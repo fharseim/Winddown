@@ -87,31 +87,18 @@ function Problem() {
           </div>
         ))}
 
-        {/* Gap row — the missing stage */}
-        <div className="flex items-center justify-between py-6 border-b border-dashed border-rise-border">
-          <div className="flex items-baseline gap-6 md:gap-10">
-            <span className="w-32 md:w-40 shrink-0" />
-            <span className="font-serif text-xl md:text-2xl font-normal text-rise-muted-light/50 italic">
-              Wind-Down & Exit
-            </span>
-          </div>
-          <span className="font-sans text-xs font-light text-rise-muted-light/40 hidden md:block">
-            —
-          </span>
-        </div>
-
-        {/* Rise row — the resolution */}
-        <div className="flex items-center justify-between py-6 mt-px border-b border-rise-border">
+        {/* Rise row — dashed top border signals the gap, coral signals the answer */}
+        <div className="flex items-center justify-between py-6 border-t border-dashed border-rise-border border-b border-b-rise-border">
           <div className="flex items-baseline gap-6 md:gap-10">
             <span className="font-sans text-xs font-medium tracking-[0.15em] uppercase w-32 md:w-40 shrink-0 text-rise-coral">
               Rise
             </span>
-            <span className="font-serif text-xl md:text-2xl font-normal text-rise-coral">
+            <span className="font-serif text-xl md:text-2xl font-normal text-rise-dark">
               Wind-Down & Exit
             </span>
           </div>
-          <span className="font-sans text-xs font-light hidden md:block max-w-xs text-right text-rise-coral/70">
-            Structured. Compliant. Supported.
+          <span className="font-sans text-xs font-light hidden md:block max-w-xs text-right text-rise-muted-light">
+            Orchestration, liability, documentation.
           </span>
         </div>
       </div>
