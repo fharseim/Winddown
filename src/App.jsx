@@ -88,16 +88,16 @@ function Problem() {
         ))}
 
         {/* Rise row — dashed top border signals the gap, coral signals the answer */}
-        <div className="flex items-center justify-between py-6 border-t border-dashed border-rise-border border-b border-b-rise-border">
+        <div className="flex items-center justify-between py-6 -mx-6 px-6 md:-mx-12 md:px-12 bg-rise-bg border-t border-dashed border-rise-border border-b border-b-rise-border">
           <div className="flex items-baseline gap-6 md:gap-10">
             <span className="font-sans text-xs font-medium tracking-[0.15em] uppercase w-32 md:w-40 shrink-0 text-rise-coral">
               Rise
             </span>
-            <span className="font-serif text-xl md:text-2xl font-normal text-rise-dark">
+            <span className="font-serif text-xl md:text-2xl font-normal text-rise-coral">
               Wind-Down & Exit
             </span>
           </div>
-          <span className="font-sans text-xs font-light hidden md:block max-w-xs text-right text-rise-muted-light">
+          <span className="font-sans text-xs font-light hidden md:block max-w-xs text-right text-rise-coral/70">
             Orchestration, liability, documentation.
           </span>
         </div>
