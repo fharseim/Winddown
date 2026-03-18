@@ -116,17 +116,20 @@ function Problem() {
         </span>
       </div>
 
-      {/* Arrow connector — problem points to solution */}
-      <div className="flex items-center gap-3 py-6 pl-1">
-        <div className="flex flex-col items-center">
-          <div className="w-px h-5 bg-rise-coral/50" />
-          <svg width="10" height="7" viewBox="0 0 10 7" className="text-rise-coral mt-px" fill="currentColor">
-            <path d="M5 7L0 0h10L5 7z" />
-          </svg>
+      {/* Arrow connector — full-width bridge from problem to solution */}
+      <div className="relative flex items-center justify-center py-10 -mx-6 md:-mx-12">
+        <div className="absolute inset-x-0 top-1/2 h-px bg-rise-border" />
+        <div className="relative flex flex-col items-center gap-2.5 bg-rise-bg-warm px-8">
+          <div className="flex flex-col items-center">
+            <div className="w-px h-6 bg-rise-coral/60" />
+            <svg width="14" height="10" viewBox="0 0 14 10" className="text-rise-coral" fill="currentColor">
+              <path d="M7 10L0 0h14L7 10z" />
+            </svg>
+          </div>
+          <span className="font-sans text-[10px] font-semibold tracking-[0.22em] uppercase text-rise-coral">
+            Rise fills this gap
+          </span>
         </div>
-        <span className="font-sans text-[11px] font-medium tracking-[0.18em] uppercase text-rise-coral">
-          Rise fills this gap
-        </span>
       </div>
 
       {/* Rise — the answer */}
