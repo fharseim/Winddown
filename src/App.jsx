@@ -4,7 +4,7 @@ function Nav() {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-rise-bg-warm/95 backdrop-blur-sm border-b border-rise-border">
       <div className="max-w-6xl mx-auto px-6 md:px-12 h-16 flex items-center justify-between">
-        <span className="font-serif text-rise-dark tracking-logo text-lg uppercase">
+        <span className="font-serif text-rise-dark tracking-logo text-2xl uppercase">
           Rise
         </span>
         <a
