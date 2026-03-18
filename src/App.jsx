@@ -168,16 +168,197 @@ function HowItWorks() {
   )
 }
 
-function Platform() {
+function FounderView() {
   const phases = ['Intake', 'Legal Setup', 'Creditor Notice', 'Sperrjahr', 'Distribution', 'Deregistration']
-  const activePhase = 2 // 0-indexed, "Creditor Notice" is current
+  const activePhase = 2
 
   const tasks = [
+    { label: 'Shareholder resolution signed', status: 'done' },
     { label: 'Liquidator appointed', status: 'done' },
-    { label: 'Creditor call published', status: 'done' },
     { label: 'VSOP cleanup', status: 'active' },
-    { label: 'Final tax filing', status: 'pending' },
+    { label: 'D&O release letter', status: 'pending' },
+    { label: 'Personal tax clearance', status: 'pending' },
   ]
+
+  return (
+    <div className="p-6 md:p-8">
+      <div className="flex items-start justify-between mb-8">
+        <div>
+          <p className="font-sans text-xs font-medium tracking-[0.15em] uppercase text-rise-muted-light mb-1">
+            Active Case
+          </p>
+          <h3 className="font-serif font-normal text-rise-dark text-xl md:text-2xl">
+            TechCo GmbH — Wind-Down
+          </h3>
+        </div>
+        <span className="font-sans text-xs font-medium bg-rise-coral/10 text-rise-coral px-3 py-1 rounded-full shrink-0">
+          In Progress
+        </span>
+      </div>
+
+      {/* Phase stepper */}
+      <div className="mb-8 overflow-x-auto pb-2">
+        <div className="flex items-center min-w-max">
+          {phases.map((phase, i) => (
+            <div key={phase} className="flex items-center">
+              <div className="flex flex-col items-center gap-1.5">
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-sans font-medium ${
+                  i < activePhase ? 'bg-rise-dark text-white'
+                  : i === activePhase ? 'bg-rise-coral text-white'
+                  : 'bg-rise-border text-rise-muted-light'
+                }`}>
+                  {i < activePhase ? '✓' : i + 1}
+                </div>
+                <span className={`font-sans text-[10px] whitespace-nowrap ${i <= activePhase ? 'text-rise-dark' : 'text-rise-muted-light'}`}>
+                  {phase}
+                </span>
+              </div>
+              {i < phases.length - 1 && (
+                <div className={`w-8 md:w-12 h-px mx-1 mb-5 shrink-0 ${i < activePhase ? 'bg-rise-dark' : 'bg-rise-border'}`} />
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Tasks + Team */}
+      <div className="flex flex-col md:flex-row gap-6 md:gap-10">
+        <div className="flex-1">
+          {tasks.map((task, i) => (
+            <div key={i} className="flex items-center gap-3 py-3 border-b border-rise-border last:border-b-0">
+              <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] shrink-0 ${
+                task.status === 'done' ? 'bg-rise-dark text-white'
+                : task.status === 'active' ? 'bg-rise-coral/20 border border-rise-coral'
+                : 'border border-rise-border'
+              }`}>
+                {task.status === 'done' && '✓'}
+              </span>
+              <span className={`font-sans text-sm ${
+                task.status === 'done' ? 'text-rise-muted-light line-through'
+                : task.status === 'active' ? 'text-rise-dark font-medium'
+                : 'text-rise-muted'
+              }`}>
+                {task.label}
+              </span>
+              {task.status === 'active' && <span className="font-sans text-xs text-rise-coral ml-auto">in progress</span>}
+              {task.status === 'pending' && <span className="font-sans text-xs text-rise-muted-light ml-auto">pending</span>}
+            </div>
+          ))}
+        </div>
+
+        <div className="md:w-48 bg-rise-bg rounded-md p-4 shrink-0">
+          <p className="font-sans text-xs font-medium tracking-[0.12em] uppercase text-rise-muted-light mb-3">Team</p>
+          <div className="space-y-2">
+            {['Rise', 'Your Counsel', 'Tax Advisor'].map((member) => (
+              <div key={member} className="flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-rise-border flex items-center justify-center text-[10px] font-medium text-rise-muted">
+                  {member[0]}
+                </span>
+                <span className="font-sans text-xs text-rise-muted">{member}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function VCView() {
+  const portfolio = [
+    { name: 'TechCo GmbH', phase: 3, label: 'Creditor Notice', lpDocs: 'In review', status: 'In Progress', active: true },
+    { name: 'Horizon SaaS GmbH', phase: 6, label: 'Deregistration', lpDocs: 'Ready', status: 'Closed', active: false },
+    { name: 'MobileCo UG', phase: 2, label: 'Legal Setup', lpDocs: 'Pending', status: 'Legal Setup', active: false },
+  ]
+
+  return (
+    <div className="p-6 md:p-8">
+      <div className="flex items-start justify-between mb-8">
+        <div>
+          <p className="font-sans text-xs font-medium tracking-[0.15em] uppercase text-rise-muted-light mb-1">
+            Portfolio Overview
+          </p>
+          <h3 className="font-serif font-normal text-rise-dark text-xl md:text-2xl">
+            Acme Ventures — Wind-Down Cases
+          </h3>
+        </div>
+        <span className="font-sans text-xs font-medium bg-rise-dark/8 text-rise-dark px-3 py-1 rounded-full shrink-0">
+          3 Active
+        </span>
+      </div>
+
+      {/* Portfolio table header */}
+      <div className="hidden md:grid grid-cols-[1fr_160px_100px_100px] gap-4 px-0 mb-2">
+        {['Company', 'Phase', 'LP Docs', 'Status'].map((h) => (
+          <span key={h} className="font-sans text-[10px] font-medium tracking-[0.12em] uppercase text-rise-muted-light">
+            {h}
+          </span>
+        ))}
+      </div>
+
+      <div className="space-y-0">
+        {portfolio.map((co, i) => (
+          <div key={i} className="border-t border-rise-border py-4 flex flex-col md:grid md:grid-cols-[1fr_160px_100px_100px] gap-2 md:gap-4 md:items-center">
+            {/* Company */}
+            <span className="font-sans text-sm font-medium text-rise-dark">{co.name}</span>
+
+            {/* Phase bar */}
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-1.5">
+                <div className="flex-1 h-1.5 bg-rise-border rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-rise-dark transition-all"
+                    style={{ width: `${(co.phase / 6) * 100}%` }}
+                  />
+                </div>
+                <span className="font-sans text-[10px] text-rise-muted-light shrink-0">{co.phase}/6</span>
+              </div>
+              <span className="font-sans text-[10px] text-rise-muted-light">{co.label}</span>
+            </div>
+
+            {/* LP Docs */}
+            <span className={`font-sans text-xs ${
+              co.lpDocs === 'Ready' ? 'text-rise-sage font-medium'
+              : co.lpDocs === 'In review' ? 'text-rise-coral'
+              : 'text-rise-muted-light'
+            }`}>
+              {co.lpDocs === 'Ready' ? '✓ Ready' : co.lpDocs}
+            </span>
+
+            {/* Status */}
+            <span className={`font-sans text-xs px-2 py-0.5 rounded-full w-fit ${
+              co.status === 'Closed' ? 'bg-rise-dark/8 text-rise-dark'
+              : co.status === 'In Progress' ? 'bg-rise-coral/10 text-rise-coral'
+              : 'bg-rise-border text-rise-muted'
+            }`}>
+              {co.status}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* Summary row */}
+      <div className="mt-6 pt-6 border-t border-rise-border flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-wrap gap-6">
+          {[
+            { label: 'Cases managed', value: '3' },
+            { label: 'LP reports ready', value: '1 of 3' },
+            { label: 'Est. close', value: 'Q3 2025' },
+          ].map((stat) => (
+            <div key={stat.label}>
+              <p className="font-sans text-[10px] uppercase tracking-[0.12em] text-rise-muted-light">{stat.label}</p>
+              <p className="font-sans text-sm font-medium text-rise-dark mt-0.5">{stat.value}</p>
+            </div>
+          ))}
+        </div>
+        <span className="font-sans text-xs text-rise-muted-light">Fixed-price per case</span>
+      </div>
+    </div>
+  )
+}
+
+function Platform() {
+  const [view, setView] = useState('founder')
 
   return (
     <section className="py-20 md:py-28 px-6 md:px-12 max-w-6xl mx-auto">
@@ -192,134 +373,51 @@ function Platform() {
 
       {/* Dashboard mockup */}
       <div className="rounded-lg border border-rise-border shadow-sm overflow-hidden bg-rise-bg-warm">
-        {/* Mockup header bar */}
-        <div className="border-b border-rise-border px-6 py-4 flex items-center justify-between">
+        {/* Chrome bar */}
+        <div className="border-b border-rise-border px-5 py-3 flex items-center justify-between bg-rise-bg">
           <div className="flex items-center gap-3">
             <div className="flex gap-1.5">
-              <span className="w-3 h-3 rounded-full bg-rise-border" />
-              <span className="w-3 h-3 rounded-full bg-rise-border" />
-              <span className="w-3 h-3 rounded-full bg-rise-border" />
+              <span className="w-2.5 h-2.5 rounded-full bg-rise-border" />
+              <span className="w-2.5 h-2.5 rounded-full bg-rise-border" />
+              <span className="w-2.5 h-2.5 rounded-full bg-rise-border" />
             </div>
-            <span className="font-sans text-xs text-rise-muted-light ml-2">rise.app/cases/techco</span>
-          </div>
-        </div>
-
-        <div className="p-6 md:p-8">
-          {/* Case title */}
-          <div className="flex items-start justify-between mb-8">
-            <div>
-              <p className="font-sans text-xs font-medium tracking-[0.15em] uppercase text-rise-muted-light mb-1">
-                Active Case
-              </p>
-              <h3 className="font-serif font-normal text-rise-dark text-xl md:text-2xl">
-                TechCo GmbH — Wind-Down
-              </h3>
-            </div>
-            <span className="font-sans text-xs font-medium bg-rise-coral/10 text-rise-coral px-3 py-1 rounded-full">
-              In Progress
+            <span className="font-sans text-xs text-rise-muted-light ml-1">
+              {view === 'founder' ? 'rise.app/cases/techco' : 'rise.app/portfolio/acme-ventures'}
             </span>
           </div>
 
-          {/* Progress phases */}
-          <div className="mb-8">
-            <div className="flex items-center gap-0 overflow-x-auto pb-2">
-              {phases.map((phase, i) => (
-                <div key={phase} className="flex items-center shrink-0">
-                  <div className="flex flex-col items-center gap-1.5">
-                    <div
-                      className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-sans font-medium transition-colors ${
-                        i < activePhase
-                          ? 'bg-rise-dark text-white'
-                          : i === activePhase
-                          ? 'bg-rise-coral text-white'
-                          : 'bg-rise-border text-rise-muted-light'
-                      }`}
-                    >
-                      {i < activePhase ? '✓' : i + 1}
-                    </div>
-                    <span
-                      className={`font-sans text-[10px] whitespace-nowrap ${
-                        i <= activePhase ? 'text-rise-dark' : 'text-rise-muted-light'
-                      }`}
-                    >
-                      {phase}
-                    </span>
-                  </div>
-                  {i < phases.length - 1 && (
-                    <div
-                      className={`w-8 md:w-12 h-px mx-1 mb-5 shrink-0 ${
-                        i < activePhase ? 'bg-rise-dark' : 'bg-rise-border'
-                      }`}
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Tasks + Team */}
-          <div className="flex flex-col md:flex-row gap-6 md:gap-10">
-            {/* Task list */}
-            <div className="flex-1 space-y-0">
-              {tasks.map((task, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-3 py-3 border-b border-rise-border last:border-b-0"
-                >
-                  <span
-                    className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] shrink-0 ${
-                      task.status === 'done'
-                        ? 'bg-rise-dark text-white'
-                        : task.status === 'active'
-                        ? 'bg-rise-coral/20 border border-rise-coral'
-                        : 'border border-rise-border'
-                    }`}
-                  >
-                    {task.status === 'done' && '✓'}
-                  </span>
-                  <span
-                    className={`font-sans text-sm ${
-                      task.status === 'done'
-                        ? 'text-rise-muted-light line-through'
-                        : task.status === 'active'
-                        ? 'text-rise-dark font-medium'
-                        : 'text-rise-muted'
-                    }`}
-                  >
-                    {task.label}
-                  </span>
-                  {task.status === 'active' && (
-                    <span className="font-sans text-xs text-rise-coral ml-auto">in progress</span>
-                  )}
-                  {task.status === 'pending' && (
-                    <span className="font-sans text-xs text-rise-muted-light ml-auto">pending</span>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {/* Team sidebar */}
-            <div className="md:w-48 bg-rise-bg rounded-md p-4 shrink-0">
-              <p className="font-sans text-xs font-medium tracking-[0.12em] uppercase text-rise-muted-light mb-3">
-                Team
-              </p>
-              <div className="space-y-2">
-                {['Rise', 'Counsel', 'Tax Advisor'].map((member) => (
-                  <div key={member} className="flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-full bg-rise-border flex items-center justify-center text-[10px] font-medium text-rise-muted">
-                      {member[0]}
-                    </span>
-                    <span className="font-sans text-xs text-rise-muted">{member}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+          {/* Perspective toggle */}
+          <div className="flex items-center gap-1 bg-rise-bg-warm border border-rise-border rounded-md p-0.5">
+            <button
+              onClick={() => setView('founder')}
+              className={`font-sans text-xs px-3 py-1.5 rounded transition-all duration-200 ${
+                view === 'founder'
+                  ? 'bg-white text-rise-dark shadow-sm font-medium'
+                  : 'text-rise-muted-light hover:text-rise-muted'
+              }`}
+            >
+              Founder
+            </button>
+            <button
+              onClick={() => setView('vc')}
+              className={`font-sans text-xs px-3 py-1.5 rounded transition-all duration-200 ${
+                view === 'vc'
+                  ? 'bg-white text-rise-dark shadow-sm font-medium'
+                  : 'text-rise-muted-light hover:text-rise-muted'
+              }`}
+            >
+              VC Fund
+            </button>
           </div>
         </div>
+
+        {view === 'founder' ? <FounderView /> : <VCView />}
       </div>
 
       <p className="font-sans font-light text-rise-muted text-sm mt-6 text-center">
-        Track every workstream. One dashboard for founders, counsel, and investors.
+        {view === 'founder'
+          ? 'Your case. Every step tracked. Nothing falls through the cracks.'
+          : 'Portfolio hygiene at scale. LP-ready documentation per case.'}
       </p>
     </section>
   )
