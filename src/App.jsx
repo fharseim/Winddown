@@ -117,31 +117,27 @@ function Problem() {
 
       {/* Rise — NOT another table row, but the resolution that steps outside the table */}
       <div className="mt-10 -mx-6 md:-mx-12 px-6 md:px-12 py-8 md:py-10 border-l-4 border-rise-coral bg-rise-coral/[0.04]">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-          <div>
-            <p className="font-sans text-xs font-semibold tracking-[0.2em] uppercase text-rise-coral mb-3">
-              Rise
-            </p>
-            <p className="font-serif font-normal text-rise-dark text-2xl md:text-3xl leading-tight">
-              The missing infrastructure, built.
-            </p>
-            <p className="font-sans font-light text-rise-muted text-sm mt-3 max-w-lg leading-relaxed">
-              One process. One point of contact. Fixed-price, fully orchestrated wind-downs
-              for European startups and their investors.
-            </p>
-          </div>
-          <div className="shrink-0 flex flex-col gap-2.5">
-            {[
-              'Fixed-price per engagement',
-              'Licensed legal & tax professionals',
-              'LP-ready documentation included',
-            ].map((item) => (
-              <div key={item} className="flex items-center gap-2">
-                <span className="w-1 h-1 rounded-full bg-rise-coral shrink-0" />
-                <span className="font-sans text-xs text-rise-muted">{item}</span>
-              </div>
-            ))}
-          </div>
+        <p className="font-sans text-xs font-semibold tracking-[0.2em] uppercase text-rise-coral mb-3">
+          Rise
+        </p>
+        <p className="font-serif font-normal text-rise-dark text-2xl md:text-3xl leading-tight">
+          The missing infrastructure, built.
+        </p>
+        <p className="font-sans font-light text-rise-muted text-sm mt-3 max-w-lg leading-relaxed">
+          One process. One point of contact. Fixed-price, fully orchestrated wind-downs
+          for European startups and their investors.
+        </p>
+        <div className="flex flex-col gap-2.5 mt-5">
+          {[
+            'Fixed-price per engagement',
+            'Licensed legal & tax professionals',
+            'LP-ready documentation included',
+          ].map((item) => (
+            <div key={item} className="flex items-center gap-2">
+              <span className="w-1 h-1 rounded-full bg-rise-coral shrink-0" />
+              <span className="font-sans text-xs text-rise-muted">{item}</span>
+            </div>
+          ))}
         </div>
       </div>
     </section>
