@@ -2,12 +2,12 @@ function Nav() {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-rise-bg-warm/95 backdrop-blur-sm border-b border-rise-border">
       <div className="max-w-6xl mx-auto px-6 md:px-12 h-16 flex items-center justify-between">
-        <span className="font-serif text-rise-dark tracking-logo text-sm uppercase">
+        <span className="font-serif text-rise-dark tracking-logo text-lg uppercase">
           Rise
         </span>
         <a
           href="mailto:hello@risestartup.eu"
-          className="text-sm font-sans font-medium text-rise-dark hover:text-rise-coral transition-colors duration-200 tracking-wide"
+          className="text-sm font-sans font-medium text-rise-muted hover:text-rise-dark transition-colors duration-200 tracking-wide"
         >
           Get in touch
         </a>
@@ -18,28 +18,26 @@ function Nav() {
 
 function Hero() {
   return (
-    <section className="pt-40 pb-32 md:pt-52 md:pb-44 px-6 md:px-12 max-w-6xl mx-auto">
-      <div className="max-w-4xl">
-        <p className="font-sans text-xs font-medium tracking-[0.2em] uppercase text-rise-muted-light mb-10">
-          Structured Transitions
-        </p>
-        <h1 className="font-serif font-normal text-rise-dark text-5xl md:text-6xl lg:text-7xl leading-[1.08] tracking-tight mb-8">
-          Every stage has infrastructure.
-          <br />
-          <span className="italic text-rise-muted">Except the last one.</span>
-        </h1>
-        <p className="font-sans font-light text-rise-muted text-lg md:text-xl leading-relaxed max-w-2xl mb-14">
-          Rise builds the missing transition layer for European startups —
-          structured wind-downs, liquidations, and exits handled with the
-          same rigor as any other stage.
-        </p>
-        <a
-          href="mailto:hello@risestartup.eu"
-          className="inline-block font-sans font-medium text-sm tracking-wide bg-rise-dark text-white px-8 py-4 hover:bg-rise-coral transition-colors duration-200"
-        >
-          Talk to us
-        </a>
-      </div>
+    <section className="pt-36 pb-24 md:pt-44 md:pb-32 px-6 md:px-12 max-w-6xl mx-auto">
+      <p className="font-sans text-xs font-medium tracking-[0.2em] uppercase text-rise-muted-light mb-8">
+        Structured Transitions
+      </p>
+      <h1 className="font-serif font-normal text-rise-dark text-5xl md:text-6xl lg:text-7xl leading-[1.08] tracking-tight mb-8 max-w-4xl">
+        Every stage has infrastructure.
+        <br />
+        <span className="italic text-rise-muted">Except the last one.</span>
+      </h1>
+      <p className="font-sans font-light text-rise-muted text-lg md:text-xl leading-relaxed max-w-2xl mb-12">
+        Rise builds the missing transition layer for European startups —
+        structured wind-downs, liquidations, and exits handled with the
+        same rigor as any other stage.
+      </p>
+      <a
+        href="mailto:hello@risestartup.eu"
+        className="inline-block font-sans font-medium text-sm tracking-wide bg-rise-dark text-white px-8 py-4 hover:bg-rise-coral transition-colors duration-200"
+      >
+        Talk to us
+      </a>
     </section>
   )
 }
@@ -81,8 +79,8 @@ function Problem() {
   ]
 
   return (
-    <section className="py-28 md:py-36 px-6 md:px-12 max-w-6xl mx-auto">
-      <div className="mb-16">
+    <section className="py-20 md:py-28 px-6 md:px-12 max-w-6xl mx-auto">
+      <div className="mb-12">
         <p className="font-sans text-xs font-medium tracking-[0.2em] uppercase text-rise-muted-light mb-4">
           The Gap
         </p>
@@ -156,8 +154,8 @@ function WhatRiseDoes() {
   ]
 
   return (
-    <section className="py-28 md:py-36 px-6 md:px-12 max-w-6xl mx-auto">
-      <div className="mb-16">
+    <section className="py-20 md:py-28 px-6 md:px-12 max-w-6xl mx-auto">
+      <div className="mb-12">
         <p className="font-sans text-xs font-medium tracking-[0.2em] uppercase text-rise-muted-light mb-4">
           What Rise Does
         </p>
@@ -205,8 +203,8 @@ function WhoWeServe() {
   ]
 
   return (
-    <section className="py-28 md:py-36 px-6 md:px-12 max-w-6xl mx-auto bg-rise-bg -mx-0">
-      <div className="mb-16">
+    <section className="py-20 md:py-28 px-6 md:px-12 max-w-6xl mx-auto">
+      <div className="mb-12">
         <p className="font-sans text-xs font-medium tracking-[0.2em] uppercase text-rise-muted-light mb-4">
           Who We Serve
         </p>
@@ -237,7 +235,7 @@ function WhoWeServe() {
 
 function Closer() {
   return (
-    <section className="py-32 md:py-44 px-6 md:px-12 max-w-6xl mx-auto text-center">
+    <section className="py-24 md:py-36 px-6 md:px-12 max-w-6xl mx-auto text-center">
       <blockquote className="font-serif font-normal italic text-rise-dark text-3xl md:text-4xl lg:text-5xl leading-tight max-w-3xl mx-auto mb-12">
         "Wie ein Kapitel endet, bestimmt,<br className="hidden md:block" /> wie das nächste beginnt."
       </blockquote>
@@ -259,7 +257,7 @@ function Footer() {
     <footer className="border-t border-rise-border">
       <div className="max-w-6xl mx-auto px-6 md:px-12 py-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center gap-6">
-          <span className="font-serif text-rise-dark tracking-logo text-xs uppercase">
+          <span className="font-serif text-rise-dark tracking-logo text-base uppercase">
             Rise
           </span>
           <span className="text-rise-border">·</span>
