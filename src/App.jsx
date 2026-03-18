@@ -238,7 +238,10 @@ function WhoWeServe() {
 function Closer() {
   return (
     <section className="py-24 md:py-36 px-6 md:px-12 max-w-6xl mx-auto text-center">
-      <blockquote className="font-serif font-normal italic text-rise-dark text-3xl md:text-4xl lg:text-5xl leading-tight max-w-3xl mx-auto mb-12">
+      <p className="font-serif font-normal text-rise-dark text-4xl md:text-5xl lg:text-6xl leading-tight mb-8 tracking-tight">
+        Close clean. Build again.
+      </p>
+      <blockquote className="font-serif font-normal italic text-rise-muted text-xl md:text-2xl leading-tight max-w-2xl mx-auto mb-12">
         "How a chapter ends<br className="hidden md:block" /> shapes how the next begins."
       </blockquote>
       <p className="font-sans font-light text-rise-muted text-base mb-10">
