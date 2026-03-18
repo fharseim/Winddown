@@ -153,23 +153,48 @@ function HowItWorks() {
     {
       number: '01',
       title: 'Intake & Assessment',
-      body: 'We evaluate your situation, identify stakeholders, and scope the wind-down.',
+      duration: '1–2 weeks',
+      body: 'Rise reviews your company structure, outstanding liabilities, remaining capital, and stakeholder map. We identify the right liquidation path and produce a scoped wind-down plan — so you know exactly what happens, in what order, and at what cost.',
+      deliverables: [
+        'Liability & creditor assessment',
+        'Stakeholder map (founders, investors, employees)',
+        'Scoped wind-down plan with timeline',
+        'Fixed-price engagement proposal',
+      ],
     },
     {
       number: '02',
-      title: 'Rise coordinates legal, tax & operations',
-      body: 'One process, one point of contact. Licensed professionals handle every workstream.',
+      title: 'Rise orchestrates every workstream',
+      duration: '3–12 months',
+      body: 'Rise acts as your single point of contact across all workstreams. We coordinate legal counsel, tax advisors, and additional specialists — managing timelines, documents, and communications so nothing is dropped, delayed, or mishandled.',
+      deliverables: [
+        'Shareholder resolution & liquidator appointment',
+        'Creditor notification (Bundesanzeiger)',
+        'Sperrjahr management & monitoring',
+        'VSOP / ESOP cleanup',
+        'Banking, HR, and regulatory filings',
+        'Ongoing LP and stakeholder updates',
+      ],
     },
     {
       number: '03',
       title: 'Clean close, full documentation',
-      body: 'Deregistration complete. LPs informed. Founders free to build again.',
+      duration: 'Final 4–8 weeks',
+      body: 'Once the Sperrjahr ends, Rise handles the final asset distribution, commercial register deregistration, and prepares a complete close-out package. Founders receive a clean record. LPs receive documentation ready for their own audit and reporting.',
+      deliverables: [
+        'Final distribution to shareholders',
+        'Commercial register deregistration',
+        'Final tax clearance certificate',
+        'D&O liability release documentation',
+        'LP reporting package (audit-ready)',
+        'Full case archive for founders & investors',
+      ],
     },
   ]
 
   return (
     <section className="py-20 md:py-28 px-6 md:px-12 max-w-6xl mx-auto">
-      <div className="mb-12">
+      <div className="mb-14">
         <p className="font-sans text-xs font-medium tracking-[0.2em] uppercase text-rise-coral mb-4">
           How It Works
         </p>
@@ -180,16 +205,32 @@ function HowItWorks() {
 
       <div className="grid md:grid-cols-3 gap-px bg-rise-border">
         {steps.map((s) => (
-          <div key={s.number} className="bg-rise-bg-warm p-8 md:p-10">
-            <span className="font-sans text-xs font-medium tracking-[0.2em] text-rise-muted-light block mb-6">
-              {s.number}
-            </span>
+          <div key={s.number} className="bg-rise-bg-warm p-8 md:p-10 flex flex-col">
+            <div className="flex items-center justify-between mb-7">
+              <span className="font-sans text-xs font-medium tracking-[0.2em] text-rise-muted-light">
+                {s.number}
+              </span>
+              <span className="font-sans text-[10px] text-rise-muted-light bg-rise-border px-2 py-1 rounded">
+                {s.duration}
+              </span>
+            </div>
             <h3 className="font-serif font-normal text-rise-dark text-xl md:text-2xl mb-4 leading-tight">
               {s.title}
             </h3>
-            <p className="font-sans font-light text-rise-muted text-sm leading-relaxed">
+            <p className="font-sans font-light text-rise-muted text-sm leading-relaxed mb-7">
               {s.body}
             </p>
+            <div className="mt-auto pt-6 border-t border-rise-border space-y-2">
+              <p className="font-sans text-[10px] font-semibold tracking-[0.16em] uppercase text-rise-muted-light mb-3">
+                Included
+              </p>
+              {s.deliverables.map((d) => (
+                <div key={d} className="flex items-start gap-2">
+                  <span className="w-1 h-1 rounded-full bg-rise-coral shrink-0 mt-1.5" />
+                  <span className="font-sans text-xs text-rise-muted leading-snug">{d}</span>
+                </div>
+              ))}
+            </div>
           </div>
         ))}
       </div>
