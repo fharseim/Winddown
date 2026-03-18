@@ -56,18 +56,35 @@ function Problem() {
 
   return (
     <section className="py-20 md:py-28 px-6 md:px-12 max-w-6xl mx-auto">
-      <div className="mb-12">
-        <p className="font-sans text-xs font-medium tracking-[0.2em] uppercase text-rise-coral mb-4">
+      <div className="mb-4">
+        <p className="font-sans text-xs font-medium tracking-[0.2em] uppercase text-rise-coral mb-5">
           The Gap
         </p>
-        <h2 className="font-serif font-normal text-rise-dark text-3xl md:text-4xl leading-tight max-w-xl">
-          Every stage is served. One is not.
+        <h2 className="font-serif font-normal text-rise-dark text-4xl md:text-5xl leading-[1.08] tracking-tight max-w-2xl">
+          Every stage is served.
+          <br />
+          <span className="italic text-rise-muted">One is not.</span>
         </h2>
       </div>
 
+      <p className="font-sans font-light text-rise-muted text-base leading-relaxed max-w-xl mb-14">
+        Infrastructure exists for every phase of a startup's life — except the last one.
+        Founders who need to close face fragmented advisors, unclear liability, and no
+        standardized process.
+      </p>
+
       <div>
+        {/* Column headers */}
+        <div className="hidden md:flex items-center justify-between pb-3 border-b border-rise-border mb-0">
+          <div className="flex items-baseline gap-6 md:gap-10">
+            <span className="font-sans text-[10px] font-medium tracking-[0.2em] uppercase text-rise-muted-light w-32 md:w-40 shrink-0">Tool</span>
+            <span className="font-sans text-[10px] font-medium tracking-[0.2em] uppercase text-rise-muted-light">Stage</span>
+          </div>
+          <span className="font-sans text-[10px] font-medium tracking-[0.2em] uppercase text-rise-muted-light">Infrastructure</span>
+        </div>
+
         {stages.map((item, i) => (
-          <div key={i} className="flex items-center justify-between py-6 border-b border-rise-border">
+          <div key={i} className="flex items-center justify-between py-5 border-b border-rise-border">
             <div className="flex items-baseline gap-6 md:gap-10">
               <span className="font-sans text-xs font-medium tracking-[0.15em] uppercase w-32 md:w-40 shrink-0 text-rise-muted-light">
                 {item.tool}
@@ -82,39 +99,36 @@ function Problem() {
           </div>
         ))}
 
-        {/* Gap row — the missing stage */}
-        <div className="flex items-center justify-between py-6 border-b border-dashed border-rise-border">
+        {/* Gap row — the unserved stage: names the PROBLEM */}
+        <div className="flex items-center justify-between py-5 border-b border-dashed border-rise-border/60 -mx-6 px-6 md:-mx-12 md:px-12 bg-rise-bg/40">
           <div className="flex items-baseline gap-6 md:gap-10">
-            <span className="w-32 md:w-40 shrink-0" />
+            <span className="font-sans text-xs font-medium tracking-[0.15em] uppercase w-32 md:w-40 shrink-0 text-rise-muted-light/40">
+              No tool
+            </span>
             <span className="font-serif text-xl md:text-2xl font-normal text-rise-muted-light/40 italic">
               Wind-Down & Exit
             </span>
           </div>
-          <span className="font-sans text-xs font-light text-rise-muted-light/40 hidden md:block">
-            —
+          <span className="font-sans text-xs font-light text-rise-muted-light/40 hidden md:block text-right">
+            No infrastructure. No standard. No support.
           </span>
         </div>
 
-        {/* Rise row — the resolution */}
-        <div className="flex items-center justify-between py-6 border-b border-rise-border">
+        {/* Rise row — the ANSWER: different copy, no duplication */}
+        <div className="flex items-center justify-between py-6 border-b-2 border-rise-coral/20 -mx-6 px-6 md:-mx-12 md:px-12 bg-rise-coral/[0.035]">
           <div className="flex items-baseline gap-6 md:gap-10">
-            <span className="font-sans text-xs font-medium tracking-[0.15em] uppercase w-32 md:w-40 shrink-0 text-rise-coral">
+            <span className="font-sans text-xs font-semibold tracking-[0.15em] uppercase w-32 md:w-40 shrink-0 text-rise-coral">
               Rise
             </span>
             <span className="font-serif text-xl md:text-2xl font-normal text-rise-coral">
-              Wind-Down & Exit
+              One process. Clean close.
             </span>
           </div>
-          <span className="font-sans text-xs font-light hidden md:block max-w-xs text-right text-rise-coral/70">
-            Structured transitions for startups and investors.
+          <span className="font-sans text-xs font-light hidden md:block max-w-xs text-right text-rise-coral/80">
+            Fixed-price. Fully orchestrated. LP-ready.
           </span>
         </div>
       </div>
-
-      <p className="font-sans font-light text-rise-muted mt-12 text-base leading-relaxed max-w-2xl">
-        When a company needs to close, founders face fragmented advisors,
-        unclear liability, and no standardized process. Rise changes that.
-      </p>
     </section>
   )
 }
