@@ -54,30 +54,9 @@ function Divider() {
 
 function Problem() {
   const stages = [
-    {
-      tool: 'Stripe Atlas',
-      stage: 'Incorporation',
-      note: 'Entity setup, banking, compliance',
-      available: true,
-    },
-    {
-      tool: 'Carta',
-      stage: 'Cap Table & Equity',
-      note: 'Ownership, options, investor reporting',
-      available: true,
-    },
-    {
-      tool: 'Notion / Linear',
-      stage: 'Operations',
-      note: 'Product, hiring, roadmap execution',
-      available: true,
-    },
-    {
-      tool: null,
-      stage: 'Wind-Down & Exit',
-      note: 'No infrastructure. No standard. No support.',
-      available: false,
-    },
+    { tool: 'Stripe Atlas', stage: 'Incorporation', note: 'Entity setup, banking, compliance' },
+    { tool: 'Carta', stage: 'Cap Table & Equity', note: 'Ownership, options, investor reporting' },
+    { tool: 'Notion / Linear', stage: 'Operations', note: 'Product, hiring, roadmap execution' },
   ]
 
   return (
@@ -91,41 +70,50 @@ function Problem() {
         </h2>
       </div>
 
-      <div className="space-y-px">
+      <div>
         {stages.map((item, i) => (
-          <div
-            key={i}
-            className={`flex items-center justify-between py-6 border-b border-rise-border group ${
-              !item.available ? 'bg-rise-dark -mx-6 px-6 md:-mx-12 md:px-12' : ''
-            }`}
-          >
+          <div key={i} className="flex items-center justify-between py-6 border-b border-rise-border">
             <div className="flex items-baseline gap-6 md:gap-10">
-              <span
-                className={`font-sans text-xs font-medium tracking-[0.15em] uppercase w-32 md:w-40 shrink-0 ${
-                  item.available ? 'text-rise-muted-light' : 'text-rise-muted-light/60'
-                }`}
-              >
-                {item.tool ?? (
-                  <span className="text-rise-coral font-medium">Rise</span>
-                )}
+              <span className="font-sans text-xs font-medium tracking-[0.15em] uppercase w-32 md:w-40 shrink-0 text-rise-muted-light">
+                {item.tool}
               </span>
-              <span
-                className={`font-serif text-xl md:text-2xl font-normal ${
-                  item.available ? 'text-rise-dark' : 'text-white'
-                }`}
-              >
+              <span className="font-serif text-xl md:text-2xl font-normal text-rise-dark">
                 {item.stage}
               </span>
             </div>
-            <span
-              className={`font-sans text-xs font-light hidden md:block max-w-xs text-right ${
-                item.available ? 'text-rise-muted-light' : 'text-rise-coral'
-              }`}
-            >
+            <span className="font-sans text-xs font-light hidden md:block max-w-xs text-right text-rise-muted-light">
               {item.note}
             </span>
           </div>
         ))}
+
+        {/* Gap row — the missing stage */}
+        <div className="flex items-center justify-between py-6 border-b border-dashed border-rise-border">
+          <div className="flex items-baseline gap-6 md:gap-10">
+            <span className="w-32 md:w-40 shrink-0" />
+            <span className="font-serif text-xl md:text-2xl font-normal text-rise-muted-light/50 italic">
+              Wind-Down & Exit
+            </span>
+          </div>
+          <span className="font-sans text-xs font-light text-rise-muted-light/40 hidden md:block">
+            —
+          </span>
+        </div>
+
+        {/* Rise row — the resolution */}
+        <div className="flex items-center justify-between py-6 mt-px border-b border-rise-border">
+          <div className="flex items-baseline gap-6 md:gap-10">
+            <span className="font-sans text-xs font-medium tracking-[0.15em] uppercase w-32 md:w-40 shrink-0 text-rise-coral">
+              Rise
+            </span>
+            <span className="font-serif text-xl md:text-2xl font-normal text-rise-coral">
+              Wind-Down & Exit
+            </span>
+          </div>
+          <span className="font-sans text-xs font-light hidden md:block max-w-xs text-right text-rise-coral/70">
+            Structured. Compliant. Supported.
+          </span>
+        </div>
       </div>
 
       <p className="font-sans font-light text-rise-muted mt-12 text-base leading-relaxed max-w-2xl">
