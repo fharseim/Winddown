@@ -182,95 +182,214 @@ function HowItWorks() {
   )
 }
 
+function TaskRow({ task }) {
+  const assigneeStyle = {
+    'Rise':        'bg-rise-coral/10 text-rise-coral',
+    'You':         'bg-rise-dark/8 text-rise-dark font-medium',
+    'Counsel':     'bg-rise-border text-rise-muted',
+    'Tax Advisor': 'bg-rise-border text-rise-muted',
+  }
+  return (
+    <div className="flex items-center gap-2.5 py-2.5 border-b border-rise-border last:border-b-0">
+      <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] shrink-0 ${
+        task.status === 'done'   ? 'bg-rise-dark text-white'
+        : task.status === 'active' ? 'border-2 border-rise-coral bg-rise-coral/10'
+        : 'border border-rise-border'
+      }`}>
+        {task.status === 'done' && '✓'}
+      </span>
+      <span className={`font-sans text-xs flex-1 ${
+        task.status === 'done'   ? 'text-rise-muted-light line-through'
+        : task.status === 'active' ? 'text-rise-dark font-medium'
+        : 'text-rise-muted'
+      }`}>
+        {task.label}
+      </span>
+      <span className={`font-sans text-[10px] px-1.5 py-0.5 rounded shrink-0 ${assigneeStyle[task.assignee] || 'bg-rise-border text-rise-muted'}`}>
+        {task.assignee}
+      </span>
+      {task.status === 'active' && (
+        <span className="font-sans text-[10px] text-rise-coral shrink-0 ml-1">● active</span>
+      )}
+    </div>
+  )
+}
+
 function FounderView() {
   const phases = ['Intake', 'Legal Setup', 'Creditor Notice', 'Sperrjahr', 'Distribution', 'Deregistration']
   const activePhase = 2
 
-  const tasks = [
-    { label: 'Shareholder resolution signed', status: 'done' },
-    { label: 'Liquidator appointed', status: 'done' },
-    { label: 'VSOP cleanup', status: 'active' },
-    { label: 'D&O release letter', status: 'pending' },
-    { label: 'Personal tax clearance', status: 'pending' },
+  const workstreams = [
+    {
+      label: 'Legal',
+      tasks: [
+        { label: 'Shareholder resolution signed', status: 'done', assignee: 'Rise' },
+        { label: 'Liquidator appointed & registered', status: 'done', assignee: 'Rise' },
+        { label: 'VSOP / ESOP cleanup', status: 'active', assignee: 'You' },
+        { label: 'D&O release letter', status: 'pending', assignee: 'You' },
+        { label: 'Commercial register filing', status: 'pending', assignee: 'Rise' },
+      ],
+    },
+    {
+      label: 'Tax',
+      tasks: [
+        { label: 'Tax advisor coordinated', status: 'done', assignee: 'Rise' },
+        { label: 'Interim tax return filed', status: 'active', assignee: 'Tax Advisor' },
+        { label: 'Final tax clearance', status: 'pending', assignee: 'Tax Advisor' },
+      ],
+    },
+    {
+      label: 'Stakeholder Communications',
+      tasks: [
+        { label: 'LP notification sent', status: 'done', assignee: 'Rise' },
+        { label: 'Creditor notice in Bundesanzeiger', status: 'done', assignee: 'Rise' },
+        { label: 'Final investor report', status: 'pending', assignee: 'Rise' },
+      ],
+    },
+  ]
+
+  const keyDates = [
+    { label: 'Creditor notice published', date: 'Mar 15, 2025' },
+    { label: 'Sperrjahr ends', date: 'Mar 15, 2026' },
+    { label: 'Est. deregistration', date: 'May 2026' },
+  ]
+
+  const docs = [
+    { label: 'VSOP schedule', note: 'review request' },
+    { label: 'D&O release letter', note: 'signature required' },
   ]
 
   return (
-    <div className="p-6 md:p-8">
-      <div className="flex items-start justify-between mb-8">
+    <div className="p-5 md:p-7">
+      {/* Case header */}
+      <div className="flex items-start justify-between mb-6">
         <div>
-          <p className="font-sans text-xs font-medium tracking-[0.15em] uppercase text-rise-muted-light mb-1">
+          <p className="font-sans text-[10px] font-medium tracking-[0.18em] uppercase text-rise-muted-light mb-1">
             Active Case
           </p>
-          <h3 className="font-serif font-normal text-rise-dark text-xl md:text-2xl">
+          <h3 className="font-serif font-normal text-rise-dark text-xl md:text-2xl leading-tight">
             TechCo GmbH — Wind-Down
           </h3>
         </div>
-        <span className="font-sans text-xs font-medium bg-rise-coral/10 text-rise-coral px-3 py-1 rounded-full shrink-0">
+        <span className="font-sans text-xs font-medium bg-rise-coral/10 text-rise-coral px-3 py-1 rounded-full shrink-0 ml-4">
           In Progress
         </span>
       </div>
 
       {/* Phase stepper */}
-      <div className="mb-8 overflow-x-auto pb-2">
+      <div className="mb-7 overflow-x-auto pb-1">
         <div className="flex items-center min-w-max">
           {phases.map((phase, i) => (
             <div key={phase} className="flex items-center">
-              <div className="flex flex-col items-center gap-1.5">
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-sans font-medium ${
-                  i < activePhase ? 'bg-rise-dark text-white'
+              <div className="flex flex-col items-center gap-1">
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-sans font-semibold ${
+                  i < activePhase  ? 'bg-rise-dark text-white'
                   : i === activePhase ? 'bg-rise-coral text-white'
                   : 'bg-rise-border text-rise-muted-light'
                 }`}>
                   {i < activePhase ? '✓' : i + 1}
                 </div>
-                <span className={`font-sans text-[10px] whitespace-nowrap ${i <= activePhase ? 'text-rise-dark' : 'text-rise-muted-light'}`}>
+                <span className={`font-sans text-[9px] whitespace-nowrap ${i <= activePhase ? 'text-rise-dark' : 'text-rise-muted-light'}`}>
                   {phase}
                 </span>
               </div>
               {i < phases.length - 1 && (
-                <div className={`w-8 md:w-12 h-px mx-1 mb-5 shrink-0 ${i < activePhase ? 'bg-rise-dark' : 'bg-rise-border'}`} />
+                <div className={`w-7 md:w-10 h-px mx-1 mb-4 shrink-0 ${i < activePhase ? 'bg-rise-dark' : 'bg-rise-border'}`} />
               )}
             </div>
           ))}
         </div>
       </div>
 
-      {/* Tasks + Team */}
-      <div className="flex flex-col md:flex-row gap-6 md:gap-10">
-        <div className="flex-1">
-          {tasks.map((task, i) => (
-            <div key={i} className="flex items-center gap-3 py-3 border-b border-rise-border last:border-b-0">
-              <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] shrink-0 ${
-                task.status === 'done' ? 'bg-rise-dark text-white'
-                : task.status === 'active' ? 'bg-rise-coral/20 border border-rise-coral'
-                : 'border border-rise-border'
-              }`}>
-                {task.status === 'done' && '✓'}
-              </span>
-              <span className={`font-sans text-sm ${
-                task.status === 'done' ? 'text-rise-muted-light line-through'
-                : task.status === 'active' ? 'text-rise-dark font-medium'
-                : 'text-rise-muted'
-              }`}>
-                {task.label}
-              </span>
-              {task.status === 'active' && <span className="font-sans text-xs text-rise-coral ml-auto">in progress</span>}
-              {task.status === 'pending' && <span className="font-sans text-xs text-rise-muted-light ml-auto">pending</span>}
+      {/* Next action callout */}
+      <div className="flex items-start gap-3 bg-rise-coral/[0.06] border border-rise-coral/20 rounded-md px-4 py-3 mb-6">
+        <span className="text-rise-coral text-xs mt-0.5 shrink-0">●</span>
+        <div>
+          <p className="font-sans text-xs font-medium text-rise-dark">Action required from you</p>
+          <p className="font-sans text-xs text-rise-muted mt-0.5">
+            Review and sign the VSOP schedule — Rise is waiting before proceeding with legal cleanup.
+          </p>
+        </div>
+      </div>
+
+      {/* Main two-column layout */}
+      <div className="flex flex-col md:flex-row gap-6 md:gap-8">
+        {/* Left: workstreams */}
+        <div className="flex-1 space-y-5 min-w-0">
+          {workstreams.map((ws) => (
+            <div key={ws.label}>
+              <p className="font-sans text-[10px] font-semibold tracking-[0.16em] uppercase text-rise-muted-light mb-1.5 pb-1.5 border-b border-rise-border">
+                {ws.label}
+              </p>
+              {ws.tasks.map((task, i) => (
+                <TaskRow key={i} task={task} />
+              ))}
             </div>
           ))}
         </div>
 
-        <div className="md:w-48 bg-rise-bg rounded-md p-4 shrink-0">
-          <p className="font-sans text-xs font-medium tracking-[0.12em] uppercase text-rise-muted-light mb-3">Team</p>
-          <div className="space-y-2">
-            {['Rise', 'Your Counsel', 'Tax Advisor'].map((member) => (
-              <div key={member} className="flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-rise-border flex items-center justify-center text-[10px] font-medium text-rise-muted">
-                  {member[0]}
-                </span>
-                <span className="font-sans text-xs text-rise-muted">{member}</span>
-              </div>
-            ))}
+        {/* Right: sidebar */}
+        <div className="md:w-52 shrink-0 space-y-5">
+          {/* Key Dates */}
+          <div className="bg-rise-bg rounded-md p-4">
+            <p className="font-sans text-[10px] font-semibold tracking-[0.16em] uppercase text-rise-muted-light mb-3">
+              Key Dates
+            </p>
+            <div className="space-y-3">
+              {keyDates.map((kd) => (
+                <div key={kd.label}>
+                  <p className="font-sans text-[10px] text-rise-muted-light leading-tight">{kd.label}</p>
+                  <p className="font-sans text-xs font-medium text-rise-dark mt-0.5">{kd.date}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Team */}
+          <div className="bg-rise-bg rounded-md p-4">
+            <p className="font-sans text-[10px] font-semibold tracking-[0.16em] uppercase text-rise-muted-light mb-3">
+              Team
+            </p>
+            <div className="space-y-2">
+              {[
+                { name: 'Rise', role: 'Orchestration' },
+                { name: 'Your Counsel', role: 'Legal' },
+                { name: 'Tax Advisor', role: 'Tax & Filings' },
+              ].map((m) => (
+                <div key={m.name} className="flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-full bg-rise-border flex items-center justify-center text-[10px] font-medium text-rise-muted shrink-0">
+                    {m.name[0]}
+                  </span>
+                  <div>
+                    <p className="font-sans text-xs text-rise-dark leading-none">{m.name}</p>
+                    <p className="font-sans text-[10px] text-rise-muted-light mt-0.5">{m.role}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Documents */}
+          <div className="bg-rise-bg rounded-md p-4">
+            <div className="flex items-center justify-between mb-3">
+              <p className="font-sans text-[10px] font-semibold tracking-[0.16em] uppercase text-rise-muted-light">
+                Documents
+              </p>
+              <span className="font-sans text-[10px] font-medium bg-rise-coral/10 text-rise-coral px-1.5 py-0.5 rounded">
+                2 pending
+              </span>
+            </div>
+            <div className="space-y-2">
+              {docs.map((doc) => (
+                <div key={doc.label} className="flex items-start gap-2">
+                  <span className="text-rise-muted-light text-xs mt-0.5 shrink-0">▸</span>
+                  <div>
+                    <p className="font-sans text-xs text-rise-dark leading-tight">{doc.label}</p>
+                    <p className="font-sans text-[10px] text-rise-coral mt-0.5">{doc.note}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -280,92 +399,150 @@ function FounderView() {
 
 function VCView() {
   const portfolio = [
-    { name: 'TechCo GmbH', phase: 3, label: 'Creditor Notice', lpDocs: 'In review', status: 'In Progress', active: true },
-    { name: 'Horizon SaaS GmbH', phase: 6, label: 'Deregistration', lpDocs: 'Ready', status: 'Closed', active: false },
-    { name: 'MobileCo UG', phase: 2, label: 'Legal Setup', lpDocs: 'Pending', status: 'Legal Setup', active: false },
+    {
+      name: 'TechCo GmbH',
+      phase: 3, phaseLabel: 'Creditor Notice',
+      lpDocs: 'In review', writeOff: 'Pending',
+      nextMilestone: 'Sperrjahr starts Apr 2025',
+      status: 'In Progress',
+    },
+    {
+      name: 'Horizon SaaS GmbH',
+      phase: 6, phaseLabel: 'Complete',
+      lpDocs: 'Ready', writeOff: 'Confirmed',
+      nextMilestone: 'Closed Mar 2025',
+      status: 'Closed',
+    },
+    {
+      name: 'MobileCo UG',
+      phase: 2, phaseLabel: 'Legal Setup',
+      lpDocs: 'Pending', writeOff: 'Pending',
+      nextMilestone: 'Creditor notice due Jun 2025',
+      status: 'Legal Setup',
+    },
+  ]
+
+  const activity = [
+    { company: 'Horizon SaaS GmbH', event: 'Final LP report ready for download', time: '2d ago' },
+    { company: 'TechCo GmbH', event: 'Creditor notice published in Bundesanzeiger', time: '1w ago' },
+    { company: 'MobileCo UG', event: 'Liquidator appointed & registered', time: '3w ago' },
+    { company: 'TechCo GmbH', event: 'VSOP cleanup initiated, awaiting founder sign-off', time: '1mo ago' },
   ]
 
   return (
-    <div className="p-6 md:p-8">
-      <div className="flex items-start justify-between mb-8">
+    <div className="p-5 md:p-7">
+      {/* Header */}
+      <div className="flex items-start justify-between mb-6">
         <div>
-          <p className="font-sans text-xs font-medium tracking-[0.15em] uppercase text-rise-muted-light mb-1">
+          <p className="font-sans text-[10px] font-medium tracking-[0.18em] uppercase text-rise-muted-light mb-1">
             Portfolio Overview
           </p>
-          <h3 className="font-serif font-normal text-rise-dark text-xl md:text-2xl">
+          <h3 className="font-serif font-normal text-rise-dark text-xl md:text-2xl leading-tight">
             Acme Ventures — Wind-Down Cases
           </h3>
         </div>
-        <span className="font-sans text-xs font-medium bg-rise-dark/8 text-rise-dark px-3 py-1 rounded-full shrink-0">
-          3 Active
+        <span className="font-sans text-xs font-medium bg-rise-dark/[0.06] text-rise-dark px-3 py-1 rounded-full shrink-0 ml-4">
+          Q1 2025
         </span>
       </div>
 
-      {/* Portfolio table header */}
-      <div className="hidden md:grid grid-cols-[1fr_160px_100px_100px] gap-4 px-0 mb-2">
-        {['Company', 'Phase', 'LP Docs', 'Status'].map((h) => (
-          <span key={h} className="font-sans text-[10px] font-medium tracking-[0.12em] uppercase text-rise-muted-light">
+      {/* Stats row */}
+      <div className="grid grid-cols-3 gap-3 mb-7">
+        {[
+          { label: 'Cases', value: '3', sub: '2 active · 1 closed' },
+          { label: 'LP Reports', value: '1 / 3', sub: '1 in review · 1 pending' },
+          { label: 'Write-offs', value: '1 / 3', sub: 'confirmed this quarter' },
+        ].map((s) => (
+          <div key={s.label} className="bg-rise-bg rounded-md px-4 py-3">
+            <p className="font-sans text-[10px] font-medium tracking-[0.14em] uppercase text-rise-muted-light mb-1">
+              {s.label}
+            </p>
+            <p className="font-serif text-xl text-rise-dark leading-none">{s.value}</p>
+            <p className="font-sans text-[10px] text-rise-muted-light mt-1 leading-tight">{s.sub}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Portfolio table */}
+      <div className="hidden md:grid grid-cols-[1fr_130px_90px_90px_180px] gap-3 pb-2 mb-0.5">
+        {['Company', 'Phase', 'LP Report', 'Write-off', 'Next milestone'].map((h) => (
+          <span key={h} className="font-sans text-[10px] font-semibold tracking-[0.14em] uppercase text-rise-muted-light">
             {h}
           </span>
         ))}
       </div>
 
-      <div className="space-y-0">
+      <div>
         {portfolio.map((co, i) => (
-          <div key={i} className="border-t border-rise-border py-4 flex flex-col md:grid md:grid-cols-[1fr_160px_100px_100px] gap-2 md:gap-4 md:items-center">
+          <div
+            key={i}
+            className="border-t border-rise-border py-3.5 flex flex-col md:grid md:grid-cols-[1fr_130px_90px_90px_180px] gap-2 md:gap-3 md:items-center"
+          >
             {/* Company */}
-            <span className="font-sans text-sm font-medium text-rise-dark">{co.name}</span>
+            <div>
+              <span className="font-sans text-sm font-medium text-rise-dark">{co.name}</span>
+              <span className={`md:hidden font-sans text-[10px] ml-2 px-1.5 py-0.5 rounded-full ${
+                co.status === 'Closed'      ? 'bg-rise-dark/[0.06] text-rise-dark'
+                : co.status === 'In Progress' ? 'bg-rise-coral/10 text-rise-coral'
+                : 'bg-rise-border text-rise-muted'
+              }`}>{co.status}</span>
+            </div>
 
             {/* Phase bar */}
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-1.5">
-                <div className="flex-1 h-1.5 bg-rise-border rounded-full overflow-hidden">
+            <div>
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <div className="flex-1 h-1 bg-rise-border rounded-full overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-rise-dark transition-all"
+                    className={`h-full rounded-full ${co.status === 'Closed' ? 'bg-rise-dark' : 'bg-rise-coral'}`}
                     style={{ width: `${(co.phase / 6) * 100}%` }}
                   />
                 </div>
                 <span className="font-sans text-[10px] text-rise-muted-light shrink-0">{co.phase}/6</span>
               </div>
-              <span className="font-sans text-[10px] text-rise-muted-light">{co.label}</span>
+              <span className="font-sans text-[10px] text-rise-muted-light">{co.phaseLabel}</span>
             </div>
 
-            {/* LP Docs */}
-            <span className={`font-sans text-xs ${
-              co.lpDocs === 'Ready' ? 'text-rise-sage font-medium'
+            {/* LP Report */}
+            <span className={`font-sans text-xs font-medium ${
+              co.lpDocs === 'Ready'     ? 'text-rise-sage'
               : co.lpDocs === 'In review' ? 'text-rise-coral'
               : 'text-rise-muted-light'
             }`}>
               {co.lpDocs === 'Ready' ? '✓ Ready' : co.lpDocs}
             </span>
 
-            {/* Status */}
-            <span className={`font-sans text-xs px-2 py-0.5 rounded-full w-fit ${
-              co.status === 'Closed' ? 'bg-rise-dark/8 text-rise-dark'
-              : co.status === 'In Progress' ? 'bg-rise-coral/10 text-rise-coral'
-              : 'bg-rise-border text-rise-muted'
+            {/* Write-off */}
+            <span className={`font-sans text-xs ${
+              co.writeOff === 'Confirmed' ? 'text-rise-sage font-medium' : 'text-rise-muted-light'
             }`}>
-              {co.status}
+              {co.writeOff === 'Confirmed' ? '✓ Confirmed' : co.writeOff}
             </span>
+
+            {/* Next milestone */}
+            <span className="font-sans text-[11px] text-rise-muted leading-tight">{co.nextMilestone}</span>
           </div>
         ))}
       </div>
 
-      {/* Summary row */}
-      <div className="mt-6 pt-6 border-t border-rise-border flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex flex-wrap gap-6">
-          {[
-            { label: 'Cases managed', value: '3' },
-            { label: 'LP reports ready', value: '1 of 3' },
-            { label: 'Est. close', value: 'Q3 2025' },
-          ].map((stat) => (
-            <div key={stat.label}>
-              <p className="font-sans text-[10px] uppercase tracking-[0.12em] text-rise-muted-light">{stat.label}</p>
-              <p className="font-sans text-sm font-medium text-rise-dark mt-0.5">{stat.value}</p>
+      {/* Activity feed */}
+      <div className="mt-6 pt-5 border-t border-rise-border">
+        <p className="font-sans text-[10px] font-semibold tracking-[0.16em] uppercase text-rise-muted-light mb-3">
+          Recent Activity
+        </p>
+        <div>
+          {activity.map((a, i) => (
+            <div key={i} className="flex items-start justify-between gap-4 py-2 border-b border-rise-border last:border-b-0">
+              <div className="flex items-start gap-2.5 min-w-0">
+                <span className="w-1 h-1 rounded-full bg-rise-muted-light shrink-0 mt-1.5" />
+                <div className="min-w-0">
+                  <span className="font-sans text-[11px] text-rise-muted-light mr-1.5">{a.company}</span>
+                  <span className="font-sans text-[11px] text-rise-dark">{a.event}</span>
+                </div>
+              </div>
+              <span className="font-sans text-[10px] text-rise-muted-light shrink-0">{a.time}</span>
             </div>
           ))}
         </div>
-        <span className="font-sans text-xs text-rise-muted-light">Fixed-price per case</span>
       </div>
     </div>
   )
