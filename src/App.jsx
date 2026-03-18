@@ -99,8 +99,12 @@ function Problem() {
           </div>
         ))}
 
-        {/* The gap — table ends here, the missing stage is shown as an absence */}
-        <div className="flex items-center justify-between py-5 border-b border-dashed border-rise-border/50 -mx-6 px-6 md:-mx-12 md:px-12">
+      </div>
+
+      {/* Wind-Down gap + Rise resolution — unified into one bordered block */}
+      <div className="-mx-6 md:-mx-12 border-l-4 border-rise-coral">
+        {/* The gap row — problem made visible */}
+        <div className="flex items-center justify-between py-5 border-b border-dashed border-rise-border/50 px-6 md:px-12">
           <div className="flex items-baseline gap-6 md:gap-10">
             <span className="w-32 md:w-40 shrink-0 font-sans text-xs text-rise-muted-light/30 tracking-widest">
               ———
@@ -113,31 +117,31 @@ function Problem() {
             No infrastructure exists.
           </span>
         </div>
-      </div>
 
-      {/* Rise — NOT another table row, but the resolution that steps outside the table */}
-      <div className="mt-10 -mx-6 md:-mx-12 px-6 md:px-12 py-8 md:py-10 border-l-4 border-rise-coral bg-rise-coral/[0.04]">
-        <p className="font-sans text-xs font-semibold tracking-[0.2em] uppercase text-rise-coral mb-3">
-          Rise
-        </p>
-        <p className="font-serif font-normal text-rise-dark text-2xl md:text-3xl leading-tight">
-          The missing infrastructure, built.
-        </p>
-        <p className="font-sans font-light text-rise-muted text-sm mt-3 max-w-lg leading-relaxed">
-          One process. One point of contact. Fixed-price, fully orchestrated wind-downs
-          for European startups and their investors.
-        </p>
-        <div className="flex flex-col gap-2.5 mt-5">
-          {[
-            'Fixed-price per engagement',
-            'Licensed legal & tax professionals',
-            'LP-ready documentation included',
-          ].map((item) => (
-            <div key={item} className="flex items-center gap-2">
-              <span className="w-1 h-1 rounded-full bg-rise-coral shrink-0" />
-              <span className="font-sans text-xs text-rise-muted">{item}</span>
-            </div>
-          ))}
+        {/* Rise — the answer, directly below */}
+        <div className="px-6 md:px-12 py-8 md:py-10 bg-rise-coral/[0.04]">
+          <p className="font-sans text-xs font-semibold tracking-[0.2em] uppercase text-rise-coral mb-3">
+            Rise
+          </p>
+          <p className="font-serif font-normal text-rise-dark text-2xl md:text-3xl leading-tight">
+            The missing infrastructure, built.
+          </p>
+          <p className="font-sans font-light text-rise-muted text-sm mt-3 max-w-lg leading-relaxed">
+            One process. One point of contact. Fixed-price, fully orchestrated wind-downs
+            for European startups and their investors.
+          </p>
+          <div className="flex flex-col gap-2.5 mt-5">
+            {[
+              'Fixed-price per engagement',
+              'Licensed legal & tax professionals',
+              'LP-ready documentation included',
+            ].map((item) => (
+              <div key={item} className="flex items-center gap-2">
+                <span className="w-1 h-1 rounded-full bg-rise-coral shrink-0" />
+                <span className="font-sans text-xs text-rise-muted">{item}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>
