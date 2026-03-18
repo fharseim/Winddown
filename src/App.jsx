@@ -2,7 +2,7 @@ function Nav() {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-rise-bg-warm/95 backdrop-blur-sm border-b border-rise-border">
       <div className="max-w-6xl mx-auto px-6 md:px-12 h-16 flex items-center justify-between">
-        <span className="font-serif text-rise-dark text-2xl uppercase tracking-[0.18em]">
+        <span className="font-serif text-rise-dark tracking-logo text-lg uppercase">
           Rise
         </span>
         <a
@@ -19,27 +19,20 @@ function Nav() {
 function Hero() {
   return (
     <section className="pt-36 pb-24 md:pt-44 md:pb-32 px-6 md:px-12 max-w-6xl mx-auto">
-      <p className="font-sans text-xs font-medium tracking-[0.2em] uppercase text-rise-muted-light mb-8">
-        Structured Transitions
-      </p>
-      <h1 className="font-serif font-normal text-rise-dark text-5xl md:text-6xl lg:text-7xl leading-[1.08] tracking-tight mb-10">
+      <h1 className="font-serif font-normal text-rise-dark text-[2.75rem] md:text-[3.5rem] lg:text-[3.75rem] leading-[1.08] tracking-tight mb-8">
         Every stage has infrastructure.
         <br />
         <span className="italic text-rise-muted">Except the last one.</span>
       </h1>
-      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8">
-        <p className="font-sans font-light text-rise-muted text-lg md:text-xl leading-relaxed max-w-xl">
-          Rise builds the missing transition layer for European startups —
-          structured wind-downs, liquidations, and exits handled with the
-          same rigor as any other stage.
-        </p>
-        <a
-          href="mailto:hello@risestartup.eu"
-          className="inline-block font-sans font-medium text-sm tracking-wide bg-rise-dark text-white px-8 py-4 hover:bg-rise-coral transition-colors duration-200 shrink-0 self-start md:self-auto"
-        >
-          Talk to us
-        </a>
-      </div>
+      <p className="font-sans font-light text-rise-muted text-lg md:text-xl leading-relaxed max-w-xl mb-10">
+        Rise builds the missing transition layer for European startups.
+      </p>
+      <a
+        href="mailto:hello@risestartup.eu"
+        className="inline-block font-sans font-medium text-sm tracking-wide bg-rise-coral text-white px-8 py-4 hover:bg-rise-dark transition-colors duration-200"
+      >
+        Talk to us about your situation
+      </a>
     </section>
   )
 }
@@ -62,7 +55,7 @@ function Problem() {
   return (
     <section className="py-20 md:py-28 px-6 md:px-12 max-w-6xl mx-auto">
       <div className="mb-12">
-        <p className="font-sans text-xs font-medium tracking-[0.2em] uppercase text-rise-muted-light mb-4">
+        <p className="font-sans text-xs font-medium tracking-[0.2em] uppercase text-rise-coral mb-4">
           The Gap
         </p>
         <h2 className="font-serif font-normal text-rise-dark text-3xl md:text-4xl leading-tight max-w-xl">
@@ -87,8 +80,21 @@ function Problem() {
           </div>
         ))}
 
-        {/* Rise row — dashed top border signals the gap, coral signals the answer */}
-        <div className="flex items-center justify-between py-6 -mx-6 px-6 md:-mx-12 md:px-12 bg-rise-bg border-t border-dashed border-rise-border border-b border-b-rise-border">
+        {/* Gap row — the missing stage */}
+        <div className="flex items-center justify-between py-6 border-b border-dashed border-rise-border">
+          <div className="flex items-baseline gap-6 md:gap-10">
+            <span className="w-32 md:w-40 shrink-0" />
+            <span className="font-serif text-xl md:text-2xl font-normal text-rise-muted-light/40 italic">
+              Wind-Down & Exit
+            </span>
+          </div>
+          <span className="font-sans text-xs font-light text-rise-muted-light/40 hidden md:block">
+            —
+          </span>
+        </div>
+
+        {/* Rise row — the resolution */}
+        <div className="flex items-center justify-between py-6 border-b border-rise-border">
           <div className="flex items-baseline gap-6 md:gap-10">
             <span className="font-sans text-xs font-medium tracking-[0.15em] uppercase w-32 md:w-40 shrink-0 text-rise-coral">
               Rise
@@ -98,7 +104,7 @@ function Problem() {
             </span>
           </div>
           <span className="font-sans text-xs font-light hidden md:block max-w-xs text-right text-rise-coral/70">
-            Orchestration, liability, documentation.
+            Structured transitions for startups and investors.
           </span>
         </div>
       </div>
@@ -111,47 +117,47 @@ function Problem() {
   )
 }
 
-function WhatRiseDoes() {
-  const pillars = [
+function HowItWorks() {
+  const steps = [
     {
       number: '01',
-      title: 'Orchestration',
-      body: 'One point of contact across all workstreams — legal, tax, banking, HR, and stakeholder communication. No coordination overhead, no dropped threads.',
+      title: 'Intake & Assessment',
+      body: 'We evaluate your situation, identify stakeholders, and scope the wind-down.',
     },
     {
       number: '02',
-      title: 'Liability Protection',
-      body: 'Directors and founders face real legal exposure during wind-downs. Rise ensures every step is documented, sequenced, and compliant — protecting the people behind the company.',
+      title: 'Rise coordinates legal, tax & operations',
+      body: 'One process, one point of contact. Licensed professionals handle every workstream.',
     },
     {
       number: '03',
-      title: 'LP Documentation',
-      body: 'Clean, standardized reporting packages for investors. Rise produces the documentation funds need to close out portfolio positions with confidence.',
+      title: 'Clean close, full documentation',
+      body: 'Deregistration complete. LPs informed. Founders free to build again.',
     },
   ]
 
   return (
     <section className="py-20 md:py-28 px-6 md:px-12 max-w-6xl mx-auto">
       <div className="mb-12">
-        <p className="font-sans text-xs font-medium tracking-[0.2em] uppercase text-rise-muted-light mb-4">
-          What Rise Does
+        <p className="font-sans text-xs font-medium tracking-[0.2em] uppercase text-rise-coral mb-4">
+          How It Works
         </p>
         <h2 className="font-serif font-normal text-rise-dark text-3xl md:text-4xl leading-tight max-w-xl">
-          The execution layer, finally built.
+          Three steps to a clean close.
         </h2>
       </div>
 
       <div className="grid md:grid-cols-3 gap-px bg-rise-border">
-        {pillars.map((p) => (
-          <div key={p.number} className="bg-rise-bg-warm p-8 md:p-10">
+        {steps.map((s) => (
+          <div key={s.number} className="bg-rise-bg-warm p-8 md:p-10">
             <span className="font-sans text-xs font-medium tracking-[0.2em] text-rise-muted-light block mb-6">
-              {p.number}
+              {s.number}
             </span>
-            <h3 className="font-serif font-normal text-rise-dark text-2xl mb-4">
-              {p.title}
+            <h3 className="font-serif font-normal text-rise-dark text-xl md:text-2xl mb-4 leading-tight">
+              {s.title}
             </h3>
             <p className="font-sans font-light text-rise-muted text-sm leading-relaxed">
-              {p.body}
+              {s.body}
             </p>
           </div>
         ))}
@@ -165,24 +171,24 @@ function WhoWeServe() {
     {
       label: 'VC Funds',
       description:
-        'Portfolio hygiene at scale. Close out positions cleanly, protect LP relationships, and free up management bandwidth.',
+        'Portfolio hygiene without GP bandwidth. Fixed-price, full documentation, LP-ready reporting.',
     },
     {
-      label: 'Portfolio Companies',
+      label: 'Founders',
       description:
-        'A structured, dignified exit from the market — without the chaos, liability risk, or reputational damage of an unmanaged close.',
+        'Close with structure and dignity. Protect yourself legally. Build again with a clean record.',
     },
     {
       label: 'Legal Counsel',
       description:
-        'An execution partner that handles the operational workstreams, so counsel can focus on what requires legal expertise.',
+        'An execution partner for operational workstreams, so you can focus on what requires legal expertise.',
     },
   ]
 
   return (
     <section className="py-20 md:py-28 px-6 md:px-12 max-w-6xl mx-auto">
       <div className="mb-12">
-        <p className="font-sans text-xs font-medium tracking-[0.2em] uppercase text-rise-muted-light mb-4">
+        <p className="font-sans text-xs font-medium tracking-[0.2em] uppercase text-rise-coral mb-4">
           Who We Serve
         </p>
         <h2 className="font-serif font-normal text-rise-dark text-3xl md:text-4xl leading-tight max-w-xl">
@@ -210,21 +216,33 @@ function WhoWeServe() {
   )
 }
 
+function Credibility() {
+  return (
+    <section className="py-16 md:py-20 px-6 md:px-12 max-w-6xl mx-auto text-center">
+      <p className="font-sans font-light text-rise-muted text-base">
+        Built by legal and operations professionals. Based in Frankfurt.
+      </p>
+    </section>
+  )
+}
+
 function Closer() {
   return (
-    <section className="py-24 md:py-36 px-6 md:px-12 max-w-6xl mx-auto text-center">
-      <p className="font-serif font-normal text-rise-dark text-4xl md:text-5xl lg:text-6xl leading-tight mb-12 tracking-tight">
-        Close clean. Build again.
-      </p>
-      <p className="font-sans font-light text-rise-muted text-base mb-10">
-        Rise is active in Europe. Talk to us about your situation.
-      </p>
-      <a
-        href="mailto:hello@risestartup.eu"
-        className="inline-block font-sans font-medium text-sm tracking-wide bg-rise-dark text-white px-8 py-4 hover:bg-rise-coral transition-colors duration-200"
-      >
-        Get in touch
-      </a>
+    <section className="bg-rise-dark">
+      <div className="py-24 md:py-36 px-6 md:px-12 max-w-6xl mx-auto text-center">
+        <p className="font-serif font-normal text-white text-4xl md:text-5xl lg:text-6xl leading-tight mb-12 tracking-tight">
+          Close clean. Build again.
+        </p>
+        <p className="font-sans font-light text-rise-muted-light text-base mb-10">
+          Rise is active in Europe. Talk to us about your situation.
+        </p>
+        <a
+          href="mailto:hello@risestartup.eu"
+          className="inline-block font-sans font-medium text-sm tracking-wide bg-rise-coral text-white px-8 py-4 hover:bg-white hover:text-rise-dark transition-colors duration-200"
+        >
+          Get in touch
+        </a>
+      </div>
     </section>
   )
 }
@@ -266,10 +284,10 @@ export default function App() {
         <Divider />
         <Problem />
         <Divider />
-        <WhatRiseDoes />
+        <HowItWorks />
         <Divider />
         <WhoWeServe />
-        <Divider />
+        <Credibility />
         <Closer />
       </main>
       <Footer />
