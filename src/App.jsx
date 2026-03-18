@@ -22,22 +22,24 @@ function Hero() {
       <p className="font-sans text-xs font-medium tracking-[0.2em] uppercase text-rise-muted-light mb-8">
         Structured Transitions
       </p>
-      <h1 className="font-serif font-normal text-rise-dark text-5xl md:text-6xl lg:text-7xl leading-[1.08] tracking-tight mb-8 max-w-4xl">
+      <h1 className="font-serif font-normal text-rise-dark text-5xl md:text-6xl lg:text-7xl leading-[1.08] tracking-tight mb-10">
         Every stage has infrastructure.
         <br />
         <span className="italic text-rise-muted">Except the last one.</span>
       </h1>
-      <p className="font-sans font-light text-rise-muted text-lg md:text-xl leading-relaxed max-w-2xl mb-12">
-        Rise builds the missing transition layer for European startups —
-        structured wind-downs, liquidations, and exits handled with the
-        same rigor as any other stage.
-      </p>
-      <a
-        href="mailto:hello@risestartup.eu"
-        className="inline-block font-sans font-medium text-sm tracking-wide bg-rise-dark text-white px-8 py-4 hover:bg-rise-coral transition-colors duration-200"
-      >
-        Talk to us
-      </a>
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8">
+        <p className="font-sans font-light text-rise-muted text-lg md:text-xl leading-relaxed max-w-xl">
+          Rise builds the missing transition layer for European startups —
+          structured wind-downs, liquidations, and exits handled with the
+          same rigor as any other stage.
+        </p>
+        <a
+          href="mailto:hello@risestartup.eu"
+          className="inline-block font-sans font-medium text-sm tracking-wide bg-rise-dark text-white px-8 py-4 hover:bg-rise-coral transition-colors duration-200 shrink-0 self-start md:self-auto"
+        >
+          Talk to us
+        </a>
+      </div>
     </section>
   )
 }
@@ -237,7 +239,7 @@ function Closer() {
   return (
     <section className="py-24 md:py-36 px-6 md:px-12 max-w-6xl mx-auto text-center">
       <blockquote className="font-serif font-normal italic text-rise-dark text-3xl md:text-4xl lg:text-5xl leading-tight max-w-3xl mx-auto mb-12">
-        "Wie ein Kapitel endet, bestimmt,<br className="hidden md:block" /> wie das nächste beginnt."
+        "How a chapter ends<br className="hidden md:block" /> shapes how the next begins."
       </blockquote>
       <p className="font-sans font-light text-rise-muted text-base mb-10">
         Rise is active in Europe. Talk to us about your situation.
