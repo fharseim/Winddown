@@ -73,9 +73,9 @@ function Problem() {
         standardized process.
       </p>
 
+      {/* The served stages — a complete, tidy table */}
       <div>
-        {/* Column headers */}
-        <div className="hidden md:flex items-center justify-between pb-3 border-b border-rise-border mb-0">
+        <div className="hidden md:flex items-center justify-between pb-3 border-b border-rise-border">
           <div className="flex items-baseline gap-6 md:gap-10">
             <span className="font-sans text-[10px] font-medium tracking-[0.2em] uppercase text-rise-muted-light w-32 md:w-40 shrink-0">Tool</span>
             <span className="font-sans text-[10px] font-medium tracking-[0.2em] uppercase text-rise-muted-light">Stage</span>
@@ -99,34 +99,49 @@ function Problem() {
           </div>
         ))}
 
-        {/* Gap row — the unserved stage: names the PROBLEM */}
-        <div className="flex items-center justify-between py-5 border-b border-dashed border-rise-border/60 -mx-6 px-6 md:-mx-12 md:px-12 bg-rise-bg/40">
+        {/* The gap — table ends here, the missing stage is shown as an absence */}
+        <div className="flex items-center justify-between py-5 border-b border-dashed border-rise-border/50 -mx-6 px-6 md:-mx-12 md:px-12">
           <div className="flex items-baseline gap-6 md:gap-10">
-            <span className="font-sans text-xs font-medium tracking-[0.15em] uppercase w-32 md:w-40 shrink-0 text-rise-muted-light/40">
-              No tool
+            <span className="w-32 md:w-40 shrink-0 font-sans text-xs text-rise-muted-light/30 tracking-widest">
+              ———
             </span>
-            <span className="font-serif text-xl md:text-2xl font-normal text-rise-muted-light/40 italic">
+            <span className="font-serif text-xl md:text-2xl font-normal text-rise-muted-light/30 italic">
               Wind-Down & Exit
             </span>
           </div>
-          <span className="font-sans text-xs font-light text-rise-muted-light/40 hidden md:block text-right">
-            No infrastructure. No standard. No support.
+          <span className="font-sans text-xs text-rise-muted-light/30 hidden md:block italic">
+            No infrastructure exists.
           </span>
         </div>
+      </div>
 
-        {/* Rise row — the ANSWER: different copy, no duplication */}
-        <div className="flex items-center justify-between py-6 border-b-2 border-rise-coral/20 -mx-6 px-6 md:-mx-12 md:px-12 bg-rise-coral/[0.035]">
-          <div className="flex items-baseline gap-6 md:gap-10">
-            <span className="font-sans text-xs font-semibold tracking-[0.15em] uppercase w-32 md:w-40 shrink-0 text-rise-coral">
+      {/* Rise — NOT another table row, but the resolution that steps outside the table */}
+      <div className="mt-10 -mx-6 md:-mx-12 px-6 md:px-12 py-8 md:py-10 border-l-4 border-rise-coral bg-rise-coral/[0.04]">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+          <div>
+            <p className="font-sans text-xs font-semibold tracking-[0.2em] uppercase text-rise-coral mb-3">
               Rise
-            </span>
-            <span className="font-serif text-xl md:text-2xl font-normal text-rise-coral">
-              One process. Clean close.
-            </span>
+            </p>
+            <p className="font-serif font-normal text-rise-dark text-2xl md:text-3xl leading-tight">
+              The missing infrastructure, built.
+            </p>
+            <p className="font-sans font-light text-rise-muted text-sm mt-3 max-w-lg leading-relaxed">
+              One process. One point of contact. Fixed-price, fully orchestrated wind-downs
+              for European startups and their investors.
+            </p>
           </div>
-          <span className="font-sans text-xs font-light hidden md:block max-w-xs text-right text-rise-coral/80">
-            Fixed-price. Fully orchestrated. LP-ready.
-          </span>
+          <div className="shrink-0 flex flex-col gap-2.5">
+            {[
+              'Fixed-price per engagement',
+              'Licensed legal & tax professionals',
+              'LP-ready documentation included',
+            ].map((item) => (
+              <div key={item} className="flex items-center gap-2">
+                <span className="w-1 h-1 rounded-full bg-rise-coral shrink-0" />
+                <span className="font-sans text-xs text-rise-muted">{item}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>
