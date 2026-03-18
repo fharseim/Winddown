@@ -101,47 +101,57 @@ function Problem() {
 
       </div>
 
-      {/* Wind-Down gap + Rise resolution — unified into one bordered block */}
-      <div className="-mx-6 md:-mx-12 border-l-4 border-rise-coral">
-        {/* The gap row — problem made visible */}
-        <div className="flex items-center justify-between py-5 border-b border-dashed border-rise-border/50 px-6 md:px-12">
-          <div className="flex items-baseline gap-6 md:gap-10">
-            <span className="w-32 md:w-40 shrink-0 font-sans text-xs text-rise-muted-light/30 tracking-widest">
-              ———
-            </span>
-            <span className="font-serif text-xl md:text-2xl font-normal text-rise-muted-light/30 italic">
-              Wind-Down & Exit
-            </span>
-          </div>
-          <span className="font-sans text-xs text-rise-muted-light/30 hidden md:block italic">
-            No infrastructure exists.
+      {/* The gap — Wind-Down & Exit, last row, shown as absence */}
+      <div className="flex items-center justify-between py-5 border-b border-dashed border-rise-border/50">
+        <div className="flex items-baseline gap-6 md:gap-10">
+          <span className="w-32 md:w-40 shrink-0 font-sans text-xs text-rise-muted-light/30 tracking-widest">
+            ———
+          </span>
+          <span className="font-serif text-xl md:text-2xl font-normal text-rise-muted-light/30 italic">
+            Wind-Down & Exit
           </span>
         </div>
+        <span className="font-sans text-xs text-rise-muted-light/30 hidden md:block italic">
+          No infrastructure exists.
+        </span>
+      </div>
 
-        {/* Rise — the answer, directly below */}
-        <div className="px-6 md:px-12 py-8 md:py-10 bg-rise-coral/[0.04]">
-          <p className="font-sans text-xs font-semibold tracking-[0.2em] uppercase text-rise-coral mb-3">
-            Rise
-          </p>
-          <p className="font-serif font-normal text-rise-dark text-2xl md:text-3xl leading-tight">
-            The missing infrastructure, built.
-          </p>
-          <p className="font-sans font-light text-rise-muted text-sm mt-3 max-w-lg leading-relaxed">
-            One process. One point of contact. Fixed-price, fully orchestrated wind-downs
-            for European startups and their investors.
-          </p>
-          <div className="flex flex-col gap-2.5 mt-5">
-            {[
-              'Fixed-price per engagement',
-              'Licensed legal & tax professionals',
-              'LP-ready documentation included',
-            ].map((item) => (
-              <div key={item} className="flex items-center gap-2">
-                <span className="w-1 h-1 rounded-full bg-rise-coral shrink-0" />
-                <span className="font-sans text-xs text-rise-muted">{item}</span>
-              </div>
-            ))}
-          </div>
+      {/* Arrow connector — problem points to solution */}
+      <div className="flex items-center gap-3 py-6 pl-1">
+        <div className="flex flex-col items-center">
+          <div className="w-px h-5 bg-rise-coral/50" />
+          <svg width="10" height="7" viewBox="0 0 10 7" className="text-rise-coral mt-px" fill="currentColor">
+            <path d="M5 7L0 0h10L5 7z" />
+          </svg>
+        </div>
+        <span className="font-sans text-[11px] font-medium tracking-[0.18em] uppercase text-rise-coral">
+          Rise fills this gap
+        </span>
+      </div>
+
+      {/* Rise — the answer */}
+      <div className="-mx-6 md:-mx-12 px-6 md:px-12 py-8 md:py-10 border-l-4 border-rise-coral bg-rise-coral/[0.04]">
+        <p className="font-sans text-xs font-semibold tracking-[0.2em] uppercase text-rise-coral mb-3">
+          Rise
+        </p>
+        <p className="font-serif font-normal text-rise-dark text-2xl md:text-3xl leading-tight">
+          The missing infrastructure, built.
+        </p>
+        <p className="font-sans font-light text-rise-muted text-sm mt-3 max-w-lg leading-relaxed">
+          One process. One point of contact. Fixed-price, fully orchestrated wind-downs
+          for European startups and their investors.
+        </p>
+        <div className="flex flex-col gap-2.5 mt-5">
+          {[
+            'Fixed-price per engagement',
+            'Licensed legal & tax professionals',
+            'LP-ready documentation included',
+          ].map((item) => (
+            <div key={item} className="flex items-center gap-2">
+              <span className="w-1 h-1 rounded-full bg-rise-coral shrink-0" />
+              <span className="font-sans text-xs text-rise-muted">{item}</span>
+            </div>
+          ))}
         </div>
       </div>
     </section>
