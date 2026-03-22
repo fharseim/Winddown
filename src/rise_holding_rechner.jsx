@@ -183,8 +183,18 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
               <span>Sperrjahr-Begleitung (12 Monate)</span><span style={{ fontWeight: 500, color: C.text }}>€ {fmt(calc.sperrjahr)}</span>
             </div>
             <div style={{ fontSize: 11, color: C.textFaint, marginTop: 3, lineHeight: 1.5 }}>
-              § 73 GmbHG schreibt 12 Monate Wartezeit vor. Rise überwacht in dieser Zeit aktiv eingehende Gläubigeranmeldungen, koordiniert Fristeinhaltung und hält das Gesellschaftskonto offen — damit Sie es nicht selbst tun müssen.{' '}
-              <span style={{ color: C.amber }}>Ausnahme: Hat die Gesellschaft weder Vermögen noch Verbindlichkeiten, erfolgt die Löschung i.d.R. nach § 394 FamFG (Löschung wegen Vermögenslosigkeit) — ohne förmliche Liquidation, ohne Sperrjahr. Der Sperrjahr-Posten entfällt in diesem Fall vollständig.</span>
+              § 73 GmbHG schreibt 12 Monate Wartezeit vor. Rise überwacht in dieser Zeit aktiv eingehende Gläubigeranmeldungen, koordiniert Fristeinhaltung und hält das Gesellschaftskonto offen — damit Sie es nicht selbst tun müssen.
+            </div>
+          </div>
+          <div style={{
+            background: C.amberLight, border: `0.5px solid ${C.amber}33`,
+            borderRadius: 8, padding: "10px 14px", marginTop: 8,
+          }}>
+            <div style={{ fontSize: 10, fontWeight: 500, letterSpacing: 1.5, textTransform: "uppercase", color: C.amber, marginBottom: 4 }}>
+              Ausnahme · § 394 FamFG
+            </div>
+            <div style={{ fontSize: 11, color: C.amberDark, lineHeight: 1.6 }}>
+              Hat die Gesellschaft weder Vermögen noch Verbindlichkeiten, erfolgt die Löschung i.d.R. nach § 394 FamFG (Löschung wegen Vermögenslosigkeit) — ohne förmliche Liquidation, ohne Sperrjahr. Der Sperrjahr-Posten entfällt in diesem Fall vollständig.
             </div>
           </div>
           <div style={{ borderTop: `0.5px solid ${C.warm200}`, marginTop: 6, paddingTop: 6, display: "flex", justifyContent: "space-between", fontSize: 14, fontWeight: 500 }}>
