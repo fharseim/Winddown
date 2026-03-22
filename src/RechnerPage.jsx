@@ -6,15 +6,18 @@ function Nav() {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-rise-bg-warm/95 backdrop-blur-sm border-b border-rise-border">
       <div className="max-w-6xl mx-auto px-6 md:px-12 h-16 flex items-center justify-between">
         <a
-          href="#"
+          href="/"
           className="font-serif text-rise-dark tracking-logo text-2xl uppercase hover:text-rise-coral transition-colors duration-200"
         >
           Rise
         </a>
         <div className="flex items-center gap-6">
-          <span className="text-sm font-sans font-medium text-rise-coral tracking-wide">
-            Kosten-Rechner
-          </span>
+          <a
+            href="/"
+            className="text-sm font-sans font-medium text-rise-muted hover:text-rise-dark transition-colors duration-200 tracking-wide"
+          >
+            Zurück zur Übersicht
+          </a>
           <a
             href="mailto:hello@risestartup.eu"
             className="text-sm font-sans font-medium text-rise-muted hover:text-rise-dark transition-colors duration-200 tracking-wide"
