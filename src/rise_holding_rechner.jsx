@@ -184,7 +184,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
             </div>
             <div style={{ fontSize: 11, color: C.textFaint, marginTop: 3, lineHeight: 1.5 }}>
               § 73 GmbHG schreibt 12 Monate Wartezeit vor. Rise überwacht in dieser Zeit aktiv eingehende Gläubigeranmeldungen, koordiniert Fristeinhaltung und hält das Gesellschaftskonto offen — damit Sie es nicht selbst tun müssen.{' '}
-              <span style={{ color: C.amber }}>Ausnahme: Hat die Gesellschaft weder Vermögen noch Verbindlichkeiten, kann das Sperrjahr in der Praxis verkürzt oder übersprungen werden — der tatsächliche Aufwand reduziert sich entsprechend.</span>
+              <span style={{ color: C.amber }}>Ausnahme: Hat die Gesellschaft weder Vermögen noch Verbindlichkeiten, erfolgt die Löschung i.d.R. nach § 394 FamFG (Löschung wegen Vermögenslosigkeit) — ohne förmliche Liquidation, ohne Sperrjahr. Der Sperrjahr-Posten entfällt in diesem Fall vollständig.</span>
             </div>
           </div>
           <div style={{ borderTop: `0.5px solid ${C.warm200}`, marginTop: 6, paddingTop: 6, display: "flex", justifyContent: "space-between", fontSize: 14, fontWeight: 500 }}>
