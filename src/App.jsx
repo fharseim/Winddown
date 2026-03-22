@@ -46,7 +46,7 @@ function Hero() {
       </p>
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mt-10">
         <a
-          href="mailto:hello@risestartup.eu"
+          href="/intake"
           className="inline-block font-sans font-medium text-sm tracking-wide bg-rise-coral text-white px-8 py-4 rounded hover:bg-rise-dark transition-colors duration-200"
         >
           Kostenlose Ersteinschätzung anfragen
@@ -858,7 +858,7 @@ function Closer() {
         </p>
         <div className="flex flex-col items-center gap-3">
           <a
-            href="mailto:hello@risestartup.eu"
+            href="/intake"
             className="inline-block font-sans font-medium text-sm tracking-wide bg-rise-coral text-white px-8 py-4 rounded hover:bg-white hover:text-rise-dark transition-colors duration-200"
           >
             Kostenlose Ersteinschätzung anfragen
