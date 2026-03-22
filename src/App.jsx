@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import HoldingRechner from './rise_holding_rechner'
+ import { useState, useEffect } from 'react'
+   import HoldingRechner from './rise_holding_rechner'
   function Nav() {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-rise-bg-warm/95 backdrop-blur-sm border-b border-rise-border">
@@ -1755,7 +1755,16 @@ function Footer() {
 }
 
 export default function App() {
-  return (
+     const [page, setPage] = useState(window.location.hash)
+     useEffect(() => {
+       const handler = () => setPage(window.location.hash)
+       window.addEventListener('hashchange', handler)
+       return () => window.removeEventListener('hashchange', handler)
+     }, [])
+
+     if (page === '#rechner') return <HoldingRechner />
+
+     return (
     <div className="bg-rise-bg-warm min-h-screen font-sans">
       <Nav />
       <main>
