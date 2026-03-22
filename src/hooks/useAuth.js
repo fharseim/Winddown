@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react'
-import { supabase, SUPABASE_CONFIGURED } from '../lib/supabase'
+import { supabase, isDemoMode } from '../lib/supabase'
 
 const DEMO_USER = { id: 'demo', email: 'demo@rise.local', demo: true }
 
 export function useAuth() {
-  const [user, setUser] = useState(SUPABASE_CONFIGURED ? null : DEMO_USER)
-  const [loading, setLoading] = useState(SUPABASE_CONFIGURED)
+  const [user, setUser] = useState(isDemoMode ? DEMO_USER : null)
+  const [loading, setLoading] = useState(!isDemoMode)
 
   useEffect(() => {
-    if (!SUPABASE_CONFIGURED) return
+    if (isDemoMode || !supabase) return
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
@@ -25,10 +25,15 @@ export function useAuth() {
     return () => subscription.unsubscribe()
   }, [])
 
-  const signIn = (email, password) =>
-    supabase.auth.signInWithPassword({ email, password })
+  const signIn = (email, password) => {
+    if (isDemoMode || !supabase) return Promise.resolve({ error: null })
+    return supabase.auth.signInWithPassword({ email, password })
+  }
 
-  const signOut = () => supabase.auth.signOut()
+  const signOut = () => {
+    if (isDemoMode || !supabase) return Promise.resolve()
+    return supabase.auth.signOut()
+  }
 
-  return { user, loading, signIn, signOut, demoMode: !SUPABASE_CONFIGURED }
+  return { user, loading, signIn, signOut, demoMode: isDemoMode }
 }

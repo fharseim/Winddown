@@ -1,14 +1,19 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
 
 export default function AdminLogin() {
-  const { signIn } = useAuth()
+  const { signIn, demoMode } = useAuth()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
+
+  // In demo mode there's no auth — skip straight to dashboard
+  useEffect(() => {
+    if (demoMode) navigate('/admin', { replace: true })
+  }, [demoMode, navigate])
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -22,6 +27,8 @@ export default function AdminLogin() {
       navigate('/admin')
     }
   }
+
+  if (demoMode) return null
 
   return (
     <div className="min-h-screen bg-rise-bg flex items-center justify-center">

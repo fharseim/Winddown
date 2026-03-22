@@ -3,10 +3,11 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-export const SUPABASE_CONFIGURED = !!(supabaseUrl && supabaseAnonKey)
+export const isDemoMode = !(supabaseUrl && supabaseAnonKey)
+export const SUPABASE_CONFIGURED = !isDemoMode
 
-// When env vars are missing, create a no-op client pointed at a placeholder URL
-// so imports don't crash. All actual calls are guarded by SUPABASE_CONFIGURED.
+// Export null when env vars are missing to avoid createClient crashing
+// with invalid placeholder credentials. All callers guard with isDemoMode.
 export const supabase = SUPABASE_CONFIGURED
   ? createClient(supabaseUrl, supabaseAnonKey)
-  : createClient('https://placeholder.supabase.co', 'placeholder')
+  : null
