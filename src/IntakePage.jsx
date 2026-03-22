@@ -386,7 +386,10 @@ function Step3b({ state, dispatch, onBack, onNext }) {
     setLoading(true)
     setSearchError(null)
 
-    fetch(`/api/companies?q=${encodeURIComponent(state.firmenname)}&limit=5`)
+    const apiToken = import.meta.env.VITE_INTERNAL_API_TOKEN || ''
+    fetch(`/api/companies?q=${encodeURIComponent(state.firmenname)}&limit=5`, {
+      headers: apiToken ? { 'x-api-token': apiToken } : {},
+    })
       .then(r => r.json())
       .then(data => {
         if (!cancelled) {

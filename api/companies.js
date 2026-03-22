@@ -1,44 +1,155 @@
-import { createClient } from '@supabase/supabase-js'
+import { readFileSync } from 'fs'
+import { join, dirname } from 'path'
+import { fileURLToPath } from 'url'
 
-// Mock dataset — used when Supabase is not configured
-const MOCK_COMPANIES = [
-  { id: 'm1',  firma_name: 'TechCo GmbH',                          register_art: 'HRB', register_nummer: '12345',  register_gericht: 'AG Frankfurt am Main', rechtsform: 'GmbH',                      sitz: 'Frankfurt am Main', status: 'aktiv' },
-  { id: 'm2',  firma_name: 'Horizon SaaS GmbH',                    register_art: 'HRB', register_nummer: '67890',  register_gericht: 'AG München',           rechtsform: 'GmbH',                      sitz: 'München',           status: 'aktiv' },
-  { id: 'm3',  firma_name: 'MobileCo UG (haftungsbeschränkt)',      register_art: 'HRB', register_nummer: '11111',  register_gericht: 'AG Berlin (Charlottenburg)', rechtsform: 'UG (haftungsbeschränkt)', sitz: 'Berlin',         status: 'aktiv' },
-  { id: 'm4',  firma_name: 'Acme Ventures GmbH',                   register_art: 'HRB', register_nummer: '23456',  register_gericht: 'AG Berlin (Charlottenburg)', rechtsform: 'GmbH',                  sitz: 'Berlin',           status: 'aktiv' },
-  { id: 'm5',  firma_name: 'Greenfield Capital GmbH',              register_art: 'HRB', register_nummer: '34567',  register_gericht: 'AG Hamburg',           rechtsform: 'GmbH',                      sitz: 'Hamburg',           status: 'aktiv' },
-  { id: 'm6',  firma_name: 'DataBridge GmbH',                      register_art: 'HRB', register_nummer: '45678',  register_gericht: 'AG Düsseldorf',        rechtsform: 'GmbH',                      sitz: 'Düsseldorf',        status: 'aktiv' },
-  { id: 'm7',  firma_name: 'NovaTech Solutions GmbH',              register_art: 'HRB', register_nummer: '56789',  register_gericht: 'AG Stuttgart',         rechtsform: 'GmbH',                      sitz: 'Stuttgart',         status: 'aktiv' },
-  { id: 'm8',  firma_name: 'CloudStack UG (haftungsbeschränkt)',   register_art: 'HRB', register_nummer: '22222',  register_gericht: 'AG Köln',              rechtsform: 'UG (haftungsbeschränkt)', sitz: 'Köln',              status: 'aktiv' },
-  { id: 'm9',  firma_name: 'PulseMedia GmbH',                      register_art: 'HRB', register_nummer: '78901',  register_gericht: 'AG München',           rechtsform: 'GmbH',                      sitz: 'München',           status: 'aktiv' },
-  { id: 'm10', firma_name: 'Finbridge GmbH',                       register_art: 'HRB', register_nummer: '89012',  register_gericht: 'AG Frankfurt am Main', rechtsform: 'GmbH',                      sitz: 'Frankfurt am Main', status: 'aktiv' },
-  { id: 'm11', firma_name: 'Alphawave Ventures GmbH',              register_art: 'HRB', register_nummer: '90123',  register_gericht: 'AG Berlin (Charlottenburg)', rechtsform: 'GmbH',                  sitz: 'Berlin',           status: 'aktiv' },
-  { id: 'm12', firma_name: 'Solaris Digital GmbH',                 register_art: 'HRB', register_nummer: '101112', register_gericht: 'AG Hamburg',           rechtsform: 'GmbH',                      sitz: 'Hamburg',           status: 'aktiv' },
-  { id: 'm13', firma_name: 'Medtech Innovations GmbH',             register_art: 'HRB', register_nummer: '121314', register_gericht: 'AG Mannheim',          rechtsform: 'GmbH',                      sitz: 'Heidelberg',        status: 'aktiv' },
-  { id: 'm14', firma_name: 'Bravo Commerce GmbH',                  register_art: 'HRB', register_nummer: '131415', register_gericht: 'AG Leipzig',           rechtsform: 'GmbH',                      sitz: 'Leipzig',           status: 'aktiv' },
-  { id: 'm15', firma_name: 'Ecoloop UG (haftungsbeschränkt)',      register_art: 'HRB', register_nummer: '33333',  register_gericht: 'AG Freiburg im Breisgau', rechtsform: 'UG (haftungsbeschränkt)', sitz: 'Freiburg im Breisgau', status: 'aktiv' },
-  { id: 'm16', firma_name: 'Skyline Properties GmbH',              register_art: 'HRB', register_nummer: '151617', register_gericht: 'AG München',           rechtsform: 'GmbH',                      sitz: 'München',           status: 'aktiv' },
-  { id: 'm17', firma_name: 'Legacysoft GmbH',                      register_art: 'HRB', register_nummer: '161718', register_gericht: 'AG Nürnberg',          rechtsform: 'GmbH',                      sitz: 'Nürnberg',          status: 'geloescht' },
-  { id: 'm18', firma_name: 'Momentum Labs GmbH',                   register_art: 'HRB', register_nummer: '171819', register_gericht: 'AG Berlin (Charlottenburg)', rechtsform: 'GmbH',                  sitz: 'Berlin',           status: 'aktiv' },
-  { id: 'm19', firma_name: 'Redshift Analytics GmbH',              register_art: 'HRB', register_nummer: '181920', register_gericht: 'AG Düsseldorf',        rechtsform: 'GmbH',                      sitz: 'Düsseldorf',        status: 'aktiv' },
-  { id: 'm20', firma_name: 'Vortex Robotics GmbH',                 register_art: 'HRB', register_nummer: '192021', register_gericht: 'AG Stuttgart',         rechtsform: 'GmbH',                      sitz: 'Stuttgart',         status: 'aktiv' },
+const __dirname = dirname(fileURLToPath(import.meta.url))
+
+// ─── Security ────────────────────────────────────────────────────────────────
+
+const ALLOWED_ORIGINS = [
+  'https://winddown-eosin.vercel.app',
+  'https://riseq.eu',
+  'https://www.riseq.eu',
 ]
 
-function searchMock(q, limit) {
-  const term = q.toLowerCase().trim()
-  if (!term) return []
-  return MOCK_COMPANIES
-    .filter(c => c.firma_name.toLowerCase().includes(term))
-    .slice(0, limit)
-    .map(({ id, firma_name, register_art, register_nummer, register_gericht, rechtsform, sitz, status }) =>
-      ({ id, firma_name, register_art, register_nummer, register_gericht, rechtsform, sitz, status })
-    )
+function isAllowedOrigin(origin) {
+  if (!origin) return false
+  if (ALLOWED_ORIGINS.includes(origin)) return true
+  // Allow all localhost origins during development
+  if (/^https?:\/\/localhost(:\d+)?$/.test(origin)) return true
+  if (/^https?:\/\/127\.0\.0\.1(:\d+)?$/.test(origin)) return true
+  return false
 }
 
+function checkAuth(req) {
+  // In development (no token configured) allow all requests
+  const expectedToken = process.env.INTERNAL_API_TOKEN
+  if (!expectedToken) return true
+
+  // Check Origin header
+  const origin = req.headers['origin'] || ''
+  const referer = req.headers['referer'] || ''
+  const hasAllowedOrigin = isAllowedOrigin(origin) ||
+    ALLOWED_ORIGINS.some(o => referer.startsWith(o)) ||
+    /^https?:\/\/localhost/.test(referer) ||
+    /^https?:\/\/127\.0\.0\.1/.test(referer)
+
+  if (!hasAllowedOrigin) return false
+
+  // Check API token
+  const token = req.headers['x-api-token'] || ''
+  return token === expectedToken
+}
+
+// ─── Dataset ─────────────────────────────────────────────────────────────────
+
+let _companies = null
+
+function loadCompanies() {
+  if (_companies) return _companies
+  try {
+    const dataPath = join(__dirname, 'data', 'companies.json')
+    const raw = readFileSync(dataPath, 'utf-8')
+    _companies = JSON.parse(raw)
+    console.log(`[companies] loaded ${_companies.length} companies from dataset`)
+  } catch (err) {
+    console.error('[companies] failed to load dataset:', err.message)
+    _companies = []
+  }
+  return _companies
+}
+
+// ─── Fuzzy Search ─────────────────────────────────────────────────────────────
+
+// Normalise a company name for matching: lowercase, strip common legal suffixes,
+// collapse whitespace.
+function normName(s) {
+  return s
+    .toLowerCase()
+    .replace(/\bgmbh\b/g, '')
+    .replace(/\bug\s*\(haftungsbeschränkt\)/g, '')
+    .replace(/\bug\b/g, '')
+    .replace(/\bmbh\b/g, '')
+    .replace(/\bco\.\s*kg\b/g, '')
+    .replace(/\bkg\b/g, '')
+    .replace(/\bag\b/g, '')
+    .replace(/[&.,]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function scoreMatch(query, company) {
+  const q = normName(query)
+  const n = normName(company.firma_name)
+  const nameRaw = company.firma_name.toLowerCase()
+  const qRaw = query.toLowerCase().trim()
+
+  if (!q) return 0
+
+  // Exact (normalised) match
+  if (n === q) return 100
+
+  // Raw exact match
+  if (nameRaw === qRaw) return 98
+
+  // Normalised starts-with
+  if (n.startsWith(q)) return 85
+
+  // Raw starts-with
+  if (nameRaw.startsWith(qRaw)) return 80
+
+  // Contains full query (raw)
+  if (nameRaw.includes(qRaw)) return 65
+
+  // Contains normalised query
+  if (n.includes(q)) return 60
+
+  // Word-level matching: all query words present in company name
+  const qWords = q.split(' ').filter(Boolean)
+  const nWords = n.split(' ').filter(Boolean)
+  if (qWords.length > 1) {
+    const matchedWords = qWords.filter(w => nWords.some(nw => nw.includes(w) || w.includes(nw)))
+    if (matchedWords.length === qWords.length) return 55
+    if (matchedWords.length >= Math.ceil(qWords.length * 0.6)) return 40
+  }
+
+  // Single token partial match in any word
+  if (qWords.length === 1) {
+    if (nWords.some(w => w.startsWith(q))) return 45
+    if (nWords.some(w => w.includes(q) && w.length <= q.length + 3)) return 35
+  }
+
+  // Any word of name starts with query (e.g. "tech" matches "DataTech GmbH")
+  if (n.split(' ').some(w => w.startsWith(q) && q.length >= 3)) return 30
+
+  return 0
+}
+
+function searchCompanies(q, limit) {
+  const companies = loadCompanies()
+  const term = q.trim()
+  if (!term || term.length < 2) return []
+
+  const scored = []
+  for (const c of companies) {
+    const score = scoreMatch(term, c)
+    if (score > 0) scored.push({ ...c, _score: score })
+  }
+
+  scored.sort((a, b) => b._score - a._score || a.firma_name.localeCompare(b.firma_name))
+
+  return scored.slice(0, limit).map(({ _score, ...c }) => c)
+}
+
+// ─── Handler ─────────────────────────────────────────────────────────────────
+
 export default async function handler(req, res) {
-  // Rate limiting headers
-  res.setHeader('X-RateLimit-Limit', '60')
-  res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300')
+  // Security: reject unauthorised requests
+  if (!checkAuth(req)) {
+    return res.status(403).json({ error: 'Forbidden' })
+  }
+
+  res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600')
 
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' })
@@ -48,33 +159,14 @@ export default async function handler(req, res) {
   const limit = Math.min(parseInt(limitParam, 10) || 5, 20)
 
   if (!q || q.trim().length < 2) {
-    return res.status(200).json({ results: [], source: 'mock' })
+    return res.status(200).json({ results: [], total: 0, query: q })
   }
 
-  // Use real Supabase if configured
-  if (process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.VITE_SUPABASE_URL) {
-    try {
-      const supabase = createClient(
-        process.env.VITE_SUPABASE_URL,
-        process.env.SUPABASE_SERVICE_ROLE_KEY
-      )
-
-      const { data, error } = await supabase
-        .from('companies')
-        .select('id, firma_name, register_art, register_nummer, register_gericht, rechtsform, sitz, status')
-        .ilike('firma_name_normalized', `%${q.toLowerCase().trim()}%`)
-        .limit(limit)
-
-      if (error) throw error
-
-      return res.status(200).json({ results: data || [], source: 'supabase' })
-    } catch (err) {
-      console.error('Supabase company search error:', err)
-      // Fall through to mock on error
-    }
-  }
-
-  // Fall back to mock data
-  const results = searchMock(q, limit)
-  return res.status(200).json({ results, source: 'mock' })
+  const results = searchCompanies(q, limit)
+  return res.status(200).json({
+    results,
+    total: results.length,
+    query: q,
+    source: 'dataset',
+  })
 }
