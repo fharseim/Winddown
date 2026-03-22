@@ -236,17 +236,18 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
         <div style={{ fontSize: 13, color: C.textLight, marginBottom: 12, lineHeight: 1.6 }}>
           Jede Holding, die nicht aufgelöst wird, kostet Sie € {fmt(calc.jaehrlich)} pro Jahr — für nichts.
         </div>
-        <button onClick={() => sendPrompt("Ich möchte den Intake-Flow für die Holding-Liquidation sehen")} style={{
+        <a href="mailto:hello@risestartup.eu" style={{
+          display: "inline-block",
           fontFamily: F.sans, fontSize: 14, fontWeight: 500,
-          background: C.bgDark, color: "#F5F5F4", border: "none",
+          background: C.bgDark, color: "#F5F5F4", textDecoration: "none",
           padding: "12px 32px", borderRadius: 8, cursor: "pointer",
-          letterSpacing: 0.5, transition: "transform 0.15s",
-        }}
-          onMouseDown={e => e.currentTarget.style.transform = "scale(0.97)"}
-          onMouseUp={e => e.currentTarget.style.transform = "scale(1)"}
-        >
-          Kostenlose Ersteinschätzung anfordern ↗
-        </button>
+          letterSpacing: 0.5,
+        }}>
+          Kostenlose Ersteinschätzung anfragen ↗
+        </a>
+        <div style={{ fontSize: 12, color: C.textFaint, marginTop: 8 }}>
+          Antwort innerhalb von 48 Stunden
+        </div>
       </div>
 
       {/* Fine print */}

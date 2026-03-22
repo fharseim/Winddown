@@ -1,30 +1,17 @@
 import { useState } from 'react'
-
 function Nav() {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-rise-bg-warm/95 backdrop-blur-sm border-b border-rise-border">
       <div className="max-w-6xl mx-auto px-6 md:px-12 h-16 flex items-center justify-between">
-        <a href="/" className="font-serif text-rise-dark tracking-logo text-2xl uppercase hover:text-rise-coral transition-colors duration-200">
+        <span className="font-serif text-rise-dark tracking-logo text-2xl uppercase">
           Rise
-        </a>
+        </span>
         <div className="flex items-center gap-6">
-          <a
-            href="/rechner"
-            className="text-sm font-sans font-medium text-rise-muted hover:text-rise-dark transition-colors duration-200 tracking-wide"
-          >
-            Kosten-Rechner
-          </a>
-          <a
-            href="/impressum"
-            className="text-sm font-sans font-medium text-rise-muted hover:text-rise-dark transition-colors duration-200 tracking-wide"
-          >
-            Impressum
-          </a>
           <a
             href="mailto:hello@risestartup.eu"
             className="text-sm font-sans font-medium text-rise-muted hover:text-rise-dark transition-colors duration-200 tracking-wide"
           >
-            Kontakt
+            Get in touch
           </a>
         </div>
       </div>
@@ -36,25 +23,19 @@ function Hero() {
   return (
     <section className="pt-36 pb-24 md:pt-44 md:pb-32 px-6 md:px-12 max-w-6xl mx-auto">
       <h1 className="font-serif font-normal text-rise-dark text-[2.75rem] md:text-[3.5rem] lg:text-[3.75rem] leading-[1.08] tracking-tight mb-8">
-        Ihre GmbH sauber auflösen.
+        Every stage has infrastructure.
         <br />
-        <span className="italic text-rise-muted">Ein Ansprechpartner.</span>
+        <span className="italic text-rise-muted">Except the last one.</span>
       </h1>
-      <p className="font-sans font-light text-rise-muted text-lg md:text-xl leading-relaxed max-w-xl mb-3">
-        Rise übernimmt den gesamten Abwicklungsprozess — Anwälte, Steuerberater,
-        Handelsregister, Sperrjahr. Sie müssen nichts selbst koordinieren.
+      <p className="font-sans font-light text-rise-muted text-lg md:text-xl leading-relaxed max-w-xl mb-10">
+        Rise builds the missing transition layer for European startups.
       </p>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mt-10">
-        <a
-          href="mailto:hello@risestartup.eu"
-          className="inline-block font-sans font-medium text-sm tracking-wide bg-rise-coral text-white px-8 py-4 rounded hover:bg-rise-dark transition-colors duration-200"
-        >
-          Kostenlose Ersteinschätzung anfragen
-        </a>
-        <span className="font-sans text-xs text-rise-muted-light">
-          Antwort innerhalb von 48 Stunden
-        </span>
-      </div>
+      <a
+        href="mailto:hello@risestartup.eu"
+        className="inline-block font-sans font-medium text-sm tracking-wide bg-rise-coral text-white px-8 py-4 rounded hover:bg-rise-dark transition-colors duration-200"
+      >
+        Get in touch
+      </a>
     </section>
   )
 }
@@ -69,38 +50,38 @@ function Divider() {
 
 function Problem() {
   const stages = [
-    { tool: 'Stripe Atlas', stage: 'Gründung', note: 'Gesellschaft, Banking, Compliance' },
-    { tool: 'Carta', stage: 'Cap Table & Equity', note: 'Beteiligungen, Optionen, Investoren' },
-    { tool: 'Notion / Linear', stage: 'Betrieb', note: 'Produkt, Hiring, Roadmap' },
+    { tool: 'Stripe Atlas', stage: 'Incorporation', note: 'Entity setup, banking, compliance' },
+    { tool: 'Carta', stage: 'Cap Table & Equity', note: 'Ownership, options, investor reporting' },
+    { tool: 'Notion / Linear', stage: 'Operations', note: 'Product, hiring, roadmap execution' },
   ]
 
   return (
     <section className="py-20 md:py-28 px-6 md:px-12 max-w-6xl mx-auto">
       <div className="mb-4">
         <p className="font-sans text-xs font-medium tracking-[0.2em] uppercase text-rise-coral mb-5">
-          Die Lücke
+          The Gap
         </p>
         <h2 className="font-serif font-normal text-rise-dark text-4xl md:text-5xl leading-[1.08] tracking-tight max-w-2xl">
-          Jede Phase ist abgedeckt.
+          Every stage is served.
           <br />
-          <span className="italic text-rise-muted">Eine nicht.</span>
+          <span className="italic text-rise-muted">One is not.</span>
         </h2>
       </div>
 
       <p className="font-sans font-light text-rise-muted text-base leading-relaxed max-w-xl mb-14">
-        Für jede Phase eines Startups gibt es Infrastruktur — nur nicht für die letzte.
-        Gründer, die ihre GmbH auflösen müssen, stehen vor fragmentierten Beratern,
-        unklarer Haftung und keinem standardisierten Prozess.
+        Infrastructure exists for every phase of a startup's life — except the last one.
+        Founders who need to close face fragmented advisors, unclear liability, and no
+        standardized process.
       </p>
 
-      {/* The served stages */}
+      {/* The served stages — a complete, tidy table */}
       <div>
         <div className="hidden md:flex items-center justify-between pb-3 border-b border-rise-border">
           <div className="flex items-baseline gap-6 md:gap-10">
             <span className="font-sans text-[10px] font-medium tracking-[0.2em] uppercase text-rise-muted-light w-32 md:w-40 shrink-0">Tool</span>
-            <span className="font-sans text-[10px] font-medium tracking-[0.2em] uppercase text-rise-muted-light">Phase</span>
+            <span className="font-sans text-[10px] font-medium tracking-[0.2em] uppercase text-rise-muted-light">Stage</span>
           </div>
-          <span className="font-sans text-[10px] font-medium tracking-[0.2em] uppercase text-rise-muted-light">Infrastruktur</span>
+          <span className="font-sans text-[10px] font-medium tracking-[0.2em] uppercase text-rise-muted-light">Infrastructure</span>
         </div>
 
         {stages.map((item, i) => (
@@ -118,24 +99,25 @@ function Problem() {
             </span>
           </div>
         ))}
+
       </div>
 
-      {/* The gap row */}
+      {/* The gap — Wind-Down & Exit, last row, shown as absence */}
       <div className="flex items-center justify-between py-5 border-b border-dashed border-rise-border/50">
         <div className="flex items-baseline gap-6 md:gap-10">
           <span className="w-32 md:w-40 shrink-0 font-sans text-xs text-rise-muted-light/30 tracking-widest">
             ———
           </span>
           <span className="font-serif text-xl md:text-2xl font-normal text-rise-muted-light/30 italic">
-            Wind-Down & Auflösung
+            Wind-Down & Exit
           </span>
         </div>
         <span className="font-sans text-xs text-rise-muted-light/30 hidden md:block italic">
-          Keine Infrastruktur vorhanden.
+          No infrastructure exists.
         </span>
       </div>
 
-      {/* Arrow connector */}
+      {/* Arrow connector — full-width bridge from problem to solution */}
       <div className="relative flex items-center justify-center py-10 -mx-6 md:-mx-12">
         <div className="absolute inset-x-0 top-1/2 h-px bg-rise-border" />
         <div className="relative flex flex-col items-center gap-2.5 bg-rise-bg-warm px-8">
@@ -146,7 +128,7 @@ function Problem() {
             </svg>
           </div>
           <span className="font-sans text-[10px] font-semibold tracking-[0.22em] uppercase text-rise-coral">
-            Rise schließt diese Lücke
+            Rise fills this gap
           </span>
         </div>
       </div>
@@ -157,17 +139,17 @@ function Problem() {
           Rise
         </p>
         <p className="font-serif font-normal text-rise-dark text-2xl md:text-3xl leading-tight">
-          Die fehlende Infrastruktur — jetzt verfügbar.
+          The missing infrastructure, built.
         </p>
         <p className="font-sans font-light text-rise-muted text-sm mt-3 max-w-lg leading-relaxed">
-          Ein Prozess. Ein Ansprechpartner. Festpreis, vollständig orchestrierte
-          GmbH-Abwicklungen für europäische Startups und ihre Investoren.
+          One process. One point of contact. Fixed-price, fully orchestrated wind-downs
+          for European startups and their investors.
         </p>
         <div className="flex flex-col gap-2.5 mt-5">
           {[
-            'Festpreis pro Beauftragung',
-            'Zugelassene Rechts- und Steuerexperten',
-            'LP-fähige Dokumentation inklusive',
+            'Fixed-price per engagement',
+            'Licensed legal & tax professionals',
+            'LP-ready documentation included',
           ].map((item) => (
             <div key={item} className="flex items-center gap-2">
               <span className="w-1 h-1 rounded-full bg-rise-coral shrink-0" />
@@ -184,42 +166,42 @@ function HowItWorks() {
   const steps = [
     {
       number: '01',
-      title: 'Intake & Analyse',
-      duration: '1–2 Wochen',
-      body: 'Rise prüft Ihre Unternehmensstruktur, offene Verbindlichkeiten, verbleibendes Kapital und Stakeholder. Wir ermitteln den richtigen Liquidationspfad und erstellen einen strukturierten Abwicklungsplan — damit Sie wissen, was wann und zu welchen Kosten passiert.',
+      title: 'Intake & Assessment',
+      duration: '1–2 weeks',
+      body: 'Rise reviews your company structure, outstanding liabilities, remaining capital, and stakeholder map. We identify the right liquidation path and produce a scoped wind-down plan — so you know exactly what happens, in what order, and at what cost.',
       deliverables: [
-        'Verbindlichkeiten- und Gläubigeranalyse',
-        'Stakeholder-Übersicht (Gründer, Investoren, Mitarbeiter)',
-        'Abwicklungsplan mit Zeitplan',
-        'Fixpreis-Angebot',
+        'Liability & creditor assessment',
+        'Stakeholder map (founders, investors, employees)',
+        'Scoped wind-down plan with timeline',
+        'Fixed-price engagement proposal',
       ],
     },
     {
       number: '02',
-      title: 'Rise koordiniert alle Workstreams',
-      duration: '3–12 Monate',
-      body: 'Rise ist Ihr zentraler Ansprechpartner für alle Workstreams. Wir koordinieren Rechtsanwälte, Steuerberater und weitere Spezialisten — und stellen sicher, dass Fristen eingehalten, Dokumente vollständig und Kommunikation lückenlos ist.',
+      title: 'Rise orchestrates every workstream',
+      duration: '3–12 months',
+      body: 'Rise acts as your single point of contact across all workstreams. We coordinate legal counsel, tax advisors, and additional specialists — managing timelines, documents, and communications so nothing is dropped, delayed, or mishandled.',
       deliverables: [
-        'Gesellschafterversammlung & Liquidatorbestellung',
-        'Gläubigerbekanntmachung (Bundesanzeiger)',
-        'Sperrjahr-Management & Überwachung',
-        'VSOP / ESOP-Bereinigung',
-        'Banking, HR und Behördenmeldungen',
-        'Regelmäßige LP- und Stakeholder-Updates',
+        'Shareholder resolution & liquidator appointment',
+        'Creditor notification (Bundesanzeiger)',
+        'Sperrjahr management & monitoring',
+        'VSOP / ESOP cleanup',
+        'Banking, HR, and regulatory filings',
+        'Ongoing LP and stakeholder updates',
       ],
     },
     {
       number: '03',
-      title: 'Sauberer Abschluss, vollständige Dokumentation',
-      duration: 'Abschluss in 4–8 Wochen',
-      body: 'Nach Ablauf des Sperrjahrs übernimmt Rise die finale Vermögensverteilung, die Löschung im Handelsregister und stellt ein vollständiges Abschlusspaket zusammen. Gründer erhalten eine saubere Akte — Investoren LP-Dokumentation für ihr eigenes Reporting.',
+      title: 'Clean close, full documentation',
+      duration: 'Final 4–8 weeks',
+      body: 'Once the Sperrjahr ends, Rise handles the final asset distribution, commercial register deregistration, and prepares a complete close-out package. Founders receive a clean record. LPs receive documentation ready for their own audit and reporting.',
       deliverables: [
-        'Finale Ausschüttung an Gesellschafter',
-        'Löschung im Handelsregister',
-        'Steuerliche Unbedenklichkeitsbescheinigung',
-        'D&O-Haftungsfreistellung',
-        'LP-Reporting-Paket (prüfungsfertig)',
-        'Vollständiges Case-Archiv für Gründer & Investoren',
+        'Final distribution to shareholders',
+        'Commercial register deregistration',
+        'Final tax clearance certificate',
+        'D&O liability release documentation',
+        'LP reporting package (audit-ready)',
+        'Full case archive for founders & investors',
       ],
     },
   ]
@@ -228,10 +210,10 @@ function HowItWorks() {
     <section className="py-20 md:py-28 px-6 md:px-12 max-w-6xl mx-auto">
       <div className="mb-14">
         <p className="font-sans text-xs font-medium tracking-[0.2em] uppercase text-rise-coral mb-4">
-          So funktioniert es
+          How It Works
         </p>
         <h2 className="font-serif font-normal text-rise-dark text-3xl md:text-4xl leading-tight max-w-xl">
-          Drei Schritte zur sauberen Auflösung.
+          Three steps to a clean close.
         </h2>
       </div>
 
@@ -254,7 +236,7 @@ function HowItWorks() {
             </p>
             <div className="mt-auto pt-6 border-t border-rise-border space-y-2">
               <p className="font-sans text-[10px] font-semibold tracking-[0.16em] uppercase text-rise-muted-light mb-3">
-                Enthalten
+                Included
               </p>
               {s.deliverables.map((d) => (
                 <div key={d} className="flex items-start gap-2">
@@ -272,10 +254,10 @@ function HowItWorks() {
 
 function TaskRow({ task }) {
   const assigneeStyle = {
-    'Rise':            'bg-rise-coral/10 text-rise-coral',
-    'Sie':             'bg-rise-dark/8 text-rise-dark font-medium',
-    'Anwalt':          'bg-rise-border text-rise-muted',
-    'Steuerberater':   'bg-rise-border text-rise-muted',
+    'Rise':        'bg-rise-coral/10 text-rise-coral',
+    'You':         'bg-rise-dark/8 text-rise-dark font-medium',
+    'Counsel':     'bg-rise-border text-rise-muted',
+    'Tax Advisor': 'bg-rise-border text-rise-muted',
   }
   return (
     <div className="flex items-center gap-2.5 py-2.5 border-b border-rise-border last:border-b-0">
@@ -297,54 +279,54 @@ function TaskRow({ task }) {
         {task.assignee}
       </span>
       {task.status === 'active' && (
-        <span className="font-sans text-[10px] text-rise-coral shrink-0 ml-1">● aktiv</span>
+        <span className="font-sans text-[10px] text-rise-coral shrink-0 ml-1">● active</span>
       )}
     </div>
   )
 }
 
 function FounderView() {
-  const phases = ['Intake', 'Rechtliches', 'Gläubigerbekanntm.', 'Sperrjahr', 'Verteilung', 'Löschung']
+  const phases = ['Intake', 'Legal Setup', 'Creditor Notice', 'Sperrjahr', 'Distribution', 'Deregistration']
   const activePhase = 2
 
   const workstreams = [
     {
-      label: 'Rechtliches',
+      label: 'Legal',
       tasks: [
-        { label: 'Gesellschafterversammlung unterzeichnet', status: 'done', assignee: 'Rise' },
-        { label: 'Liquidator bestellt & eingetragen', status: 'done', assignee: 'Rise' },
-        { label: 'VSOP / ESOP-Bereinigung', status: 'active', assignee: 'Sie' },
-        { label: 'D&O-Haftungsfreistellungsschreiben', status: 'pending', assignee: 'Sie' },
-        { label: 'Handelsregistereintragung', status: 'pending', assignee: 'Rise' },
+        { label: 'Shareholder resolution signed', status: 'done', assignee: 'Rise' },
+        { label: 'Liquidator appointed & registered', status: 'done', assignee: 'Rise' },
+        { label: 'VSOP / ESOP cleanup', status: 'active', assignee: 'You' },
+        { label: 'D&O release letter', status: 'pending', assignee: 'You' },
+        { label: 'Commercial register filing', status: 'pending', assignee: 'Rise' },
       ],
     },
     {
-      label: 'Steuer',
+      label: 'Tax',
       tasks: [
-        { label: 'Steuerberater koordiniert', status: 'done', assignee: 'Rise' },
-        { label: 'Zwischensteuererklärung eingereicht', status: 'active', assignee: 'Steuerberater' },
-        { label: 'Steuerliche Unbedenklichkeit', status: 'pending', assignee: 'Steuerberater' },
+        { label: 'Tax advisor coordinated', status: 'done', assignee: 'Rise' },
+        { label: 'Interim tax return filed', status: 'active', assignee: 'Tax Advisor' },
+        { label: 'Final tax clearance', status: 'pending', assignee: 'Tax Advisor' },
       ],
     },
     {
-      label: 'Stakeholder-Kommunikation',
+      label: 'Stakeholder Communications',
       tasks: [
-        { label: 'LP-Benachrichtigung versandt', status: 'done', assignee: 'Rise' },
-        { label: 'Gläubigerbekanntmachung (Bundesanzeiger)', status: 'done', assignee: 'Rise' },
-        { label: 'Finaler Investorenbericht', status: 'pending', assignee: 'Rise' },
+        { label: 'LP notification sent', status: 'done', assignee: 'Rise' },
+        { label: 'Creditor notice in Bundesanzeiger', status: 'done', assignee: 'Rise' },
+        { label: 'Final investor report', status: 'pending', assignee: 'Rise' },
       ],
     },
   ]
 
   const keyDates = [
-    { label: 'Gläubigerbekanntmachung', date: '15. März 2025' },
-    { label: 'Sperrjahr endet', date: '15. März 2026' },
-    { label: 'Voraussichtliche Löschung', date: 'Mai 2026' },
+    { label: 'Creditor notice published', date: 'Mar 15, 2025' },
+    { label: 'Sperrjahr ends', date: 'Mar 15, 2026' },
+    { label: 'Est. deregistration', date: 'May 2026' },
   ]
 
   const docs = [
-    { label: 'VSOP-Plan', note: 'Prüfung ausstehend' },
-    { label: 'D&O-Freistellungsschreiben', note: 'Unterschrift erforderlich' },
+    { label: 'VSOP schedule', note: 'review request' },
+    { label: 'D&O release letter', note: 'signature required' },
   ]
 
   return (
@@ -353,14 +335,14 @@ function FounderView() {
       <div className="flex items-start justify-between mb-6">
         <div>
           <p className="font-sans text-[10px] font-medium tracking-[0.18em] uppercase text-rise-muted-light mb-1">
-            Aktiver Fall
+            Active Case
           </p>
           <h3 className="font-serif font-normal text-rise-dark text-xl md:text-2xl leading-tight">
-            TechCo GmbH — Abwicklung
+            TechCo GmbH — Wind-Down
           </h3>
         </div>
         <span className="font-sans text-xs font-medium bg-rise-coral/10 text-rise-coral px-3 py-1 rounded-full shrink-0 ml-4">
-          In Bearbeitung
+          In Progress
         </span>
       </div>
 
@@ -393,9 +375,9 @@ function FounderView() {
       <div className="flex items-start gap-3 bg-rise-coral/[0.06] border border-rise-coral/20 rounded-md px-4 py-3 mb-6">
         <span className="text-rise-coral text-xs mt-0.5 shrink-0">●</span>
         <div>
-          <p className="font-sans text-xs font-medium text-rise-dark">Ihre Handlung erforderlich</p>
+          <p className="font-sans text-xs font-medium text-rise-dark">Action required from you</p>
           <p className="font-sans text-xs text-rise-muted mt-0.5">
-            Bitte prüfen und unterzeichnen Sie den VSOP-Plan — Rise wartet darauf, um mit der rechtlichen Bereinigung fortzufahren.
+            Review and sign the VSOP schedule — Rise is waiting before proceeding with legal cleanup.
           </p>
         </div>
       </div>
@@ -421,7 +403,7 @@ function FounderView() {
           {/* Key Dates */}
           <div className="bg-rise-bg rounded-md p-4">
             <p className="font-sans text-[10px] font-semibold tracking-[0.16em] uppercase text-rise-muted-light mb-3">
-              Wichtige Termine
+              Key Dates
             </p>
             <div className="space-y-3">
               {keyDates.map((kd) => (
@@ -440,9 +422,9 @@ function FounderView() {
             </p>
             <div className="space-y-2">
               {[
-                { name: 'Rise', role: 'Orchestrierung' },
-                { name: 'Ihr Anwalt', role: 'Rechtliches' },
-                { name: 'Steuerberater', role: 'Steuer & Filings' },
+                { name: 'Rise', role: 'Orchestration' },
+                { name: 'Your Counsel', role: 'Legal' },
+                { name: 'Tax Advisor', role: 'Tax & Filings' },
               ].map((m) => (
                 <div key={m.name} className="flex items-center gap-2">
                   <span className="w-6 h-6 rounded-full bg-rise-border flex items-center justify-center text-[10px] font-medium text-rise-muted shrink-0">
@@ -461,10 +443,10 @@ function FounderView() {
           <div className="bg-rise-bg rounded-md p-4">
             <div className="flex items-center justify-between mb-3">
               <p className="font-sans text-[10px] font-semibold tracking-[0.16em] uppercase text-rise-muted-light">
-                Dokumente
+                Documents
               </p>
               <span className="font-sans text-[10px] font-medium bg-rise-coral/10 text-rise-coral px-1.5 py-0.5 rounded">
-                2 offen
+                2 pending
               </span>
             </div>
             <div className="space-y-2">
@@ -489,32 +471,32 @@ function VCView() {
   const portfolio = [
     {
       name: 'TechCo GmbH',
-      phase: 3, phaseLabel: 'Gläubigerbekanntm.',
-      lpDocs: 'In Prüfung', writeOff: 'Ausstehend',
-      nextMilestone: 'Sperrjahr beginnt Apr 2025',
-      status: 'In Bearbeitung',
+      phase: 3, phaseLabel: 'Creditor Notice',
+      lpDocs: 'In review', writeOff: 'Pending',
+      nextMilestone: 'Sperrjahr starts Apr 2025',
+      status: 'In Progress',
     },
     {
       name: 'Horizon SaaS GmbH',
-      phase: 6, phaseLabel: 'Abgeschlossen',
-      lpDocs: 'Bereit', writeOff: 'Bestätigt',
-      nextMilestone: 'Abgeschlossen März 2025',
-      status: 'Abgeschlossen',
+      phase: 6, phaseLabel: 'Complete',
+      lpDocs: 'Ready', writeOff: 'Confirmed',
+      nextMilestone: 'Closed Mar 2025',
+      status: 'Closed',
     },
     {
       name: 'MobileCo UG',
-      phase: 2, phaseLabel: 'Rechtliches',
-      lpDocs: 'Ausstehend', writeOff: 'Ausstehend',
-      nextMilestone: 'Gläubigerbekanntm. fällig Jun 2025',
-      status: 'Rechtliches',
+      phase: 2, phaseLabel: 'Legal Setup',
+      lpDocs: 'Pending', writeOff: 'Pending',
+      nextMilestone: 'Creditor notice due Jun 2025',
+      status: 'Legal Setup',
     },
   ]
 
   const activity = [
-    { company: 'Horizon SaaS GmbH', event: 'Finaler LP-Bericht zum Download bereit', time: 'vor 2 Tagen' },
-    { company: 'TechCo GmbH', event: 'Gläubigerbekanntmachung im Bundesanzeiger veröffentlicht', time: 'vor 1 Woche' },
-    { company: 'MobileCo UG', event: 'Liquidator bestellt & eingetragen', time: 'vor 3 Wochen' },
-    { company: 'TechCo GmbH', event: 'VSOP-Bereinigung eingeleitet, Gründer-Freigabe ausstehend', time: 'vor 1 Monat' },
+    { company: 'Horizon SaaS GmbH', event: 'Final LP report ready for download', time: '2d ago' },
+    { company: 'TechCo GmbH', event: 'Creditor notice published in Bundesanzeiger', time: '1w ago' },
+    { company: 'MobileCo UG', event: 'Liquidator appointed & registered', time: '3w ago' },
+    { company: 'TechCo GmbH', event: 'VSOP cleanup initiated, awaiting founder sign-off', time: '1mo ago' },
   ]
 
   return (
@@ -523,10 +505,10 @@ function VCView() {
       <div className="flex items-start justify-between mb-6">
         <div>
           <p className="font-sans text-[10px] font-medium tracking-[0.18em] uppercase text-rise-muted-light mb-1">
-            Portfolio-Übersicht
+            Portfolio Overview
           </p>
           <h3 className="font-serif font-normal text-rise-dark text-xl md:text-2xl leading-tight">
-            Acme Ventures — Abwicklungsfälle
+            Acme Ventures — Wind-Down Cases
           </h3>
         </div>
         <span className="font-sans text-xs font-medium bg-rise-dark/[0.06] text-rise-dark px-3 py-1 rounded-full shrink-0 ml-4">
@@ -537,9 +519,9 @@ function VCView() {
       {/* Stats row */}
       <div className="grid grid-cols-3 gap-3 mb-7">
         {[
-          { label: 'Fälle', value: '3', sub: '2 aktiv · 1 abgeschlossen' },
-          { label: 'LP-Berichte', value: '1 / 3', sub: '1 in Prüfung · 1 ausstehend' },
-          { label: 'Write-offs', value: '1 / 3', sub: 'dieses Quartal bestätigt' },
+          { label: 'Cases', value: '3', sub: '2 active · 1 closed' },
+          { label: 'LP Reports', value: '1 / 3', sub: '1 in review · 1 pending' },
+          { label: 'Write-offs', value: '1 / 3', sub: 'confirmed this quarter' },
         ].map((s) => (
           <div key={s.label} className="bg-rise-bg rounded-md px-4 py-3">
             <p className="font-sans text-[10px] font-medium tracking-[0.14em] uppercase text-rise-muted-light mb-1">
@@ -553,7 +535,7 @@ function VCView() {
 
       {/* Portfolio table */}
       <div className="hidden md:grid grid-cols-[1fr_130px_90px_90px_180px] gap-3 pb-2 mb-0.5">
-        {['Unternehmen', 'Phase', 'LP-Bericht', 'Write-off', 'Nächster Meilenstein'].map((h) => (
+        {['Company', 'Phase', 'LP Report', 'Write-off', 'Next milestone'].map((h) => (
           <span key={h} className="font-sans text-[10px] font-semibold tracking-[0.14em] uppercase text-rise-muted-light">
             {h}
           </span>
@@ -566,20 +548,22 @@ function VCView() {
             key={i}
             className="border-t border-rise-border py-3.5 flex flex-col md:grid md:grid-cols-[1fr_130px_90px_90px_180px] gap-2 md:gap-3 md:items-center"
           >
+            {/* Company */}
             <div>
               <span className="font-sans text-sm font-medium text-rise-dark">{co.name}</span>
               <span className={`md:hidden font-sans text-[10px] ml-2 px-1.5 py-0.5 rounded-full ${
-                co.status === 'Abgeschlossen'    ? 'bg-rise-dark/[0.06] text-rise-dark'
-                : co.status === 'In Bearbeitung' ? 'bg-rise-coral/10 text-rise-coral'
+                co.status === 'Closed'      ? 'bg-rise-dark/[0.06] text-rise-dark'
+                : co.status === 'In Progress' ? 'bg-rise-coral/10 text-rise-coral'
                 : 'bg-rise-border text-rise-muted'
               }`}>{co.status}</span>
             </div>
 
+            {/* Phase bar */}
             <div>
               <div className="flex items-center gap-1.5 mb-0.5">
                 <div className="flex-1 h-1 bg-rise-border rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full ${co.status === 'Abgeschlossen' ? 'bg-rise-dark' : 'bg-rise-coral'}`}
+                    className={`h-full rounded-full ${co.status === 'Closed' ? 'bg-rise-dark' : 'bg-rise-coral'}`}
                     style={{ width: `${(co.phase / 6) * 100}%` }}
                   />
                 </div>
@@ -588,20 +572,23 @@ function VCView() {
               <span className="font-sans text-[10px] text-rise-muted-light">{co.phaseLabel}</span>
             </div>
 
+            {/* LP Report */}
             <span className={`font-sans text-xs font-medium ${
-              co.lpDocs === 'Bereit'      ? 'text-rise-sage'
-              : co.lpDocs === 'In Prüfung' ? 'text-rise-coral'
+              co.lpDocs === 'Ready'     ? 'text-rise-sage'
+              : co.lpDocs === 'In review' ? 'text-rise-coral'
               : 'text-rise-muted-light'
             }`}>
-              {co.lpDocs === 'Bereit' ? '✓ Bereit' : co.lpDocs}
+              {co.lpDocs === 'Ready' ? '✓ Ready' : co.lpDocs}
             </span>
 
+            {/* Write-off */}
             <span className={`font-sans text-xs ${
-              co.writeOff === 'Bestätigt' ? 'text-rise-sage font-medium' : 'text-rise-muted-light'
+              co.writeOff === 'Confirmed' ? 'text-rise-sage font-medium' : 'text-rise-muted-light'
             }`}>
-              {co.writeOff === 'Bestätigt' ? '✓ Bestätigt' : co.writeOff}
+              {co.writeOff === 'Confirmed' ? '✓ Confirmed' : co.writeOff}
             </span>
 
+            {/* Next milestone */}
             <span className="font-sans text-[11px] text-rise-muted leading-tight">{co.nextMilestone}</span>
           </div>
         ))}
@@ -610,7 +597,7 @@ function VCView() {
       {/* Activity feed */}
       <div className="mt-6 pt-5 border-t border-rise-border">
         <p className="font-sans text-[10px] font-semibold tracking-[0.16em] uppercase text-rise-muted-light mb-3">
-          Aktuelle Aktivitäten
+          Recent Activity
         </p>
         <div>
           {activity.map((a, i) => (
@@ -638,10 +625,10 @@ function Platform() {
     <section className="py-20 md:py-28 px-6 md:px-12 max-w-6xl mx-auto">
       <div className="mb-12">
         <p className="font-sans text-xs font-medium tracking-[0.2em] uppercase text-rise-coral mb-4">
-          Die Plattform
+          The Platform
         </p>
         <h2 className="font-serif font-normal text-rise-dark text-3xl md:text-4xl leading-tight max-w-xl">
-          Ein Prozess. Volle Transparenz.
+          One process. Full visibility.
         </h2>
       </div>
 
@@ -656,7 +643,7 @@ function Platform() {
               <span className="w-2.5 h-2.5 rounded-full bg-rise-border" />
             </div>
             <span className="font-sans text-xs text-rise-muted-light ml-1">
-              {view === 'founder' ? 'rise.app/faelle/techco' : 'rise.app/portfolio/acme-ventures'}
+              {view === 'founder' ? 'rise.app/cases/techco' : 'rise.app/portfolio/acme-ventures'}
             </span>
           </div>
 
@@ -670,7 +657,7 @@ function Platform() {
                   : 'text-rise-muted-light hover:text-rise-muted'
               }`}
             >
-              Gründer
+              Founder
             </button>
             <button
               onClick={() => setView('vc')}
@@ -680,7 +667,7 @@ function Platform() {
                   : 'text-rise-muted-light hover:text-rise-muted'
               }`}
             >
-              VC-Fonds
+              VC Fund
             </button>
           </div>
         </div>
@@ -690,8 +677,8 @@ function Platform() {
 
       <p className="font-sans font-light text-rise-muted text-sm mt-6 text-center">
         {view === 'founder'
-          ? 'Ihr Fall. Jeder Schritt nachverfolgbar. Nichts geht verloren.'
-          : 'Portfolio-Hygiene im Überblick. LP-fähige Dokumentation pro Fall.'}
+          ? 'Your case. Every step tracked. Nothing falls through the cracks.'
+          : 'Portfolio hygiene at scale. LP-ready documentation per case.'}
       </p>
     </section>
   )
@@ -700,19 +687,19 @@ function Platform() {
 function WhoWeServe() {
   const customers = [
     {
-      label: 'VC-Fonds',
+      label: 'VC Funds',
       description:
-        'Portfolio-Hygiene, ohne die interne Kapazität zu strapazieren. Festpreis, vollständige Dokumentation, LP-fähiges Reporting — alles aus einer Hand. Wir wissen, dass auslaufende Portfoliounternehmen intern oft keine Priorität haben. Rise stellt sicher, dass die Abwicklung trotzdem professionell, fristgerecht und sauber erfolgt.',
+        'Portfolio hygiene without GP bandwidth. Fixed-price, full documentation, LP-ready reporting.',
     },
     {
-      label: 'Gründer',
+      label: 'Founders',
       description:
-        'Sie haben etwas aufgebaut — und es hat nicht den erhofften Weg genommen. Das ist keine Niederlage, sondern Teil des unternehmerischen Wegs. Rise hilft Ihnen, sauber und strukturiert abzuschließen, sich rechtlich abzusichern und mit einer vollständigen Akte weiterzuziehen. Damit Sie den nächsten Schritt gehen können — ohne offene Baustellen.',
+        'Close with structure and dignity. Protect yourself legally. Build again with a clean record.',
     },
     {
-      label: 'Rechtsanwälte',
+      label: 'Legal Counsel',
       description:
-        'Ein Umsetzungspartner für operative Workstreams — damit Sie sich auf das konzentrieren können, was echte juristische Expertise erfordert. Rise übernimmt Fristmanagement, Dokumentenkoordination und die Kommunikation mit Behörden und Stakeholdern. Sie behalten die rechtliche Verantwortung. Wir liefern die Struktur drumherum.',
+        'An execution partner for operational workstreams, so you can focus on what requires legal expertise.',
     },
   ]
 
@@ -720,10 +707,10 @@ function WhoWeServe() {
     <section className="py-20 md:py-28 px-6 md:px-12 max-w-6xl mx-auto">
       <div className="mb-12">
         <p className="font-sans text-xs font-medium tracking-[0.2em] uppercase text-rise-coral mb-4">
-          Für wen wir arbeiten
+          Who We Serve
         </p>
         <h2 className="font-serif font-normal text-rise-dark text-3xl md:text-4xl leading-tight max-w-xl">
-          Gebaut für alle, die den Abschluss professionell gestalten wollen.
+          Built for the institutions that make the ecosystem work.
         </h2>
       </div>
 
@@ -747,30 +734,12 @@ function WhoWeServe() {
   )
 }
 
-function TrustSection() {
-  const metrics = [
-    { value: '50+', label: 'GmbHs begleitet' },
-    { value: 'Frankfurt', label: 'Standort' },
-    { value: 'Festpreis', label: 'Keine Stundensätze' },
-  ]
-
+function Credibility() {
   return (
-    <section className="bg-rise-bg py-16 md:py-20 px-6 md:px-12">
-      <div className="max-w-6xl mx-auto">
-        <p className="font-sans font-light text-rise-muted text-base md:text-lg leading-relaxed max-w-2xl mb-12">
-          Aufgebaut von Rechts- und Operations-Experten mit Erfahrung in der Abwicklung
-          von Venture-finanzierten Unternehmen. Rise kombiniert juristische Präzision
-          mit operativer Umsetzungsstärke — für einen Prozess, der funktioniert.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-10 sm:gap-16">
-          {metrics.map((m) => (
-            <div key={m.label}>
-              <p className="font-serif text-rise-dark text-3xl md:text-4xl mb-1">{m.value}</p>
-              <p className="font-sans text-xs text-rise-muted-light tracking-wide uppercase">{m.label}</p>
-            </div>
-          ))}
-        </div>
-      </div>
+    <section className="py-20 md:py-24 px-6 md:px-12 max-w-6xl mx-auto text-center">
+      <p className="font-sans font-light text-rise-muted text-base">
+        Built by legal and operations professionals. Based in Frankfurt.
+      </p>
     </section>
   )
 }
@@ -780,24 +749,24 @@ function FAQ() {
 
   const items = [
     {
-      q: 'Wie lange dauert eine GmbH-Liquidation in Deutschland?',
-      a: 'Eine solvente GmbH-Liquidation dauert typischerweise 12–18 Monate — hauptsächlich aufgrund des gesetzlich vorgeschriebenen Sperrjahrs nach § 73 GmbHG. Rise koordiniert den gesamten Prozess von der Gesellschafterversammlung bis zur Löschung im Handelsregister. In bestimmten Fällen (keine Aktiva, keine Passiva) ist auch eine vereinfachte Löschung nach § 394 FamFG möglich.',
+      q: 'How long does a wind-down take in Germany?',
+      a: 'A solvent GmbH liquidation typically takes 12–18 months, primarily due to the mandatory one-year creditor protection period (Sperrjahr). Rise manages the full timeline — from the shareholder resolution through to final deregistration.',
     },
     {
-      q: 'Was übernimmt Rise — und was macht mein Anwalt?',
-      a: 'Rise koordiniert den gesamten Prozess: Zeitpläne, Stakeholder-Kommunikation, Dokumenten-Workflows und operative Umsetzung. Rechtliche und steuerliche Leistungen werden von zugelassenen Fachleuten erbracht — entweder Ihrem bestehenden Berater oder Partnern aus unserem Netzwerk. Rise ist die Orchestrierungsebene, keine Kanzlei.',
+      q: 'What does Rise handle vs. what does my lawyer handle?',
+      a: 'Rise coordinates the entire process: timelines, stakeholder communication, document workflows, and operational execution. Legal and tax work is performed by licensed professionals — your existing counsel or partners from our network. Rise is the orchestration layer, not a law firm.',
     },
     {
-      q: 'Wer bezahlt eine Rise-Beauftragung?',
-      a: 'Das hängt von der Situation ab. In vielen Fällen übernimmt der VC-Fonds die Kosten als Teil des Portfolio-Managements. In anderen Fällen trägt das Unternehmen selbst die Kosten aus verbliebenem Kapital. Wir strukturieren Engagements passend zu Ihrer Situation.',
+      q: 'Who typically pays for a Rise engagement?',
+      a: 'It depends on the situation. In many cases, the VC fund sponsors the wind-down as part of portfolio management. In others, the company itself pays from remaining capital. We structure engagements to fit your setup.',
     },
     {
-      q: 'Was ist in einer Rise-Beauftragung enthalten?',
-      a: 'Eine Standardbeauftragung umfasst: Gesellschafterversammlung, Liquidatorkoordination, Gläubigerbekanntmachung, Handelsregisteranmeldungen, VSOP/ESOP-Bereinigung, Steuerkoordination, LP-Dokumentation und finale Löschung. Jeder Fall wird individuell scopiert — wir machen kein Einheitsangebot.',
+      q: "What's included in a Rise engagement?",
+      a: 'A standard engagement covers: shareholder resolution, liquidator coordination, creditor notification, commercial register filings, VSOP/ESOP cleanup, tax coordination, LP documentation, and final deregistration. We scope each case individually.',
     },
     {
-      q: 'Ist Rise eine Kanzlei?',
-      a: 'Nein. Rise ist eine technologiegestützte Orchestrierungsplattform für strukturierte Unternehmenstransitionen. Alle Rechts- und Steuerleistungen werden von zugelassenen Fachleuten erbracht. Rise koordiniert den Prozess, überwacht Fristen und stellt sicher, dass nichts verloren geht.',
+      q: 'Is Rise a law firm?',
+      a: 'No. Rise is a tech-enabled orchestration platform for structured company transitions. All legal and tax work is performed by licensed professionals. Rise coordinates the process, manages timelines, and ensures nothing falls through the cracks.',
     },
   ]
 
@@ -805,10 +774,10 @@ function FAQ() {
     <section className="py-20 md:py-28 px-6 md:px-12 max-w-6xl mx-auto">
       <div className="mb-12">
         <p className="font-sans text-xs font-medium tracking-[0.2em] uppercase text-rise-coral mb-4">
-          Häufige Fragen
+          Common Questions
         </p>
         <h2 className="font-serif font-normal text-rise-dark text-3xl md:text-4xl leading-tight max-w-xl">
-          Was Sie wissen möchten.
+          What you need to know.
         </h2>
       </div>
 
@@ -847,26 +816,18 @@ function Closer() {
   return (
     <section className="bg-rise-dark">
       <div className="py-24 md:py-36 px-6 md:px-12 max-w-6xl mx-auto text-center">
-        <p className="font-serif font-normal text-white text-4xl md:text-5xl lg:text-6xl leading-tight mb-8 tracking-tight">
-          Sauber abschließen.
-          <br />
-          <span className="text-rise-muted-light">Neu anfangen.</span>
+        <p className="font-serif font-normal text-white text-4xl md:text-5xl lg:text-6xl leading-tight mb-12 tracking-tight">
+          Close clean. Build again.
         </p>
-        <p className="font-sans font-light text-rise-muted-light text-base mb-10 max-w-md mx-auto">
-          Rise begleitet Sie durch den gesamten Abwicklungsprozess —
-          von der ersten Analyse bis zur Löschung im Handelsregister.
+        <p className="font-sans font-light text-rise-muted-light text-base mb-10">
+          Rise is active in Europe.
         </p>
-        <div className="flex flex-col items-center gap-3">
-          <a
-            href="mailto:hello@risestartup.eu"
-            className="inline-block font-sans font-medium text-sm tracking-wide bg-rise-coral text-white px-8 py-4 rounded hover:bg-white hover:text-rise-dark transition-colors duration-200"
-          >
-            Kostenlose Ersteinschätzung anfragen
-          </a>
-          <span className="font-sans text-xs text-rise-muted-light">
-            Antwort innerhalb von 48 Stunden
-          </span>
-        </div>
+        <a
+          href="mailto:hello@risestartup.eu"
+          className="inline-block font-sans font-medium text-sm tracking-wide bg-rise-coral text-white px-8 py-4 rounded hover:bg-white hover:text-rise-dark transition-colors duration-200"
+        >
+          Get in touch
+        </a>
       </div>
     </section>
   )
@@ -876,39 +837,25 @@ function Footer() {
   return (
     <footer className="border-t border-rise-border">
       <div className="max-w-6xl mx-auto px-6 md:px-12 py-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4 flex-wrap">
+        <div className="flex items-center gap-6">
           <span className="font-serif text-rise-dark tracking-logo text-base uppercase">
             Rise
           </span>
           <span className="text-rise-border">·</span>
           <span className="font-sans font-light text-rise-muted-light text-xs">
-            GmbH-Abwicklung für Startups
+            Structured Transitions
           </span>
           <span className="text-rise-border hidden md:block">·</span>
           <span className="font-sans font-light text-rise-muted-light text-xs hidden md:block">
             Frankfurt
           </span>
         </div>
-        <div className="flex items-center gap-5 flex-wrap">
-          <a
-            href="/impressum"
-            className="font-sans font-light text-xs text-rise-muted hover:text-rise-coral transition-colors duration-200"
-          >
-            Impressum
-          </a>
-          <a
-            href="/datenschutz"
-            className="font-sans font-light text-xs text-rise-muted hover:text-rise-coral transition-colors duration-200"
-          >
-            Datenschutz
-          </a>
-          <a
-            href="mailto:hello@risestartup.eu"
-            className="font-sans font-light text-xs text-rise-muted hover:text-rise-coral transition-colors duration-200"
-          >
-            hello@risestartup.eu
-          </a>
-        </div>
+        <a
+          href="mailto:hello@risestartup.eu"
+          className="font-sans font-light text-xs text-rise-muted hover:text-rise-coral transition-colors duration-200"
+        >
+          hello@risestartup.eu
+        </a>
       </div>
     </footer>
   )
@@ -928,7 +875,7 @@ export default function App() {
         <Platform />
         <Divider />
         <WhoWeServe />
-        <TrustSection />
+        <Credibility />
         <Divider />
         <FAQ />
         <Closer />

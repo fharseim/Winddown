@@ -22,7 +22,7 @@ function Nav() {
             href="mailto:hello@risestartup.eu"
             className="text-sm font-sans font-medium text-rise-muted hover:text-rise-dark transition-colors duration-200 tracking-wide"
           >
-            Get in touch
+            Kontakt
           </a>
         </div>
       </div>
@@ -37,15 +37,14 @@ function Hero() {
         Holding-Kosten-Rechner
       </p>
       <h1 className="font-serif font-normal text-rise-dark text-[2.5rem] md:text-[3rem] leading-[1.1] tracking-tight mb-6">
-        Was kostet Ihre leere Holding
+        Was kostet es,
         <br />
-        <span className="italic text-rise-muted">wirklich?</span>
+        <span className="italic text-rise-muted">nichts zu tun?</span>
       </h1>
       <p className="font-sans font-light text-rise-muted text-lg leading-relaxed max-w-xl mx-auto">
-        Viele Gründer halten ihre GmbH oder UG am Leben, obwohl sie längst
-        inaktiv ist. Die laufenden Kosten summieren sich still — Jahr für Jahr.
-        Dieser Rechner zeigt Ihnen den genauen Betrag und ab wann sich die
-        Auflösung rentiert.
+        Eine inaktive GmbH kostet jedes Jahr Geld — Steuerberater, IHK-Beitrag,
+        Offenlegungspflichten. Dieser Rechner zeigt Ihnen, was das Nichtstun
+        wirklich kostet, und ab wann sich die Auflösung rechnet.
       </p>
     </section>
   )
@@ -192,8 +191,11 @@ function Closer() {
           href="mailto:hello@risestartup.eu"
           className="inline-block font-sans font-medium text-sm tracking-wide bg-rise-coral text-white px-8 py-4 rounded hover:bg-white hover:text-rise-dark transition-colors duration-200"
         >
-          Jetzt anfragen
+          Kostenlose Ersteinschätzung anfragen
         </a>
+        <p className="font-sans text-xs text-rise-muted-light mt-3">
+          Antwort innerhalb von 48 Stunden
+        </p>
       </div>
     </section>
   )
@@ -216,12 +218,11 @@ function Footer() {
             Frankfurt
           </span>
         </div>
-        <a
-          href="mailto:hello@risestartup.eu"
-          className="font-sans font-light text-xs text-rise-muted hover:text-rise-coral transition-colors duration-200"
-        >
-          hello@risestartup.eu
-        </a>
+        <div className="flex items-center gap-5 flex-wrap">
+          <a href="/impressum" className="font-sans font-light text-xs text-rise-muted hover:text-rise-coral transition-colors duration-200">Impressum</a>
+          <a href="/datenschutz" className="font-sans font-light text-xs text-rise-muted hover:text-rise-coral transition-colors duration-200">Datenschutz</a>
+          <a href="mailto:hello@risestartup.eu" className="font-sans font-light text-xs text-rise-muted hover:text-rise-coral transition-colors duration-200">hello@risestartup.eu</a>
+        </div>
       </div>
     </footer>
   )
