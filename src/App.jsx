@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import HoldingRechner from './rise_holding_rechner'
+import RechnerPage from './RechnerPage'
 function Nav() {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-rise-bg-warm/95 backdrop-blur-sm border-b border-rise-border">
@@ -876,7 +876,7 @@ export default function App() {
     return () => window.removeEventListener('hashchange', handler)
   }, [])
 
-  if (page === '#rechner') return <HoldingRechner />
+  if (page === '#rechner') return <RechnerPage />
 
   return (
     <div className="bg-rise-bg-warm min-h-screen font-sans">

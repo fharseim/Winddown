@@ -86,7 +86,7 @@ function Bar({ label, width, value, color, max }) {
   );
 }
 
-export default function HoldingRechner() {
+export default function HoldingRechner({ hideHeader = false }) {
   const [jahre, setJahre] = useState(3);
   const [stbKosten, setStbKosten] = useState(2500);
   const [ihk, setIhk] = useState(200);
@@ -124,16 +124,18 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 `}</style>
 
       {/* Header */}
-      <div style={{ textAlign: "center", marginBottom: 32, paddingTop: 8 }}>
-        <div style={{ fontFamily: F.serif, fontSize: 20, letterSpacing: 3, textTransform: "uppercase", marginBottom: 6 }}>RISE</div>
-        <div style={{ fontSize: 10, letterSpacing: 2, textTransform: "uppercase", color: C.textFaint, marginBottom: 16 }}>Structured Transitions</div>
-        <h1 style={{ fontFamily: F.serif, fontSize: 26, fontWeight: 400, color: C.text, margin: "0 0 6px", lineHeight: 1.3 }}>
-          Was kostet Ihre leere Holding?
-        </h1>
-        <p style={{ fontSize: 14, color: C.textLight, margin: 0, lineHeight: 1.6 }}>
-          Berechnen Sie, wie viel Ihre inaktive Holding-Gesellschaft Sie jedes Jahr kostet — und wann sich die Auflösung rechnet.
-        </p>
-      </div>
+      {!hideHeader && (
+        <div style={{ textAlign: "center", marginBottom: 32, paddingTop: 8 }}>
+          <div style={{ fontFamily: F.serif, fontSize: 20, letterSpacing: 3, textTransform: "uppercase", marginBottom: 6 }}>RISE</div>
+          <div style={{ fontSize: 10, letterSpacing: 2, textTransform: "uppercase", color: C.textFaint, marginBottom: 16 }}>Structured Transitions</div>
+          <h1 style={{ fontFamily: F.serif, fontSize: 26, fontWeight: 400, color: C.text, margin: "0 0 6px", lineHeight: 1.3 }}>
+            Was kostet Ihre leere Holding?
+          </h1>
+          <p style={{ fontSize: 14, color: C.textLight, margin: 0, lineHeight: 1.6 }}>
+            Berechnen Sie, wie viel Ihre inaktive Holding-Gesellschaft Sie jedes Jahr kostet — und wann sich die Auflösung rechnet.
+          </p>
+        </div>
+      )}
 
       {/* Input section */}
       <div style={{ background: C.bgCard, border: `0.5px solid ${C.border}`, borderRadius: 14, padding: "24px 28px", marginBottom: 16 }}>
