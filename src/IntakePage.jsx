@@ -1,4 +1,4 @@
-import { useReducer, useState, useEffect } from 'react'
+import { useReducer, useState, useEffect, useRef } from 'react'
 
 // ─── State ───────────────────────────────────────────────────────────────────
 
@@ -195,7 +195,7 @@ function NoteCard({ children }) {
 
 // ─── Navigation buttons ───────────────────────────────────────────────────────
 
-function StepNav({ onBack, onNext, nextDisabled, isLast, onSubmit }) {
+function StepNav({ onBack, onNext, nextDisabled, isLast, onSubmit, submitting }) {
   return (
     <div className="flex items-center justify-between mt-10 pt-6 border-t border-rise-border">
       {onBack ? (
@@ -213,10 +213,16 @@ function StepNav({ onBack, onNext, nextDisabled, isLast, onSubmit }) {
         <button
           type="button"
           onClick={onSubmit}
-          className="font-sans font-medium text-sm tracking-wide bg-rise-coral text-white px-8 py-4 rounded hover:bg-rise-dark transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
-          disabled={nextDisabled}
+          disabled={nextDisabled || submitting}
+          className="font-sans font-medium text-sm tracking-wide bg-rise-coral text-white px-8 py-4 rounded hover:bg-rise-dark transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
         >
-          Kostenlose Ersteinschätzung anfragen
+          {submitting && (
+            <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+          )}
+          {submitting ? 'Wird gesendet …' : 'Kostenlose Ersteinschätzung anfragen'}
         </button>
       ) : (
         <button
@@ -604,6 +610,102 @@ function Step7({ state, dispatch, onBack, onNext }) {
   )
 }
 
+// ─── Step 8: Satzung Upload ───────────────────────────────────────────────────
+
+function formatFileSize(bytes) {
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+function Step8({ satzungFile, setSatzungFile, onBack, onNext }) {
+  const [dragging, setDragging] = useState(false)
+  const [fileError, setFileError] = useState(null)
+  const inputRef = useRef(null)
+
+  function handleFile(file) {
+    if (!file) return
+    setFileError(null)
+    if (file.type !== 'application/pdf') {
+      setFileError('Bitte nur PDF-Dateien hochladen.')
+      return
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setFileError('Die Datei darf maximal 10 MB groß sein.')
+      return
+    }
+    setSatzungFile(file)
+  }
+
+  function handleDrop(e) {
+    e.preventDefault()
+    setDragging(false)
+    handleFile(e.dataTransfer.files[0])
+  }
+
+  return (
+    <div>
+      <StepHeader
+        label="Schritt 8"
+        title="Satzung der Gesellschaft"
+        subtitle="Laden Sie die aktuelle Satzung Ihrer Gesellschaft als PDF hoch. Wir prüfen diese auf besondere Auflösungsklauseln, Mehrheitserfordernisse und Abfindungsregelungen, die den Ablauf beeinflussen können."
+      />
+
+      <InfoCard>
+        Optional — falls Sie die Satzung nicht zur Hand haben, können Sie diese auch später nachreichen.
+      </InfoCard>
+
+      {!satzungFile ? (
+        <div
+          onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={handleDrop}
+          onClick={() => inputRef.current?.click()}
+          className={`border-2 border-dashed rounded-lg p-10 text-center cursor-pointer transition-colors duration-150 ${
+            dragging
+              ? 'border-rise-coral bg-rise-coral/5'
+              : 'border-rise-border hover:border-rise-muted-light bg-white'
+          }`}
+        >
+          <input
+            ref={inputRef}
+            type="file"
+            accept=".pdf"
+            className="hidden"
+            onChange={(e) => handleFile(e.target.files[0])}
+          />
+          <div className="text-4xl mb-3">📄</div>
+          <p className="font-sans font-medium text-sm text-rise-dark">
+            PDF hier ablegen oder klicken zum Auswählen
+          </p>
+          <p className="font-sans text-xs text-rise-muted-light mt-1">Nur PDF, max. 10 MB</p>
+        </div>
+      ) : (
+        <div className="flex items-center gap-4 border border-rise-sage/40 rounded-lg px-5 py-4 bg-rise-sage/5">
+          <span className="text-2xl">📄</span>
+          <div className="flex-1 min-w-0">
+            <p className="font-sans font-medium text-sm text-rise-dark truncate">{satzungFile.name}</p>
+            <p className="font-sans text-xs text-rise-muted-light mt-0.5">{formatFileSize(satzungFile.size)}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => { setSatzungFile(null); setFileError(null) }}
+            className="text-rise-muted-light hover:text-rise-dark transition-colors duration-150 text-xl leading-none w-6 h-6 flex items-center justify-center"
+            aria-label="Datei entfernen"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {fileError && (
+        <p className="font-sans text-xs text-rise-coral mt-3">{fileError}</p>
+      )}
+
+      <StepNav onBack={onBack} onNext={onNext} />
+    </div>
+  )
+}
+
 // ─── Summary helpers ──────────────────────────────────────────────────────────
 
 const LABELS = {
@@ -712,71 +814,117 @@ function SummarySection({ section, state }) {
   )
 }
 
-function buildEmailBody(state) {
-  const lines = []
-  lines.push('Guten Tag,')
-  lines.push('')
-  lines.push(
-    `hiermit bitte ich um eine kostenlose Ersteinschätzung zur Auflösung der Gesellschaft "${state.firmenname || '—'}".`
+// ─── Step 9: Zusammenfassung ──────────────────────────────────────────────────
+
+function SuccessScreen() {
+  const [visible, setVisible] = useState(false)
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(true), 50)
+    return () => clearTimeout(t)
+  }, [])
+
+  return (
+    <div
+      className="text-center py-16 transition-all duration-500 ease-out"
+      style={{ opacity: visible ? 1 : 0, transform: visible ? 'translateY(0)' : 'translateY(12px)' }}
+    >
+      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-rise-sage/20 mb-6">
+        <svg className="w-8 h-8 text-rise-sage" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+      <h2 className="font-serif font-normal text-rise-dark text-3xl md:text-4xl mb-4">
+        Vielen Dank!
+      </h2>
+      <p className="font-sans font-light text-rise-muted text-base leading-relaxed max-w-sm mx-auto mb-10">
+        Ihre Anfrage ist eingegangen. Wir melden uns innerhalb von 48 Stunden bei Ihnen.
+      </p>
+      <a
+        href="/"
+        className="font-sans font-medium text-sm text-rise-coral hover:text-rise-dark transition-colors duration-150 flex items-center justify-center gap-1.5"
+      >
+        ← Zurück zur Startseite
+      </a>
+    </div>
   )
-  lines.push('')
-
-  for (const section of SECTIONS) {
-    lines.push(`── ${section.title} ──`)
-    for (const f of section.fields) {
-      if (f === 'mitarbeiterAnzahl' && state.hatMitarbeiter !== 'ja') continue
-      if (f === 'jahreRueckstand' && state.jahresabschluesseAktuell !== 'nein') continue
-      if (f === 'telefon' && !state[f]) continue
-      lines.push(`${LABELS[f]}: ${formatValue(f, state[f])}`)
-    }
-    lines.push('')
-  }
-
-  lines.push('Mit freundlichen Grüßen,')
-  lines.push(state.name || '')
-  return lines.join('\n')
 }
 
-function Step8({ state, onBack, onSubmit }) {
-  const firmenname = state.firmenname || 'Unbekannte GmbH'
-  const subject = encodeURIComponent(`Intake-Anfrage: ${firmenname} — Rise Ersteinschätzung`)
-  const body = encodeURIComponent(buildEmailBody(state))
-  const mailtoHref = `mailto:hello@risestartup.eu?subject=${subject}&body=${body}`
+function Step9({ state, satzungFile, onBack }) {
+  const [submitting, setSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  const [submitError, setSubmitError] = useState(null)
+
+  async function handleSubmit() {
+    setSubmitting(true)
+    setSubmitError(null)
+
+    try {
+      const formData = new FormData()
+      formData.append('data', JSON.stringify(state))
+      if (satzungFile) {
+        formData.append('satzung', satzungFile)
+      }
+
+      const res = await fetch('/api/intake', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const json = await res.json()
+
+      if (!res.ok || json.error) {
+        throw new Error(json.error || 'Unbekannter Fehler')
+      }
+
+      setSubmitted(true)
+    } catch (err) {
+      setSubmitError(err.message || 'Fehler beim Senden. Bitte versuchen Sie es erneut.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  if (submitted) {
+    return <SuccessScreen />
+  }
 
   return (
     <div>
       <StepHeader
-        label="Schritt 8"
+        label="Schritt 9"
         title="Zusammenfassung"
         subtitle="Bitte prüfen Sie Ihre Angaben. Sie können einzelne Abschnitte aufklappen und zurückgehen, um Korrekturen vorzunehmen."
       />
-      <div className="space-y-3 mb-10">
+
+      <div className="space-y-3 mb-8">
         {SECTIONS.map((s) => (
           <SummarySection key={s.title} section={s} state={state} />
         ))}
       </div>
 
-      <div className="text-center space-y-3 pt-4">
-        <a
-          href={mailtoHref}
-          className="inline-block font-sans font-medium text-sm tracking-wide bg-rise-coral text-white px-8 py-4 rounded hover:bg-rise-dark transition-colors duration-200"
-        >
-          Kostenlose Ersteinschätzung anfragen
-        </a>
-        <p className="font-sans text-xs text-rise-muted-light">
-          Antwort innerhalb von 48 Stunden
-        </p>
-      </div>
+      {satzungFile && (
+        <div className="flex items-center gap-3 border border-rise-sage/40 rounded-lg px-5 py-3 bg-rise-sage/5 mb-8">
+          <span className="text-lg">📄</span>
+          <div className="flex-1 min-w-0">
+            <p className="font-sans text-sm text-rise-dark truncate">{satzungFile.name}</p>
+            <p className="font-sans text-xs text-rise-muted-light">{formatFileSize(satzungFile.size)}</p>
+          </div>
+          <span className="font-sans text-xs text-rise-sage font-medium">Anhang</span>
+        </div>
+      )}
 
-      <div className="mt-6 flex justify-start">
-        <button
-          type="button"
-          onClick={onBack}
-          className="font-sans font-medium text-sm text-rise-muted hover:text-rise-dark transition-colors duration-150 flex items-center gap-1.5"
-        >
-          ← Zurück
-        </button>
-      </div>
+      {submitError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg px-5 py-4 mb-6">
+          <p className="font-sans text-sm text-red-700">{submitError}</p>
+        </div>
+      )}
+
+      <StepNav
+        onBack={onBack}
+        isLast
+        onSubmit={handleSubmit}
+        submitting={submitting}
+      />
     </div>
   )
 }
@@ -806,11 +954,12 @@ function StepWrapper({ stepKey, children }) {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-const TOTAL_STEPS = 8
+const TOTAL_STEPS = 9
 
 export default function IntakePage() {
   const [step, setStep] = useState(1)
   const [state, dispatch] = useReducer(reducer, initialState)
+  const [satzungFile, setSatzungFile] = useState(null)
 
   const next = () => setStep((s) => Math.min(s + 1, TOTAL_STEPS))
   const back = () => setStep((s) => Math.max(s - 1, 1))
@@ -832,7 +981,21 @@ export default function IntakePage() {
             {step === 5 && <Step5 {...stepProps} />}
             {step === 6 && <Step6 {...stepProps} />}
             {step === 7 && <Step7 {...stepProps} />}
-            {step === 8 && <Step8 state={state} onBack={back} />}
+            {step === 8 && (
+              <Step8
+                satzungFile={satzungFile}
+                setSatzungFile={setSatzungFile}
+                onBack={back}
+                onNext={next}
+              />
+            )}
+            {step === 9 && (
+              <Step9
+                state={state}
+                satzungFile={satzungFile}
+                onBack={back}
+              />
+            )}
           </StepWrapper>
         </div>
       </main>
