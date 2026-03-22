@@ -1,4 +1,5 @@
 import Busboy from 'busboy'
+import { createClient } from '@supabase/supabase-js'
 
 export const config = {
   api: {
@@ -100,36 +101,59 @@ function buildHtmlEmail(data, hasSatzung) {
       })
       .map(
         (f) =>
-          `<tr><td style="color:#6b6b6b;width:220px;padding:7px 16px 7px 0;border-bottom:1px solid #f4f4f4;font-size:13px;vertical-align:top">${LABELS[f]}</td><td style="padding:7px 0;border-bottom:1px solid #f4f4f4;font-size:13px;vertical-align:top">${fmtVal(f, data[f])}</td></tr>`
+          '<tr><td style="color:#6b6b6b;width:220px;padding:7px 16px 7px 0;border-bottom:1px solid #f4f4f4;font-size:13px;vertical-align:top">' + LABELS[f] + '</td><td style="padding:7px 0;border-bottom:1px solid #f4f4f4;font-size:13px;vertical-align:top">' + fmtVal(f, data[f]) + '</td></tr>'
       )
       .join('')
 
     if (rows) {
-      sectionsHtml += `
-        <h2 style="font-size:11px;font-weight:600;color:#b05050;text-transform:uppercase;letter-spacing:0.15em;margin:28px 0 0;padding-bottom:6px;border-bottom:1px solid #e8e8e8">${section.title}</h2>
-        <table style="width:100%;border-collapse:collapse">${rows}</table>
-      `
+      sectionsHtml +=
+        '<h2 style="font-size:11px;font-weight:600;color:#b05050;text-transform:uppercase;letter-spacing:0.15em;margin:28px 0 0;padding-bottom:6px;border-bottom:1px solid #e8e8e8">' + section.title + '</h2>' +
+        '<table style="width:100%;border-collapse:collapse">' + rows + '</table>'
     }
   }
 
   const satzungBadge = hasSatzung
-    ? `<p style="margin-top:20px"><span style="display:inline-block;background:#f4f4f4;color:#6b6b6b;font-size:11px;padding:3px 10px;border-radius:4px">📄 Satzung als PDF angehängt</span></p>`
+    ? '<p style="margin-top:20px"><span style="display:inline-block;background:#f4f4f4;color:#6b6b6b;font-size:11px;padding:3px 10px;border-radius:4px">Satzung als PDF angehängt</span></p>'
     : ''
 
-  return `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1a1a1a;max-width:600px;margin:0 auto;padding:24px">
-  <h1 style="font-size:22px;font-weight:400;color:#1a1a1a;margin-bottom:4px">Neue Intake-Anfrage</h1>
-  <p style="color:#6b6b6b;font-size:14px;margin-bottom:32px">Rise Ersteinschätzung — eingegangen über das Online-Formular</p>
-  ${sectionsHtml}
-  ${satzungBadge}
-  <p style="color:#9b9b9b;font-size:12px;margin-top:40px;border-top:1px solid #e8e8e8;padding-top:16px">
-    Diese E-Mail wurde automatisch über das Rise Intake-Formular gesendet.
-    Bitte antworten Sie direkt an ${data.email || 'die angegebene E-Mail-Adresse'}.
-  </p>
-</body>
-</html>`
+  return '<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',sans-serif;color:#1a1a1a;max-width:600px;margin:0 auto;padding:24px"><h1 style="font-size:22px;font-weight:400;color:#1a1a1a;margin-bottom:4px">Neue Intake-Anfrage</h1><p style="color:#6b6b6b;font-size:14px;margin-bottom:32px">Rise Ersteinschätzung — eingegangen über das Online-Formular</p>' + sectionsHtml + satzungBadge + '<p style="color:#9b9b9b;font-size:12px;margin-top:40px;border-top:1px solid #e8e8e8;padding-top:16px">Diese E-Mail wurde automatisch über das Rise Intake-Formular gesendet. Bitte antworten Sie direkt an ' + (data.email || 'die angegebene E-Mail-Adresse') + '.</p></body></html>'
+}
+
+// ─── Supabase insert ──────────────────────────────────────────────────────────
+
+async function insertCase(data, satzungFilename) {
+  const supabaseUrl = process.env.VITE_SUPABASE_URL
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!supabaseUrl || !supabaseServiceKey) return
+
+  try {
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    await supabase.from('cases').insert({
+      contact_name: data.name,
+      contact_email: data.email,
+      contact_phone: data.telefon || null,
+      rolle: data.rolle || null,
+      firma_name: data.firmenname || null,
+      firma_rechtsform: data.rechtsform || null,
+      firma_gruendungsjahr: data.gruendungsjahr ? parseInt(data.gruendungsjahr) : null,
+      firma_sitz: data.sitz || null,
+      operativ_aktiv: data.operativAktiv === 'ja' ? true : data.operativAktiv === 'nein' ? false : null,
+      mitarbeiter: data.hatMitarbeiter === 'ja' ? true : data.hatMitarbeiter === 'nein' ? false : null,
+      mitarbeiter_anzahl: data.mitarbeiterAnzahl ? parseInt(data.mitarbeiterAnzahl) : null,
+      glaeubiger: data.offeneVerbindlichkeiten || null,
+      jahresabschluesse_aktuell: data.jahresabschluesseAktuell === 'ja' ? true : data.jahresabschluesseAktuell === 'nein' ? false : null,
+      rueckstand_jahre: data.jahreRueckstand ? parseInt(data.jahreRueckstand) : null,
+      steuerberater: data.hatSteuerberater === 'ja' ? true : data.hatSteuerberater === 'nein' ? false : null,
+      gesellschafter_anzahl: data.gesellschafterAnzahl || null,
+      vsop_esop: data.hatVSOPESOP || null,
+      investoren: data.hatInstitutionelleInvestoren === 'ja' ? true : data.hatInstitutionelleInvestoren === 'nein' ? false : null,
+      vermoegensfrei: data.vermogenSchuldenfrei || null,
+      satzung_filename: satzungFilename || null,
+      status: 'intake',
+    })
+  } catch (err) {
+    console.error('[intake] Supabase error:', err)
+  }
 }
 
 // ─── Handler ──────────────────────────────────────────────────────────────────
@@ -160,7 +184,7 @@ export default async function handler(req, res) {
 
   if (!RESEND_API_KEY) {
     console.log('[intake] Kein RESEND_API_KEY konfiguriert. Formulardaten empfangen:', data)
-    console.log('[intake] Satzung angehängt:', hasSatzung)
+    await insertCase(data, satzungFile?.filename)
     return res.status(200).json({ success: true })
   }
 
@@ -169,19 +193,14 @@ export default async function handler(req, res) {
     const resend = new Resend(RESEND_API_KEY)
 
     const attachments = hasSatzung
-      ? [
-          {
-            filename: satzungFile.filename || 'Satzung.pdf',
-            content: satzungFile.buffer,
-          },
-        ]
+      ? [{ filename: satzungFile.filename || 'Satzung.pdf', content: satzungFile.buffer }]
       : []
 
     const { error } = await resend.emails.send({
       from: 'Rise Intake <noreply@risestartup.eu>',
       to: 'hello@risestartup.eu',
       replyTo: data.email,
-      subject: `Neue Intake-Anfrage: ${data.firmenname || 'Unbekannt'} — Rise Ersteinschätzung`,
+      subject: 'Neue Intake-Anfrage: ' + (data.firmenname || 'Unbekannt') + ' — Rise Ersteinschätzung',
       html: buildHtmlEmail(data, hasSatzung),
       attachments,
     })
@@ -191,6 +210,7 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'E-Mail konnte nicht gesendet werden.' })
     }
 
+    await insertCase(data, satzungFile?.filename)
     return res.status(200).json({ success: true })
   } catch (err) {
     console.error('[intake] Unerwarteter Fehler:', err)

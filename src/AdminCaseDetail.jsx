@@ -1,0 +1,328 @@
+import { useState } from 'react'
+import { useParams, Link } from 'react-router-dom'
+import AdminLayout from './AdminLayout'
+
+const STATUS_OPTIONS = [
+  { value: 'intake',            label: 'Intake' },
+  { value: 'ersteinschaetzung', label: 'Ersteinschätzung' },
+  { value: 'angebot',           label: 'Angebot' },
+  { value: 'aktiv',             label: 'Aktiv' },
+  { value: 'abgeschlossen',     label: 'Abgeschlossen' },
+  { value: 'abgebrochen',       label: 'Abgebrochen' },
+]
+
+const STATUS_COLOR = {
+  intake:            'bg-stone-100 text-stone-600',
+  ersteinschaetzung: 'bg-amber-100 text-amber-700',
+  angebot:           'bg-blue-100 text-blue-700',
+  aktiv:             'bg-rise-sage/15 text-rise-sage',
+  abgeschlossen:     'bg-green-100 text-green-700',
+  abgebrochen:       'bg-red-100 text-red-600',
+}
+
+const MOCK_CASE = {
+  id: 'mock-001',
+  created_at: '2026-03-18T10:24:00Z',
+  status: 'ersteinschaetzung',
+  contact_name: 'Julia Bauer',
+  contact_email: 'julia@acme.de',
+  contact_phone: '+49 160 1234567',
+  rolle: 'Geschäftsführer/in',
+  firma_name: 'Acme Ventures GmbH',
+  firma_rechtsform: 'GmbH',
+  firma_gruendungsjahr: 2019,
+  firma_sitz: 'Berlin',
+  hrb_nummer: 'HRB 12345 B',
+  hr_validated: false,
+  operativ_aktiv: false,
+  mitarbeiter: false,
+  mitarbeiter_anzahl: 0,
+  glaeubiger: 'nein',
+  jahresabschluesse_aktuell: false,
+  rueckstand_jahre: 2,
+  steuerberater: true,
+  gesellschafter_anzahl: '2',
+  vsop_esop: 'nein',
+  investoren: false,
+  vermoegensfrei: 'ja',
+  satzung_filename: 'satzung_acme.pdf',
+  calculated_fee: 1990,
+  internal_notes: '',
+}
+
+const MOCK_DOCUMENTS = [
+  { id: 'd1', type: 'ersteinschaetzung', filename: 'ersteinschaetzung_acme.pdf', status: 'entwurf', created_at: '2026-03-18T12:00:00Z' },
+  { id: 'd2', type: 'kostenangebot',     filename: 'angebot_acme_2026.pdf',       status: 'freigegeben', created_at: '2026-03-19T09:30:00Z' },
+]
+
+const MOCK_ACTIVITY = [
+  { id: 'a1', created_at: '2026-03-18T10:24:00Z', action: 'Intake eingereicht', actor: 'system' },
+  { id: 'a2', created_at: '2026-03-18T10:25:00Z', action: 'E-Mail-Bestätigung gesendet', actor: 'system' },
+  { id: 'a3', created_at: '2026-03-18T12:00:00Z', action: 'Ersteinschätzung erstellt', actor: 'admin' },
+  { id: 'a4', created_at: '2026-03-19T09:30:00Z', action: 'Status → Angebot', actor: 'admin' },
+]
+
+function StatusBadge({ status }) {
+  const cfg = STATUS_COLOR[status] ?? 'bg-stone-100 text-stone-600'
+  const opt = STATUS_OPTIONS.find(o => o.value === status)
+  return (
+    <span className={`inline-block px-2.5 py-0.5 rounded-full font-sans text-xs font-medium ${cfg}`}>
+      {opt?.label ?? status}
+    </span>
+  )
+}
+
+function DataRow({ label, value }) {
+  if (value === null || value === undefined || value === '') return null
+  return (
+    <div className="flex py-2.5 border-b border-rise-border last:border-0">
+      <span className="font-sans text-sm text-rise-muted w-48 flex-shrink-0">{label}</span>
+      <span className="font-sans text-sm text-rise-dark">{String(value)}</span>
+    </div>
+  )
+}
+
+function Section({ title, children }) {
+  return (
+    <div className="mb-6">
+      <h3 className="font-sans text-xs font-medium text-rise-muted uppercase tracking-wide mb-2">{title}</h3>
+      <div className="bg-white rounded-xl border border-rise-border px-5">{children}</div>
+    </div>
+  )
+}
+
+function formatDate(iso) {
+  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
+
+const DOC_STATUS_COLOR = {
+  entwurf:    'bg-stone-100 text-stone-600',
+  freigegeben:'bg-blue-100 text-blue-700',
+  versendet:  'bg-green-100 text-green-700',
+}
+
+export default function AdminCaseDetail() {
+  const { id } = useParams()
+  const [tab, setTab] = useState('uebersicht')
+  const [status, setStatus] = useState(MOCK_CASE.status)
+  const [notes, setNotes] = useState(MOCK_CASE.internal_notes)
+
+  // In production: fetch case by `id` from Supabase
+  const c = MOCK_CASE
+
+  return (
+    <AdminLayout>
+      <div className="p-6 max-w-5xl mx-auto">
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-2 mb-5">
+          <Link to="/admin" className="font-sans text-sm text-rise-muted hover:text-rise-dark transition-colors">
+            Übersicht
+          </Link>
+          <span className="text-rise-muted">/</span>
+          <span className="font-sans text-sm text-rise-dark">{c.firma_name}</span>
+        </div>
+
+        {/* Header */}
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <h1 className="font-sans font-medium text-rise-dark text-xl">{c.firma_name}</h1>
+            <p className="font-sans text-sm text-rise-muted mt-0.5">
+              Eingegangen: {formatDate(c.created_at)} · Case ID: {id}
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <StatusBadge status={status} />
+            <select
+              value={status}
+              onChange={e => setStatus(e.target.value)}
+              className="font-sans text-sm text-rise-dark bg-white border border-rise-border rounded-lg px-3 py-1.5 focus:outline-none focus:border-rise-dark transition-colors"
+            >
+              {STATUS_OPTIONS.map(o => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="flex gap-6">
+          {/* Main content */}
+          <div className="flex-1 min-w-0">
+            {/* Tabs */}
+            <div className="flex gap-0 border-b border-rise-border mb-6">
+              {[
+                { key: 'uebersicht', label: 'Übersicht' },
+                { key: 'dokumente',  label: 'Dokumente' },
+                { key: 'aktivitaet',label: 'Aktivität' },
+              ].map(t => (
+                <button
+                  key={t.key}
+                  onClick={() => setTab(t.key)}
+                  className={`px-4 py-2 font-sans text-sm font-medium border-b-2 -mb-px transition-colors ${
+                    tab === t.key
+                      ? 'border-rise-dark text-rise-dark'
+                      : 'border-transparent text-rise-muted hover:text-rise-dark'
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Übersicht */}
+            {tab === 'uebersicht' && (
+              <div>
+                <Section title="Kontakt">
+                  <DataRow label="Name" value={c.contact_name} />
+                  <DataRow label="E-Mail" value={c.contact_email} />
+                  <DataRow label="Telefon" value={c.contact_phone} />
+                  <DataRow label="Rolle" value={c.rolle} />
+                </Section>
+
+                <Section title="Unternehmen">
+                  <DataRow label="Firma" value={c.firma_name} />
+                  <DataRow label="Rechtsform" value={c.firma_rechtsform} />
+                  <DataRow label="Gründungsjahr" value={c.firma_gruendungsjahr} />
+                  <DataRow label="Sitz" value={c.firma_sitz} />
+                  <DataRow label="HRB-Nummer" value={c.hrb_nummer} />
+                </Section>
+
+                <Section title="Aktueller Status">
+                  <DataRow label="Operativ aktiv" value={c.operativ_aktiv ? 'Ja' : 'Nein'} />
+                  <DataRow label="Mitarbeiter" value={c.mitarbeiter ? `Ja (${c.mitarbeiter_anzahl})` : 'Nein'} />
+                  <DataRow label="Gläubiger" value={c.glaeubiger} />
+                </Section>
+
+                <Section title="Steuerliche Situation">
+                  <DataRow label="Jahresabschlüsse aktuell" value={c.jahresabschluesse_aktuell ? 'Ja' : 'Nein'} />
+                  <DataRow label="Jahre im Rückstand" value={c.rueckstand_jahre} />
+                  <DataRow label="Steuerberater vorhanden" value={c.steuerberater ? 'Ja' : 'Nein'} />
+                </Section>
+
+                <Section title="Gesellschafter">
+                  <DataRow label="Anzahl" value={c.gesellschafter_anzahl} />
+                  <DataRow label="VSOP/ESOP" value={c.vsop_esop} />
+                  <DataRow label="Institutionelle Investoren" value={c.investoren ? 'Ja' : 'Nein'} />
+                </Section>
+
+                <Section title="§394 FamFG">
+                  <DataRow label="Vermögensfrei" value={c.vermoegensfrei} />
+                </Section>
+
+                {c.calculated_fee && (
+                  <Section title="Honorar">
+                    <DataRow label="Kalkuliertes Honorar" value={`${c.calculated_fee.toLocaleString('de-DE')} €`} />
+                  </Section>
+                )}
+              </div>
+            )}
+
+            {/* Dokumente */}
+            {tab === 'dokumente' && (
+              <div className="bg-white rounded-xl border border-rise-border overflow-hidden">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-rise-border">
+                      <th className="px-5 py-3 text-left font-sans text-xs font-medium text-rise-muted uppercase tracking-wide">Dokument</th>
+                      <th className="px-5 py-3 text-left font-sans text-xs font-medium text-rise-muted uppercase tracking-wide">Typ</th>
+                      <th className="px-5 py-3 text-left font-sans text-xs font-medium text-rise-muted uppercase tracking-wide">Status</th>
+                      <th className="px-5 py-3 text-left font-sans text-xs font-medium text-rise-muted uppercase tracking-wide">Erstellt</th>
+                      <th className="px-5 py-3" />
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-rise-border">
+                    {MOCK_DOCUMENTS.map(d => (
+                      <tr key={d.id} className="hover:bg-rise-bg/50 transition-colors">
+                        <td className="px-5 py-3.5 font-sans text-sm text-rise-dark">{d.filename}</td>
+                        <td className="px-5 py-3.5 font-sans text-sm text-rise-muted">{d.type}</td>
+                        <td className="px-5 py-3.5">
+                          <span className={`inline-block px-2.5 py-0.5 rounded-full font-sans text-xs font-medium ${DOC_STATUS_COLOR[d.status]}`}>
+                            {d.status}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3.5 font-sans text-sm text-rise-muted whitespace-nowrap">
+                          {formatDate(d.created_at)}
+                        </td>
+                        <td className="px-5 py-3.5 text-right">
+                          <button className="font-sans text-xs font-medium text-rise-dark hover:text-rise-coral transition-colors">
+                            Download
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {MOCK_DOCUMENTS.length === 0 && (
+                  <p className="px-5 py-8 text-center font-sans text-sm text-rise-muted">Keine Dokumente vorhanden.</p>
+                )}
+              </div>
+            )}
+
+            {/* Aktivität */}
+            {tab === 'aktivitaet' && (
+              <div className="space-y-0">
+                {MOCK_ACTIVITY.map((a, i) => (
+                  <div key={a.id} className="flex gap-4">
+                    <div className="flex flex-col items-center">
+                      <div className="w-2.5 h-2.5 rounded-full bg-rise-dark mt-1 flex-shrink-0" />
+                      {i < MOCK_ACTIVITY.length - 1 && (
+                        <div className="w-px bg-rise-border flex-1 my-1" />
+                      )}
+                    </div>
+                    <div className="pb-5">
+                      <p className="font-sans text-sm text-rise-dark">{a.action}</p>
+                      <p className="font-sans text-xs text-rise-muted mt-0.5">
+                        {formatDate(a.created_at)} · {a.actor}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Sidebar */}
+          <div className="w-64 flex-shrink-0 space-y-4">
+            {/* Handelsregister */}
+            {c.hrb_nummer && (
+              <div className="bg-white rounded-xl border border-rise-border p-4">
+                <p className="font-sans text-xs font-medium text-rise-muted uppercase tracking-wide mb-2">Handelsregister</p>
+                <p className="font-sans text-sm text-rise-dark mb-2">{c.hrb_nummer}</p>
+                <a
+                  href={`https://www.unternehmensregister.de/ureg/result.html?search=${encodeURIComponent(c.hrb_nummer)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-sans text-xs font-medium text-rise-dark hover:text-rise-coral transition-colors"
+                >
+                  Im HR prüfen →
+                </a>
+              </div>
+            )}
+
+            {/* Satzung */}
+            {c.satzung_filename && (
+              <div className="bg-white rounded-xl border border-rise-border p-4">
+                <p className="font-sans text-xs font-medium text-rise-muted uppercase tracking-wide mb-2">Satzung</p>
+                <p className="font-sans text-sm text-rise-dark mb-2">{c.satzung_filename}</p>
+                <button className="font-sans text-xs font-medium text-rise-dark hover:text-rise-coral transition-colors">
+                  Herunterladen →
+                </button>
+              </div>
+            )}
+
+            {/* Internal notes */}
+            <div className="bg-white rounded-xl border border-rise-border p-4">
+              <p className="font-sans text-xs font-medium text-rise-muted uppercase tracking-wide mb-2">Interne Notizen</p>
+              <textarea
+                value={notes}
+                onChange={e => setNotes(e.target.value)}
+                placeholder="Notizen hinzufügen…"
+                rows={5}
+                className="w-full font-sans text-sm text-rise-dark bg-rise-bg border border-rise-border rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-rise-dark transition-colors"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </AdminLayout>
+  )
+}
