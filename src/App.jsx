@@ -15,12 +15,6 @@ function Nav() {
             Kosten-Rechner
           </a>
           <a
-            href="/impressum"
-            className="text-sm font-sans font-medium text-rise-muted hover:text-rise-dark transition-colors duration-200 tracking-wide"
-          >
-            Impressum
-          </a>
-          <a
             href="mailto:hello@risestartup.eu"
             className="text-sm font-sans font-medium text-rise-muted hover:text-rise-dark transition-colors duration-200 tracking-wide"
           >

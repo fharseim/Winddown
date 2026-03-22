@@ -8,7 +8,7 @@ const navItems = [
 ]
 
 export default function AdminLayout({ children }) {
-  const { user, loading, signOut } = useAuth()
+  const { user, loading, signOut, demoMode } = useAuth()
   const navigate = useNavigate()
 
   if (loading) {
@@ -68,6 +68,18 @@ export default function AdminLayout({ children }) {
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
+        {/* Demo banner */}
+        {demoMode && (
+          <div className="bg-amber-50 border-b border-amber-200 px-6 py-2 flex items-center gap-2 flex-shrink-0">
+            <svg className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="font-sans text-xs text-amber-700">
+              Demo-Modus — Supabase nicht konfiguriert. Alle Daten sind Beispieldaten.
+            </span>
+          </div>
+        )}
+
         {/* Top bar */}
         <header className="bg-white border-b border-rise-border px-6 py-3 flex items-center justify-between flex-shrink-0">
           <div />
