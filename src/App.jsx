@@ -7,12 +7,20 @@ function Nav() {
         <span className="font-serif text-rise-dark tracking-logo text-2xl uppercase">
           Rise
         </span>
-        <a
-          href="mailto:hello@risestartup.eu"
-          className="text-sm font-sans font-medium text-rise-muted hover:text-rise-dark transition-colors duration-200 tracking-wide"
-        >
-          Get in touch
-        </a>
+        <div className="flex items-center gap-6">
+          <a
+            href="#rechner"
+            className="text-sm font-sans font-medium text-rise-muted hover:text-rise-dark transition-colors duration-200 tracking-wide"
+          >
+            Kosten-Rechner
+          </a>
+          <a
+            href="mailto:hello@risestartup.eu"
+            className="text-sm font-sans font-medium text-rise-muted hover:text-rise-dark transition-colors duration-200 tracking-wide"
+          >
+            Get in touch
+          </a>
+        </div>
       </div>
     </nav>
   )
