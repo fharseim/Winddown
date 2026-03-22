@@ -756,13 +756,23 @@ function TrustSection() {
           von Venture-finanzierten Unternehmen. Rise kombiniert juristische Präzision
           mit operativer Umsetzungsstärke — für einen Prozess, der funktioniert.
         </p>
-        <div className="flex flex-col sm:flex-row gap-10 sm:gap-16">
+        <div className="flex flex-col sm:flex-row gap-10 sm:gap-16 mb-14">
           {metrics.map((m) => (
             <div key={m.label}>
               <p className="font-serif text-rise-dark text-3xl md:text-4xl mb-1">{m.value}</p>
               <p className="font-sans text-xs text-rise-muted-light tracking-wide uppercase">{m.label}</p>
             </div>
           ))}
+        </div>
+
+        {/* Positioning statement */}
+        <div className="border-l-2 border-rise-coral pl-5 max-w-2xl">
+          <p className="font-sans font-light text-rise-muted text-sm md:text-base leading-relaxed">
+            Rise ist kein Ersatz für Ihren Anwalt oder Steuerberater — Rise ist die Plattform,
+            die den gesamten Prozess orchestriert. Zugelassene Rechtsanwälte und Steuerberater
+            erbringen alle Fachleistungen. Wir sorgen dafür, dass alles termingerecht,
+            vollständig und koordiniert abläuft.
+          </p>
         </div>
       </div>
     </section>
