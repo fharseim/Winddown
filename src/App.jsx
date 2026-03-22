@@ -848,9 +848,9 @@ function Closer() {
     <section className="bg-rise-dark">
       <div className="py-24 md:py-36 px-6 md:px-12 max-w-6xl mx-auto text-center">
         <p className="font-serif font-normal text-white text-4xl md:text-5xl lg:text-6xl leading-tight mb-8 tracking-tight">
-          Sauber abschließen.
+          Close Clean.
           <br />
-          <span className="text-rise-muted-light">Neu anfangen.</span>
+          <span className="text-rise-muted-light">Build Again.</span>
         </p>
         <p className="font-sans font-light text-rise-muted-light text-base mb-10 max-w-md mx-auto">
           Rise begleitet Sie durch den gesamten Abwicklungsprozess —
