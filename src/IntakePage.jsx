@@ -349,6 +349,17 @@ function Step3({ state, dispatch, onBack, onNext }) {
           options={[
             { value: 'GmbH', label: 'GmbH' },
             { value: 'UG (haftungsbeschränkt)', label: 'UG (haftungsbeschränkt)' },
+            { value: 'AG', label: 'AG (Aktiengesellschaft)' },
+            { value: 'SE', label: 'SE (Societas Europaea)' },
+            { value: 'KGaA', label: 'KGaA (Kommanditges. auf Aktien)' },
+            { value: 'GmbH & Co. KG', label: 'GmbH & Co. KG' },
+            { value: 'KG', label: 'KG (Kommanditgesellschaft)' },
+            { value: 'OHG', label: 'OHG (Offene Handelsgesellschaft)' },
+            { value: 'PartG', label: 'PartG (Partnerschaftsgesellschaft)' },
+            { value: 'PartG mbB', label: 'PartG mbB' },
+            { value: 'eG', label: 'eG (eingetragene Genossenschaft)' },
+            { value: 'e.V.', label: 'e.V. (eingetragener Verein)' },
+            { value: 'Stiftung', label: 'Stiftung' },
           ]}
         />
         <SelectInput
@@ -370,6 +381,33 @@ function Step3({ state, dispatch, onBack, onNext }) {
       </div>
       <StepNav onBack={onBack} onNext={onNext} nextDisabled={!valid} />
     </div>
+  )
+}
+
+// ─── Rechtsform Badge ─────────────────────────────────────────────────────────
+
+const RECHTSFORM_COLORS = {
+  'GmbH':                    'bg-blue-100 text-blue-700',
+  'UG (haftungsbeschränkt)': 'bg-sky-100 text-sky-700',
+  'AG':                      'bg-violet-100 text-violet-700',
+  'SE':                      'bg-purple-100 text-purple-700',
+  'KGaA':                    'bg-fuchsia-100 text-fuchsia-700',
+  'GmbH & Co. KG':           'bg-amber-100 text-amber-700',
+  'KG':                      'bg-orange-100 text-orange-700',
+  'OHG':                     'bg-yellow-100 text-yellow-700',
+  'PartG':                   'bg-teal-100 text-teal-700',
+  'PartG mbB':               'bg-cyan-100 text-cyan-700',
+  'eG':                      'bg-emerald-100 text-emerald-700',
+  'e.V.':                    'bg-lime-100 text-lime-700',
+  'Stiftung':                'bg-rose-100 text-rose-700',
+}
+
+function RechtsformBadge({ rechtsform }) {
+  const color = RECHTSFORM_COLORS[rechtsform] || 'bg-stone-100 text-stone-600'
+  return (
+    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-sans font-semibold ${color}`}>
+      {rechtsform}
+    </span>
   )
 }
 
@@ -479,9 +517,10 @@ function Step3b({ state, dispatch, onBack, onNext }) {
                     <p className="font-sans font-light text-xs text-rise-muted mt-1">
                       {company.register_art} {company.register_nummer} · {company.register_gericht}
                     </p>
-                    <p className="font-sans font-light text-xs text-rise-muted">
-                      {company.rechtsform} · {company.sitz}
-                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <RechtsformBadge rechtsform={company.rechtsform} />
+                      <span className="font-sans font-light text-xs text-rise-muted">{company.sitz}</span>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-sans font-medium ${

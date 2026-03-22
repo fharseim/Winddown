@@ -66,13 +66,24 @@ function loadCompanies() {
 function normName(s) {
   return s
     .toLowerCase()
-    .replace(/\bgmbh\b/g, '')
     .replace(/\bug\s*\(haftungsbeschränkt\)/g, '')
+    .replace(/\bgmbh\s*&\s*co\.\s*kgaa\b/g, '')
+    .replace(/\bgmbh\s*&\s*co\.\s*kg\b/g, '')
+    .replace(/\bgmbh\s*&\s*co\s*kg\b/g, '')
+    .replace(/\bkgaa\b/g, '')
+    .replace(/\bpartg\s+mbb\b/g, '')
+    .replace(/\bpartgmbb\b/g, '')
+    .replace(/\bpartg\b/g, '')
+    .replace(/\bgmbh\b/g, '')
     .replace(/\bug\b/g, '')
     .replace(/\bmbh\b/g, '')
-    .replace(/\bco\.\s*kg\b/g, '')
+    .replace(/\bohg\b/g, '')
     .replace(/\bkg\b/g, '')
     .replace(/\bag\b/g, '')
+    .replace(/\bse\b/g, '')
+    .replace(/\beg\b/g, '')
+    .replace(/\be\.v\.\b/g, '')
+    .replace(/\bstiftung\b/g, '')
     .replace(/[&.,]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
@@ -125,13 +136,18 @@ function scoreMatch(query, company) {
   return 0
 }
 
-function searchCompanies(q, limit) {
+function searchCompanies(q, limit, rechtsformFilter) {
   const companies = loadCompanies()
   const term = q.trim()
   if (!term || term.length < 2) return []
 
+  const rfLower = rechtsformFilter ? rechtsformFilter.toLowerCase().trim() : null
+
   const scored = []
   for (const c of companies) {
+    // Apply rechtsform filter if specified
+    if (rfLower && (!c.rechtsform || c.rechtsform.toLowerCase() !== rfLower)) continue
+
     const score = scoreMatch(term, c)
     if (score > 0) scored.push({ ...c, _score: score })
   }
@@ -155,18 +171,19 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { q = '', limit: limitParam = '5' } = req.query
+  const { q = '', limit: limitParam = '5', rechtsform = '' } = req.query
   const limit = Math.min(parseInt(limitParam, 10) || 5, 20)
 
   if (!q || q.trim().length < 2) {
     return res.status(200).json({ results: [], total: 0, query: q })
   }
 
-  const results = searchCompanies(q, limit)
+  const results = searchCompanies(q, limit, rechtsform || null)
   return res.status(200).json({
     results,
     total: results.length,
     query: q,
+    rechtsform: rechtsform || null,
     source: 'dataset',
   })
 }
