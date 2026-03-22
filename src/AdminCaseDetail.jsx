@@ -186,6 +186,36 @@ export default function AdminCaseDetail() {
                   <DataRow label="HRB-Nummer" value={c.hrb_nummer} />
                 </Section>
 
+                <Section title="Handelsregister">
+                  <div className="py-3">
+                    <div className="flex items-center gap-2 mb-3">
+                      {c.hr_validated ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-green-100 text-green-700 font-sans text-xs font-medium">
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                          HR-validiert
+                        </span>
+                      ) : (
+                        <span className="inline-block px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-500 font-sans text-xs font-medium">
+                          Nicht validiert
+                        </span>
+                      )}
+                    </div>
+                    {c.hr_validated && c.hrb_nummer && (
+                      <p className="font-sans text-sm text-rise-dark mb-2">{c.hrb_nummer}</p>
+                    )}
+                    <a
+                      href={`https://www.handelsregister.de/rp_web/mask.do?Typ=e&Schlagwort=${encodeURIComponent(c.firma_name)}&Bundesland=0`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-sans text-xs font-medium text-rise-dark hover:text-rise-coral transition-colors inline-flex items-center gap-1"
+                    >
+                      Im Handelsregister prüfen →
+                    </a>
+                  </div>
+                </Section>
+
                 <Section title="Aktueller Status">
                   <DataRow label="Operativ aktiv" value={c.operativ_aktiv ? 'Ja' : 'Nein'} />
                   <DataRow label="Mitarbeiter" value={c.mitarbeiter ? `Ja (${c.mitarbeiter_anzahl})` : 'Nein'} />
@@ -288,7 +318,7 @@ export default function AdminCaseDetail() {
                 <p className="font-sans text-xs font-medium text-rise-muted uppercase tracking-wide mb-2">Handelsregister</p>
                 <p className="font-sans text-sm text-rise-dark mb-2">{c.hrb_nummer}</p>
                 <a
-                  href={`https://www.unternehmensregister.de/ureg/result.html?search=${encodeURIComponent(c.hrb_nummer)}`}
+                  href={`https://www.handelsregister.de/rp_web/mask.do?Typ=e&Schlagwort=${encodeURIComponent(c.firma_name)}&Bundesland=0`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="font-sans text-xs font-medium text-rise-dark hover:text-rise-coral transition-colors"

@@ -14,7 +14,11 @@ const initialState = {
   rechtsform: 'GmbH',
   gruendungsjahr: '',
   sitz: '',
-  // Step 4
+  // Step 3b — HR validation
+  hrbNummer: '',
+  hrValidated: false,
+  hrMatchedCompany: null,
+  // Step 5 (was 4)
   operativAktiv: '',
   hatMitarbeiter: '',
   mitarbeiterAnzahl: '',
@@ -369,6 +373,174 @@ function Step3({ state, dispatch, onBack, onNext }) {
   )
 }
 
+// ─── Step 3b: Handelsregister Validation ─────────────────────────────────────
+
+function Step3b({ state, dispatch, onBack, onNext }) {
+  const [loading, setLoading] = useState(true)
+  const [results, setResults] = useState([])
+  const [selected, setSelected] = useState(state.hrMatchedCompany)
+  const [searchError, setSearchError] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    setSearchError(null)
+
+    fetch(`/api/companies?q=${encodeURIComponent(state.firmenname)}&limit=5`)
+      .then(r => r.json())
+      .then(data => {
+        if (!cancelled) {
+          setResults(data.results || [])
+          setLoading(false)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSearchError('Suche konnte nicht durchgeführt werden.')
+          setLoading(false)
+        }
+      })
+
+    return () => { cancelled = true }
+  }, [state.firmenname])
+
+  function selectCompany(company) {
+    setSelected(company)
+    dispatch({ field: 'hrMatchedCompany', value: company })
+    dispatch({ field: 'hrValidated', value: true })
+    dispatch({ field: 'hrbNummer', value: `${company.register_art} ${company.register_nummer} ${company.register_gericht}` })
+  }
+
+  function proceedManually() {
+    dispatch({ field: 'hrMatchedCompany', value: null })
+    dispatch({ field: 'hrValidated', value: false })
+    onNext()
+  }
+
+  return (
+    <div>
+      <StepHeader
+        title="Gesellschaft bestätigen"
+        subtitle={`Wir gleichen Ihre Angaben für „${state.firmenname}" mit dem Handelsregister ab.`}
+      />
+
+      <div className="bg-rise-sage/10 border border-rise-sage/30 rounded-lg px-5 py-4 mb-6 flex items-start gap-3">
+        <svg className="w-4 h-4 text-rise-sage mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <p className="font-sans font-light text-rise-dark text-sm leading-relaxed">
+          Wir gleichen Ihre Angaben mit dem Handelsregister ab, um Tippfehler zu vermeiden. Dieser Schritt ist optional — Sie können jederzeit mit manuellen Angaben fortfahren.
+        </p>
+      </div>
+
+      {loading && (
+        <div className="flex items-center gap-3 py-8 justify-center">
+          <svg className="animate-spin h-5 w-5 text-rise-sage" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          <span className="font-sans text-sm text-rise-muted">Suche im Handelsregister…</span>
+        </div>
+      )}
+
+      {!loading && searchError && (
+        <p className="font-sans text-sm text-rise-muted text-center py-6">{searchError}</p>
+      )}
+
+      {!loading && !searchError && results.length === 0 && (
+        <div className="text-center py-8">
+          <p className="font-sans text-sm text-rise-muted">Kein Ergebnis gefunden.</p>
+        </div>
+      )}
+
+      {!loading && !searchError && results.length > 0 && (
+        <div className="space-y-3 mb-4">
+          {results.map(company => {
+            const isSelected = selected?.id === company.id
+            return (
+              <button
+                key={company.id}
+                type="button"
+                onClick={() => selectCompany(company)}
+                className={`w-full text-left px-5 py-4 rounded-lg border-2 transition-all duration-150 ${
+                  isSelected
+                    ? 'border-rise-coral bg-rise-coral/5'
+                    : 'border-rise-border bg-white hover:border-rise-muted-light'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <p className={`font-sans font-medium text-sm ${isSelected ? 'text-rise-coral' : 'text-rise-dark'}`}>
+                      {company.firma_name}
+                    </p>
+                    <p className="font-sans font-light text-xs text-rise-muted mt-1">
+                      {company.register_art} {company.register_nummer} · {company.register_gericht}
+                    </p>
+                    <p className="font-sans font-light text-xs text-rise-muted">
+                      {company.rechtsform} · {company.sitz}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-sans font-medium ${
+                      company.status === 'aktiv' ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-500'
+                    }`}>
+                      {company.status === 'aktiv' ? 'Aktiv' : 'Gelöscht'}
+                    </span>
+                    {isSelected && (
+                      <svg className="w-5 h-5 text-rise-coral" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+                {isSelected && (
+                  <p className="font-sans text-xs font-medium text-rise-coral mt-2">Das ist meine Gesellschaft ✓</p>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      <div className="flex items-center justify-between mt-8 pt-6 border-t border-rise-border">
+        <button
+          type="button"
+          onClick={onBack}
+          className="font-sans font-medium text-sm text-rise-muted hover:text-rise-dark transition-colors duration-150 flex items-center gap-1.5"
+        >
+          ← Zurück
+        </button>
+        <div className="flex flex-col items-end gap-2">
+          {selected ? (
+            <button
+              type="button"
+              onClick={onNext}
+              className="font-sans font-medium text-sm tracking-wide bg-rise-coral text-white px-7 py-3 rounded hover:bg-rise-dark transition-colors duration-200"
+            >
+              Weiter →
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={proceedManually}
+              className="font-sans font-medium text-sm tracking-wide bg-rise-coral text-white px-7 py-3 rounded hover:bg-rise-dark transition-colors duration-200"
+            >
+              Weiter →
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={proceedManually}
+            className="font-sans text-xs text-rise-muted hover:text-rise-dark transition-colors duration-150 underline underline-offset-2"
+          >
+            Meine Gesellschaft ist nicht dabei — mit manuellen Angaben fortfahren
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function Step4({ state, dispatch, onBack, onNext }) {
   const valid =
     state.operativAktiv &&
@@ -379,7 +551,7 @@ function Step4({ state, dispatch, onBack, onNext }) {
   return (
     <div>
       <StepHeader
-        label="Schritt 4"
+        label="Schritt 5"
         title="Aktueller Status"
         subtitle="Helfen Sie uns, die aktuelle Lage der Gesellschaft einzuschätzen."
       />
@@ -452,7 +624,7 @@ function Step5({ state, dispatch, onBack, onNext }) {
   return (
     <div>
       <StepHeader
-        label="Schritt 5"
+        label="Schritt 6"
         title="Steuerliche Situation"
         subtitle="Der steuerliche Status beeinflusst den Liquidationspfad."
       />
@@ -513,7 +685,7 @@ function Step6({ state, dispatch, onBack, onNext }) {
   return (
     <div>
       <StepHeader
-        label="Schritt 6"
+        label="Schritt 7"
         title="Gesellschafter & Beteiligungen"
         subtitle="Die Gesellschafterstruktur bestimmt den Aufwand der Abwicklung."
       />
@@ -575,7 +747,7 @@ function Step7({ state, dispatch, onBack, onNext }) {
   return (
     <div>
       <StepHeader
-        label="Schritt 7"
+        label="Schritt 8"
         title="§ 394 FamFG — Vermögenslose Gesellschaft"
       />
       <InfoCard>
@@ -645,7 +817,7 @@ function Step8({ satzungFile, setSatzungFile, onBack, onNext }) {
   return (
     <div>
       <StepHeader
-        label="Schritt 8"
+        label="Schritt 9"
         title="Satzung der Gesellschaft"
         subtitle="Laden Sie die aktuelle Satzung Ihrer Gesellschaft als PDF hoch. Wir prüfen diese auf besondere Auflösungsklauseln, Mehrheitserfordernisse und Abfindungsregelungen, die den Ablauf beeinflussen können."
       />
@@ -891,7 +1063,7 @@ function Step9({ state, satzungFile, onBack }) {
   return (
     <div>
       <StepHeader
-        label="Schritt 9"
+        label="Schritt 10"
         title="Zusammenfassung"
         subtitle="Bitte prüfen Sie Ihre Angaben. Sie können einzelne Abschnitte aufklappen und zurückgehen, um Korrekturen vorzunehmen."
       />
@@ -954,7 +1126,7 @@ function StepWrapper({ stepKey, children }) {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-const TOTAL_STEPS = 9
+const TOTAL_STEPS = 10
 
 export default function IntakePage() {
   const [step, setStep] = useState(1)
@@ -974,14 +1146,15 @@ export default function IntakePage() {
       <main className="pt-32 pb-20 px-6">
         <div className="max-w-2xl mx-auto">
           <StepWrapper stepKey={step}>
-            {step === 1 && <Step1 {...stepProps} />}
-            {step === 2 && <Step2 {...stepProps} />}
-            {step === 3 && <Step3 {...stepProps} />}
-            {step === 4 && <Step4 {...stepProps} />}
-            {step === 5 && <Step5 {...stepProps} />}
-            {step === 6 && <Step6 {...stepProps} />}
-            {step === 7 && <Step7 {...stepProps} />}
-            {step === 8 && (
+            {step === 1  && <Step1 {...stepProps} />}
+            {step === 2  && <Step2 {...stepProps} />}
+            {step === 3  && <Step3 {...stepProps} />}
+            {step === 4  && <Step3b {...stepProps} />}
+            {step === 5  && <Step4 {...stepProps} />}
+            {step === 6  && <Step5 {...stepProps} />}
+            {step === 7  && <Step6 {...stepProps} />}
+            {step === 8  && <Step7 {...stepProps} />}
+            {step === 9  && (
               <Step8
                 satzungFile={satzungFile}
                 setSatzungFile={setSatzungFile}
@@ -989,7 +1162,7 @@ export default function IntakePage() {
                 onNext={next}
               />
             )}
-            {step === 9 && (
+            {step === 10 && (
               <Step9
                 state={state}
                 satzungFile={satzungFile}
