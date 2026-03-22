@@ -1,4 +1,7 @@
 {
   "_dns_note": "A-Record at IONOS currently 216.198.79.1 (Vercel). Original IP before migration: 217.160.0.171 — update this record to revert.",
-  "rewrites": [{"source": "/(.*)", "destination": "/index.html"}]
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }
