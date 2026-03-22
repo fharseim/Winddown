@@ -152,6 +152,29 @@ function NextSteps() {
   )
 }
 
+function Differentiator() {
+  return (
+    <section className="bg-rise-sage">
+      <div className="py-20 md:py-28 px-6 md:px-12 max-w-6xl mx-auto">
+        <div className="max-w-3xl">
+          <p className="font-sans text-xs font-medium tracking-[0.2em] uppercase text-white/50 mb-6">
+            Warum Rise
+          </p>
+          <p className="font-serif font-normal text-white text-3xl md:text-4xl lg:text-5xl leading-tight mb-8">
+            Rise koordiniert die gesamte Abwicklung.{' '}
+            <span className="text-white/60">Sie müssen nichts selbst organisieren.</span>
+          </p>
+          <p className="font-sans font-light text-white/70 text-base md:text-lg leading-relaxed max-w-xl">
+            Template-Anbieter liefern Dokumente. Rise übernimmt den Prozess —
+            von der Gesellschafterversammlung über Behördenkommunikation bis zur
+            Handelsregister-Löschung. Ein Ansprechpartner. Kein Koordinationsaufwand auf Ihrer Seite.
+          </p>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function Closer() {
   return (
     <section className="bg-rise-dark">
@@ -211,6 +234,7 @@ export default function RechnerPage() {
         <section className="py-16 md:py-24 px-6 md:px-12">
           <HoldingRechner hideHeader />
         </section>
+        <Differentiator />
         <Divider />
         <Explanation />
         <Divider />

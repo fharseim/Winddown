@@ -247,9 +247,6 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
         >
           Kostenlose Ersteinschätzung anfordern ↗
         </button>
-        <div style={{ fontSize: 10, color: C.textFaint, marginTop: 10 }}>
-          Rise koordiniert die gesamte Abwicklung — Sie müssen nichts selbst organisieren.
-        </div>
       </div>
 
       {/* Fine print */}
