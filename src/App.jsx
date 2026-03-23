@@ -28,25 +28,53 @@ function Nav() {
 
 function Hero() {
   return (
-    <section className="pt-36 pb-24 md:pt-44 md:pb-32 px-6 md:px-12 max-w-6xl mx-auto">
-      <h1 className="font-serif font-normal text-rise-dark text-[2.75rem] md:text-[3.5rem] lg:text-[3.75rem] leading-[1.08] tracking-tight mb-8">
-        Ihre GmbH sauber auflösen.
-        <br />
-        <span className="italic text-rise-muted">Ein Ansprechpartner.</span>
-      </h1>
-      <p className="font-sans font-light text-rise-muted text-lg md:text-xl leading-relaxed max-w-xl mb-3">
-        Rise begleitet Sie durch den gesamten Abwicklungsprozess — von der ersten Analyse bis zur Löschung im Handelsregister.
-      </p>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mt-10">
-        <a
-          href="/intake"
-          className="inline-block font-sans font-medium text-sm tracking-wide bg-rise-coral text-white px-8 py-4 rounded hover:bg-rise-dark transition-colors duration-200"
-        >
-          Kostenlose Ersteinschätzung anfragen
-        </a>
-        <span className="font-sans text-xs text-rise-muted-light">
-          Antwort innerhalb von 48 Stunden
-        </span>
+    <section className="pt-44 pb-32 md:pt-56 md:pb-44 px-6 md:px-12 max-w-6xl mx-auto">
+      <div className="fade-in">
+        <h1 className="font-serif font-normal text-rise-dark text-6xl md:text-7xl lg:text-8xl leading-[1.0] tracking-tight mb-10">
+          Ihre GmbH
+          <br />
+          sauber auflösen.
+          <br />
+          <span className="italic text-rise-muted">Ein Ansprechpartner.</span>
+        </h1>
+        <p className="font-sans font-light text-rise-muted text-xl md:text-2xl leading-relaxed max-w-2xl mb-4">
+          Rise begleitet Sie durch den gesamten Abwicklungsprozess — von der ersten Analyse bis zur Löschung im Handelsregister.
+        </p>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mt-12">
+          <a
+            href="/intake"
+            className="inline-block font-sans font-medium text-base tracking-wide bg-rise-coral text-white px-10 py-5 rounded hover:bg-rise-dark transition-colors duration-300"
+          >
+            Kostenlose Ersteinschätzung anfragen
+          </a>
+          <span className="font-sans text-sm text-rise-muted-light">
+            Antwort innerhalb von 48 Stunden
+          </span>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function TrustBar() {
+  return (
+    <section className="py-14 px-6 md:px-12 bg-rise-bg border-y border-rise-border">
+      <div className="max-w-6xl mx-auto">
+        <p className="font-sans text-[10px] font-medium tracking-[0.25em] uppercase text-rise-muted-light text-center mb-8">
+          Vertraut von Gründern, Investoren und Beratern
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-0">
+          {['Rechtsanwälte', 'Steuerberater', 'Notare', 'Wirtschaftsprüfer', 'VC-Fonds', 'Family Offices'].map((item, i, arr) => (
+            <div key={item} className="flex items-center">
+              <span className="font-sans text-sm font-light text-rise-muted-light tracking-wide px-6 py-2">
+                {item}
+              </span>
+              {i < arr.length - 1 && (
+                <span className="text-rise-border text-lg font-light select-none">·</span>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   )
@@ -68,19 +96,19 @@ function Problem() {
   ]
 
   return (
-    <section className="py-20 md:py-28 px-6 md:px-12 max-w-6xl mx-auto">
-      <div className="mb-4">
-        <p className="font-sans text-xs font-medium tracking-[0.2em] uppercase text-rise-coral mb-5">
+    <section className="py-24 md:py-40 px-6 md:px-12 max-w-6xl mx-auto">
+      <div className="mb-8">
+        <p className="font-sans text-xs font-medium tracking-[0.2em] uppercase text-rise-coral mb-6">
           Die Lücke
         </p>
-        <h2 className="font-serif font-normal text-rise-dark text-4xl md:text-5xl leading-[1.08] tracking-tight max-w-2xl">
+        <h2 className="font-serif font-normal text-rise-dark text-5xl md:text-6xl lg:text-7xl leading-[1.0] tracking-tight max-w-3xl">
           Jede Phase ist abgedeckt.
           <br />
           <span className="italic text-rise-muted">Eine nicht.</span>
         </h2>
       </div>
 
-      <p className="font-sans font-light text-rise-muted text-base leading-relaxed max-w-xl mb-14">
+      <p className="font-sans font-light text-rise-muted text-lg leading-relaxed max-w-xl mb-20">
         Für jede Phase eines Startups gibt es Infrastruktur — nur nicht für die letzte.
         Gründer, die ihre GmbH auflösen müssen, stehen vor fragmentierten Beratern,
         unklarer Haftung und keinem standardisierten Prozess.
@@ -88,21 +116,21 @@ function Problem() {
 
       {/* The served stages */}
       <div>
-        <div className="hidden md:flex items-center justify-between pb-3 border-b border-rise-border">
+        <div className="hidden md:flex items-center justify-between pb-4 border-b border-rise-border">
           <div className="flex items-baseline gap-6 md:gap-10">
-            <span className="font-sans text-[10px] font-medium tracking-[0.2em] uppercase text-rise-muted-light w-32 md:w-40 shrink-0">Tool</span>
+            <span className="font-sans text-[10px] font-medium tracking-[0.2em] uppercase text-rise-muted-light w-36 md:w-48 shrink-0">Tool</span>
             <span className="font-sans text-[10px] font-medium tracking-[0.2em] uppercase text-rise-muted-light">Phase</span>
           </div>
           <span className="font-sans text-[10px] font-medium tracking-[0.2em] uppercase text-rise-muted-light">Infrastruktur</span>
         </div>
 
         {stages.map((item, i) => (
-          <div key={i} className="flex items-center justify-between py-5 border-b border-rise-border">
+          <div key={i} className="flex items-center justify-between py-7 border-b border-rise-border">
             <div className="flex items-baseline gap-6 md:gap-10">
-              <span className="font-sans text-xs font-medium tracking-[0.15em] uppercase w-32 md:w-40 shrink-0 text-rise-muted-light">
+              <span className="font-sans text-xs font-medium tracking-[0.15em] uppercase w-36 md:w-48 shrink-0 text-rise-muted-light">
                 {item.tool}
               </span>
-              <span className="font-serif text-xl md:text-2xl font-normal text-rise-dark">
+              <span className="font-serif text-2xl md:text-3xl font-normal text-rise-dark">
                 {item.stage}
               </span>
             </div>
@@ -114,12 +142,12 @@ function Problem() {
       </div>
 
       {/* The gap row */}
-      <div className="flex items-center justify-between py-5 border-b border-dashed border-rise-border/50">
+      <div className="flex items-center justify-between py-7 border-b border-dashed border-rise-border/50">
         <div className="flex items-baseline gap-6 md:gap-10">
-          <span className="w-32 md:w-40 shrink-0 font-sans text-xs text-rise-muted-light/30 tracking-widest">
+          <span className="w-36 md:w-48 shrink-0 font-sans text-xs text-rise-muted-light/30 tracking-widest">
             ———
           </span>
-          <span className="font-serif text-xl md:text-2xl font-normal text-rise-muted-light/30 italic">
+          <span className="font-serif text-2xl md:text-3xl font-normal text-rise-muted-light/30 italic">
             Wind-Down & Auflösung
           </span>
         </div>
@@ -129,11 +157,11 @@ function Problem() {
       </div>
 
       {/* Arrow connector */}
-      <div className="relative flex items-center justify-center py-10 -mx-6 md:-mx-12">
+      <div className="relative flex items-center justify-center py-14 -mx-6 md:-mx-12">
         <div className="absolute inset-x-0 top-1/2 h-px bg-rise-border" />
         <div className="relative flex flex-col items-center gap-2.5 bg-rise-bg-warm px-8">
           <div className="flex flex-col items-center">
-            <div className="w-px h-6 bg-rise-coral/60" />
+            <div className="w-px h-8 bg-rise-coral/60" />
             <svg width="14" height="10" viewBox="0 0 14 10" className="text-rise-coral" fill="currentColor">
               <path d="M7 10L0 0h14L7 10z" />
             </svg>
@@ -145,26 +173,26 @@ function Problem() {
       </div>
 
       {/* Rise — the answer */}
-      <div className="-mx-6 md:-mx-12 px-6 md:px-12 py-8 md:py-10 border-l-4 border-rise-coral bg-rise-coral/[0.04]">
-        <p className="font-sans text-xs font-semibold tracking-[0.2em] uppercase text-rise-coral mb-3">
+      <div className="-mx-6 md:-mx-12 px-8 md:px-14 py-10 md:py-14 border-l-4 border-rise-coral bg-rise-coral/[0.04]">
+        <p className="font-sans text-xs font-semibold tracking-[0.2em] uppercase text-rise-coral mb-4">
           Rise
         </p>
-        <p className="font-serif font-normal text-rise-dark text-2xl md:text-3xl leading-tight">
+        <p className="font-serif font-normal text-rise-dark text-3xl md:text-4xl leading-tight mb-4">
           Die fehlende Infrastruktur — jetzt verfügbar.
         </p>
-        <p className="font-sans font-light text-rise-muted text-sm mt-3 max-w-lg leading-relaxed">
+        <p className="font-sans font-light text-rise-muted text-base mt-3 max-w-lg leading-relaxed">
           Ein Prozess. Ein Ansprechpartner. Festpreis, vollständig orchestrierte
           GmbH-Abwicklungen für europäische Startups und ihre Investoren.
         </p>
-        <div className="flex flex-col gap-2.5 mt-5">
+        <div className="flex flex-col gap-3 mt-8">
           {[
             'Festpreis pro Beauftragung',
             'Zugelassene Rechts- und Steuerexperten',
             'LP-fähige Dokumentation inklusive',
           ].map((item) => (
-            <div key={item} className="flex items-center gap-2">
-              <span className="w-1 h-1 rounded-full bg-rise-coral shrink-0" />
-              <span className="font-sans text-xs text-rise-muted">{item}</span>
+            <div key={item} className="flex items-center gap-3">
+              <span className="w-1.5 h-1.5 rounded-full bg-rise-coral shrink-0" />
+              <span className="font-sans text-sm text-rise-muted">{item}</span>
             </div>
           ))}
         </div>
@@ -218,41 +246,41 @@ function HowItWorks() {
   ]
 
   return (
-    <section className="py-20 md:py-28 px-6 md:px-12 max-w-6xl mx-auto">
-      <div className="mb-14">
-        <p className="font-sans text-xs font-medium tracking-[0.2em] uppercase text-rise-coral mb-4">
+    <section className="py-24 md:py-40 px-6 md:px-12 max-w-6xl mx-auto">
+      <div className="mb-16">
+        <p className="font-sans text-xs font-medium tracking-[0.2em] uppercase text-rise-coral mb-5">
           So funktioniert es
         </p>
-        <h2 className="font-serif font-normal text-rise-dark text-3xl md:text-4xl leading-tight max-w-xl">
+        <h2 className="font-serif font-normal text-rise-dark text-4xl md:text-5xl leading-tight max-w-xl">
           Drei Schritte zur sauberen Auflösung.
         </h2>
       </div>
 
       <div className="grid md:grid-cols-3 gap-px bg-rise-border">
         {steps.map((s) => (
-          <div key={s.number} className="bg-rise-bg-warm p-8 md:p-10 flex flex-col">
-            <div className="flex items-center justify-between mb-7">
-              <span className="font-sans text-xs font-medium tracking-[0.2em] text-rise-muted-light">
+          <div key={s.number} className="bg-rise-bg-warm p-10 md:p-12 flex flex-col">
+            <div className="flex items-center justify-between mb-10">
+              <span className="font-serif text-4xl font-normal text-rise-muted-light/40">
                 {s.number}
               </span>
-              <span className="font-sans text-[10px] text-rise-muted-light bg-rise-border px-2 py-1 rounded">
+              <span className="font-sans text-[10px] text-rise-muted-light bg-rise-border px-2.5 py-1.5 rounded">
                 {s.duration}
               </span>
             </div>
-            <h3 className="font-serif font-normal text-rise-dark text-xl md:text-2xl mb-4 leading-tight">
+            <h3 className="font-serif font-normal text-rise-dark text-2xl md:text-3xl mb-5 leading-tight">
               {s.title}
             </h3>
-            <p className="font-sans font-light text-rise-muted text-sm leading-relaxed mb-7">
+            <p className="font-sans font-light text-rise-muted text-sm leading-relaxed mb-8">
               {s.body}
             </p>
-            <div className="mt-auto pt-6 border-t border-rise-border space-y-2">
-              <p className="font-sans text-[10px] font-semibold tracking-[0.16em] uppercase text-rise-muted-light mb-3">
+            <div className="mt-auto pt-7 border-t border-rise-border space-y-3">
+              <p className="font-sans text-[10px] font-semibold tracking-[0.16em] uppercase text-rise-muted-light mb-4">
                 Enthalten
               </p>
               {s.deliverables.map((d) => (
-                <div key={d} className="flex items-start gap-2">
-                  <span className="w-1 h-1 rounded-full bg-rise-coral shrink-0 mt-1.5" />
-                  <span className="font-sans text-xs text-rise-muted leading-snug">{d}</span>
+                <div key={d} className="flex items-start gap-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rise-coral shrink-0 mt-1.5" />
+                  <span className="font-sans text-sm text-rise-muted leading-snug">{d}</span>
                 </div>
               ))}
             </div>
@@ -628,18 +656,18 @@ function Platform() {
   const [view, setView] = useState('founder')
 
   return (
-    <section className="py-20 md:py-28 px-6 md:px-12 max-w-6xl mx-auto">
-      <div className="mb-12">
-        <p className="font-sans text-xs font-medium tracking-[0.2em] uppercase text-rise-coral mb-4">
+    <section className="py-24 md:py-40 px-6 md:px-12 max-w-6xl mx-auto">
+      <div className="mb-14">
+        <p className="font-sans text-xs font-medium tracking-[0.2em] uppercase text-rise-coral mb-5">
           Die Plattform
         </p>
-        <h2 className="font-serif font-normal text-rise-dark text-3xl md:text-4xl leading-tight max-w-xl">
+        <h2 className="font-serif font-normal text-rise-dark text-4xl md:text-5xl leading-tight max-w-xl">
           Ein Prozess. Volle Transparenz.
         </h2>
       </div>
 
       {/* Dashboard mockup */}
-      <div className="rounded-lg border border-rise-border shadow-sm overflow-hidden bg-rise-bg-warm">
+      <div className="rounded-xl border border-rise-border shadow-xl shadow-rise-dark/5 overflow-hidden bg-rise-bg-warm">
         {/* Chrome bar */}
         <div className="border-b border-rise-border px-5 py-3 flex items-center justify-between bg-rise-bg">
           <div className="flex items-center gap-3">
@@ -681,7 +709,7 @@ function Platform() {
         {view === 'founder' ? <FounderView /> : <VCView />}
       </div>
 
-      <p className="font-sans font-light text-rise-muted text-sm mt-6 text-center">
+      <p className="font-sans font-light text-rise-muted text-sm mt-8 text-center">
         {view === 'founder'
           ? 'Ihr Fall. Jeder Schritt nachverfolgbar. Nichts geht verloren.'
           : 'Portfolio-Hygiene im Überblick. LP-fähige Dokumentation pro Fall.'}
@@ -710,12 +738,12 @@ function WhoWeServe() {
   ]
 
   return (
-    <section className="py-20 md:py-28 px-6 md:px-12 max-w-6xl mx-auto">
-      <div className="mb-12">
-        <p className="font-sans text-xs font-medium tracking-[0.2em] uppercase text-rise-coral mb-4">
+    <section className="py-24 md:py-40 px-6 md:px-12 max-w-6xl mx-auto">
+      <div className="mb-14">
+        <p className="font-sans text-xs font-medium tracking-[0.2em] uppercase text-rise-coral mb-5">
           Für wen wir arbeiten
         </p>
-        <h2 className="font-serif font-normal text-rise-dark text-3xl md:text-4xl leading-tight max-w-xl">
+        <h2 className="font-serif font-normal text-rise-dark text-4xl md:text-5xl leading-tight max-w-2xl">
           Gebaut für alle, die den Abschluss professionell gestalten wollen.
         </h2>
       </div>
@@ -724,9 +752,9 @@ function WhoWeServe() {
         {customers.map((c, i) => (
           <div
             key={i}
-            className="flex flex-col md:flex-row md:items-start py-10 border-t border-rise-border gap-4 md:gap-20"
+            className="flex flex-col md:flex-row md:items-start py-12 border-t border-rise-border gap-6 md:gap-24 group"
           >
-            <span className="font-serif text-rise-dark text-xl md:text-2xl md:w-56 shrink-0">
+            <span className="font-serif text-rise-dark text-2xl md:text-3xl md:w-56 shrink-0 group-hover:text-rise-coral transition-colors duration-300">
               {c.label}
             </span>
             <p className="font-sans font-light text-rise-muted text-base leading-relaxed max-w-lg">
@@ -748,25 +776,25 @@ function TrustSection() {
   ]
 
   return (
-    <section className="bg-rise-bg py-16 md:py-20 px-6 md:px-12">
+    <section className="bg-rise-bg py-24 md:py-36 px-6 md:px-12">
       <div className="max-w-6xl mx-auto">
-        <p className="font-sans font-light text-rise-muted text-base md:text-lg leading-relaxed max-w-2xl mb-12">
+        <p className="font-sans font-light text-rise-muted text-lg md:text-xl leading-relaxed max-w-2xl mb-16">
           Aufgebaut von Rechts- und Operations-Experten mit Erfahrung in der Abwicklung
           von Venture-finanzierten Unternehmen. Rise kombiniert juristische Präzision
           mit operativer Umsetzungsstärke — für einen Prozess, der funktioniert.
         </p>
-        <div className="flex flex-col sm:flex-row gap-10 sm:gap-16 mb-14">
+        <div className="flex flex-col sm:flex-row gap-14 sm:gap-20 mb-20">
           {metrics.map((m) => (
             <div key={m.label}>
-              <p className="font-serif text-rise-dark text-3xl md:text-4xl mb-1">{m.value}</p>
+              <p className="font-serif text-rise-dark text-5xl md:text-6xl mb-2">{m.value}</p>
               <p className="font-sans text-xs text-rise-muted-light tracking-wide uppercase">{m.label}</p>
             </div>
           ))}
         </div>
 
         {/* Positioning statement */}
-        <div className="border-l-2 border-rise-coral pl-5 max-w-2xl">
-          <p className="font-sans font-light text-rise-muted text-sm md:text-base leading-relaxed">
+        <div className="border-l-2 border-rise-coral pl-7 max-w-2xl">
+          <p className="font-sans font-light text-rise-muted text-base md:text-lg leading-relaxed">
             Rise ist kein Ersatz für Ihren Anwalt oder Steuerberater — Rise ist die Plattform,
             die den gesamten Prozess orchestriert. Zugelassene Rechtsanwälte und Steuerberater
             erbringen alle Fachleistungen. Wir sorgen dafür, dass alles termingerecht,
@@ -805,12 +833,12 @@ function FAQ() {
   ]
 
   return (
-    <section className="py-20 md:py-28 px-6 md:px-12 max-w-6xl mx-auto">
-      <div className="mb-12">
-        <p className="font-sans text-xs font-medium tracking-[0.2em] uppercase text-rise-coral mb-4">
+    <section className="py-24 md:py-40 px-6 md:px-12 max-w-6xl mx-auto">
+      <div className="mb-14">
+        <p className="font-sans text-xs font-medium tracking-[0.2em] uppercase text-rise-coral mb-5">
           Häufige Fragen
         </p>
-        <h2 className="font-serif font-normal text-rise-dark text-3xl md:text-4xl leading-tight max-w-xl">
+        <h2 className="font-serif font-normal text-rise-dark text-4xl md:text-5xl leading-tight max-w-xl">
           Was Sie wissen möchten.
         </h2>
       </div>
@@ -822,21 +850,21 @@ function FAQ() {
             <div key={i} className="border-t border-rise-border">
               <button
                 onClick={() => setOpenIndex(isOpen ? null : i)}
-                className="w-full flex items-center justify-between py-6 text-left gap-6 group"
+                className="w-full flex items-center justify-between py-8 text-left gap-8 group"
                 aria-expanded={isOpen}
               >
-                <span className="font-sans font-medium text-rise-dark text-base group-hover:text-rise-coral transition-colors duration-200">
+                <span className="font-serif font-normal text-rise-dark text-xl md:text-2xl group-hover:text-rise-coral transition-colors duration-300">
                   {item.q}
                 </span>
-                <span className="shrink-0 w-5 h-5 rounded-full border border-rise-border flex items-center justify-center text-rise-muted-light text-sm transition-colors duration-200 group-hover:border-rise-coral group-hover:text-rise-coral">
+                <span className="shrink-0 w-8 h-8 rounded-full border border-rise-border flex items-center justify-center text-rise-muted-light text-lg transition-all duration-300 group-hover:border-rise-coral group-hover:text-rise-coral">
                   {isOpen ? '−' : '+'}
                 </span>
               </button>
-              {isOpen && (
-                <p className="font-sans font-light text-rise-muted text-base leading-relaxed pb-6 max-w-3xl">
+              <div className={`overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
+                <p className="font-sans font-light text-rise-muted text-base leading-relaxed pb-8 max-w-3xl">
                   {item.a}
                 </p>
-              )}
+              </div>
             </div>
           )
         })}
@@ -849,24 +877,24 @@ function FAQ() {
 function Closer() {
   return (
     <section className="bg-rise-dark">
-      <div className="py-24 md:py-36 px-6 md:px-12 max-w-6xl mx-auto text-center">
-        <p className="font-serif font-normal text-white text-4xl md:text-5xl lg:text-6xl leading-tight mb-8 tracking-tight">
+      <div className="py-32 md:py-48 px-6 md:px-12 max-w-6xl mx-auto text-center">
+        <p className="font-serif font-normal text-white text-6xl md:text-7xl lg:text-8xl leading-[1.0] mb-10 tracking-tight">
           Close Clean.
           <br />
           <span className="text-rise-muted-light">Build Again.</span>
         </p>
-        <p className="font-sans font-light text-rise-muted-light text-base mb-10 max-w-md mx-auto">
+        <p className="font-sans font-light text-rise-muted-light text-lg mb-12 max-w-lg mx-auto leading-relaxed">
           Rise begleitet Sie durch den gesamten Abwicklungsprozess —
           von der ersten Analyse bis zur Löschung im Handelsregister.
         </p>
-        <div className="flex flex-col items-center gap-3">
+        <div className="flex flex-col items-center gap-4">
           <a
             href="/intake"
-            className="inline-block font-sans font-medium text-sm tracking-wide bg-rise-coral text-white px-8 py-4 rounded hover:bg-white hover:text-rise-dark transition-colors duration-200"
+            className="inline-block font-sans font-medium text-base tracking-wide bg-rise-coral text-white px-12 py-5 rounded hover:bg-white hover:text-rise-dark transition-colors duration-300"
           >
             Kostenlose Ersteinschätzung anfragen
           </a>
-          <span className="font-sans text-xs text-rise-muted-light">
+          <span className="font-sans text-sm text-rise-muted-light/70">
             Antwort innerhalb von 48 Stunden
           </span>
         </div>
@@ -877,37 +905,37 @@ function Closer() {
 
 function Footer() {
   return (
-    <footer className="border-t border-rise-border">
-      <div className="max-w-6xl mx-auto px-6 md:px-12 py-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4 flex-wrap">
-          <span className="font-serif text-rise-dark tracking-logo text-base uppercase">
+    <footer className="border-t border-rise-border bg-rise-bg-warm">
+      <div className="max-w-6xl mx-auto px-6 md:px-12 py-14 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div className="flex items-center gap-5 flex-wrap">
+          <span className="font-serif text-rise-dark tracking-logo text-lg uppercase">
             Rise
           </span>
           <span className="text-rise-border">·</span>
-          <span className="font-sans font-light text-rise-muted-light text-xs">
+          <span className="font-sans font-light text-rise-muted-light text-sm">
             GmbH-Abwicklung für Startups
           </span>
           <span className="text-rise-border hidden md:block">·</span>
-          <span className="font-sans font-light text-rise-muted-light text-xs hidden md:block">
+          <span className="font-sans font-light text-rise-muted-light text-sm hidden md:block">
             Frankfurt
           </span>
         </div>
-        <div className="flex items-center gap-5 flex-wrap">
+        <div className="flex items-center gap-7 flex-wrap">
           <a
             href="/impressum"
-            className="font-sans font-light text-xs text-rise-muted hover:text-rise-coral transition-colors duration-200"
+            className="font-sans font-light text-sm text-rise-muted hover:text-rise-coral transition-colors duration-200"
           >
             Impressum
           </a>
           <a
             href="/datenschutz"
-            className="font-sans font-light text-xs text-rise-muted hover:text-rise-coral transition-colors duration-200"
+            className="font-sans font-light text-sm text-rise-muted hover:text-rise-coral transition-colors duration-200"
           >
             Datenschutz
           </a>
           <a
             href="mailto:hello@risestartup.eu"
-            className="font-sans font-light text-xs text-rise-muted hover:text-rise-coral transition-colors duration-200"
+            className="font-sans font-light text-sm text-rise-muted hover:text-rise-coral transition-colors duration-200"
           >
             hello@risestartup.eu
           </a>
@@ -923,6 +951,7 @@ export default function App() {
       <Nav />
       <main>
         <Hero />
+        <TrustBar />
         <Divider />
         <Problem />
         <Divider />
