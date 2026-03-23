@@ -31,6 +31,43 @@ async function downloadDocument(type, caseData, setLoadingDoc) {
   }
 }
 
+// ─── Handelsregister document download ───────────────────────────────────────
+
+async function downloadHrDocument(params, setLoadingHr) {
+  const { registerArt, registerNummer, registerGericht, docType } = params
+  const key = docType
+  setLoadingHr(key)
+  try {
+    const qs = new URLSearchParams({
+      registerArt,
+      registerNummer,
+      ...(registerGericht ? { registerGericht } : {}),
+      docType,
+    })
+    const res = await fetch(`/api/hr-download?${qs}`, {
+      headers: { 'x-api-token': window.__API_TOKEN__ || '' },
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }))
+      alert(`HR-Download fehlgeschlagen: ${err.detail || err.error}`)
+      return
+    }
+    const blob = await res.blob()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    const disp = res.headers.get('Content-Disposition') || ''
+    a.download = disp.match(/filename="([^"]+)"/)?.[1]
+      ?? `HR_${registerArt}_${registerNummer}_${docType}.${docType === 'SI' ? 'xml' : 'pdf'}`
+    a.click()
+    URL.revokeObjectURL(url)
+  } catch (err) {
+    alert(`Netzwerkfehler: ${err.message}`)
+  } finally {
+    setLoadingHr(null)
+  }
+}
+
 // ─── Config ───────────────────────────────────────────────────────────────────
 
 const STATUS_OPTIONS = [
@@ -343,6 +380,7 @@ export default function AdminCaseDetail() {
   const [status, setStatus] = useState(MOCK_CASE.status)
   const [notes, setNotes] = useState(MOCK_CASE.internal_notes)
   const [loadingDoc, setLoadingDoc] = useState(null)
+  const [loadingHr, setLoadingHr] = useState(null)
   const [emailModal, setEmailModal] = useState(null)
   const [toast, setToast] = useState(null)
 
@@ -718,6 +756,32 @@ export default function AdminCaseDetail() {
                     Nicht validiert
                   </span>
                 )}
+                {/* Document download buttons */}
+                {(() => {
+                  const hrbMatch = (c.hrb_nummer || '').match(/^(HRB|HRA|PR|GnR|VR)\s*(\S+)/)
+                  if (!hrbMatch) return null
+                  const registerArt = hrbMatch[1]
+                  const registerNummer = hrbMatch[2]
+                  const registerGericht = (c.registergericht || '').replace(/^AG\s+/i, '')
+                  const hrParams = { registerArt, registerNummer, registerGericht }
+                  return (
+                    <div className="mt-4 space-y-2">
+                      {[
+                        { docType: 'AD', label: 'Aktueller Abdruck (PDF)' },
+                        { docType: 'SI', label: 'Strukturdaten (XML)' },
+                      ].map(({ docType, label }) => (
+                        <button
+                          key={docType}
+                          onClick={() => downloadHrDocument({ ...hrParams, docType }, setLoadingHr)}
+                          disabled={loadingHr === docType}
+                          className="w-full text-left text-xs font-medium px-3 py-2 rounded-lg border border-rise-border hover:border-rise-muted text-rise-muted hover:text-rise-dark transition-colors disabled:opacity-50"
+                        >
+                          {loadingHr === docType ? 'Lädt…' : `↓ ${label}`}
+                        </button>
+                      ))}
+                    </div>
+                  )
+                })()}
                 <a
                   href={`https://www.handelsregister.de/rp_web/mask.do?Typ=e&Schlagwort=${encodeURIComponent(c.firma_name)}&Bundesland=0`}
                   target="_blank"
