@@ -375,6 +375,31 @@ function inferRechtsform(name) {
   return 'GmbH'
 }
 
+// ─── Railway crawler proxy ────────────────────────────────────────────────────
+
+async function proxyToCrawler(req, res) {
+  const crawlerUrl = process.env.CRAWLER_URL
+  const crawlerSecret = process.env.CRAWLER_SECRET
+
+  const { q = '', schlagwortOptionen = '2' } = req.query
+  const target = `${crawlerUrl}/api/search?q=${encodeURIComponent(q)}&schlagwortOptionen=${encodeURIComponent(schlagwortOptionen)}`
+
+  try {
+    const upstream = await fetch(target, {
+      headers: {
+        'x-api-secret': crawlerSecret || '',
+        Accept: 'application/json',
+      },
+      signal: AbortSignal.timeout(30000),
+    })
+    const data = await upstream.json()
+    return res.status(upstream.ok ? 200 : upstream.status).json(data)
+  } catch (err) {
+    console.error('[hr-search] crawler proxy error:', err.message)
+    throw err
+  }
+}
+
 // ─── Handler ─────────────────────────────────────────────────────────────────
 
 export default async function handler(req, res) {
@@ -394,6 +419,17 @@ export default async function handler(req, res) {
     return res.status(200).json({ results: [], total: 0, query: q, source: 'handelsregister.de' })
   }
 
+  // ── Proxy to Railway crawler if configured ──
+  if (process.env.CRAWLER_URL) {
+    try {
+      return await proxyToCrawler(req, res)
+    } catch (err) {
+      console.warn('[hr-search] crawler proxy failed, falling back to dataset:', err.message)
+      const results = searchDataset(q).map(c => ({ ...c, source: 'dataset' }))
+      return res.status(200).json({ results, total: results.length, query: q, source: 'dataset' })
+    }
+  }
+
   const cacheKey = `${q.trim().toLowerCase()}:${schlagwortOptionen}`
   const cached = getCached(cacheKey)
   if (cached) {
@@ -408,7 +444,6 @@ export default async function handler(req, res) {
     setCached(cacheKey, results)
   } catch (err) {
     console.warn(`[hr-search] live search failed for "${q}": ${err.message} — falling back to dataset`)
-    // Fallback to static dataset
     results = searchDataset(q).map(c => ({ ...c, source: 'dataset' }))
     return res.status(200).json({
       results,

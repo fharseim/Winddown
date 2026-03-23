@@ -62,6 +62,25 @@ function setCached(key, data) {
   cache.set(key, { ts: Date.now(), data })
 }
 
+// ─── Railway crawler proxy ────────────────────────────────────────────────────
+
+async function proxyToCrawler(registerArt, registerNummer, registerGericht) {
+  const crawlerUrl = process.env.CRAWLER_URL
+  const crawlerSecret = process.env.CRAWLER_SECRET
+
+  const params = new URLSearchParams({ registerArt, registerNummer, registerGericht })
+  const target = `${crawlerUrl}/api/documents?${params}`
+
+  const upstream = await fetch(target, {
+    headers: {
+      'x-api-secret': crawlerSecret || '',
+      Accept: 'application/json',
+    },
+    signal: AbortSignal.timeout(30000),
+  })
+  return { status: upstream.status, data: await upstream.json() }
+}
+
 // ─── Handler ─────────────────────────────────────────────────────────────────
 
 export default async function handler(req, res) {
@@ -74,6 +93,17 @@ export default async function handler(req, res) {
     return res.status(400).json({
       error: 'registerArt, registerNummer, registerGericht are required',
     })
+  }
+
+  // ── Proxy to Railway crawler if configured ──
+  if (process.env.CRAWLER_URL) {
+    try {
+      const { status, data } = await proxyToCrawler(registerArt, registerNummer, registerGericht)
+      return res.status(status).json(data)
+    } catch (err) {
+      console.error('[hr-documents] crawler proxy error:', err.message)
+      return res.status(502).json({ error: 'Fehler beim Abruf der Dokumentenliste.', detail: err.message })
+    }
   }
 
   const cacheKey = `${registerArt}:${registerNummer}:${registerGericht}`

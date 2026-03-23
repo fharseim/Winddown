@@ -487,6 +487,41 @@ function buildFilename(registerArt, registerNummer, registerGericht, docType, do
   return `HR_${registerArt}_${registerNummer}_${courtSlug}_${docType}.${ext}`
 }
 
+// ─── Railway crawler proxy ────────────────────────────────────────────────────
+
+async function proxyToCrawler(req, res) {
+  const crawlerUrl = process.env.CRAWLER_URL
+  const crawlerSecret = process.env.CRAWLER_SECRET
+
+  const params = new URLSearchParams(req.query)
+  const target = `${crawlerUrl}/api/download?${params}`
+
+  const upstream = await fetch(target, {
+    headers: {
+      'x-api-secret': crawlerSecret || '',
+    },
+    signal: AbortSignal.timeout(60000),
+  })
+
+  if (!upstream.ok) {
+    const ct = upstream.headers.get('content-type') || ''
+    if (ct.includes('json')) {
+      const data = await upstream.json()
+      return res.status(upstream.status).json(data)
+    }
+    return res.status(upstream.status).json({ error: 'Crawler error', detail: `HTTP ${upstream.status}` })
+  }
+
+  const contentType = upstream.headers.get('content-type') || 'application/octet-stream'
+  const contentDisposition = upstream.headers.get('content-disposition') || ''
+  res.setHeader('Content-Type', contentType)
+  if (contentDisposition) res.setHeader('Content-Disposition', contentDisposition)
+  res.setHeader('Cache-Control', 'private, max-age=21600')
+
+  const buffer = Buffer.from(await upstream.arrayBuffer())
+  return res.status(200).send(buffer)
+}
+
 // ─── Handler ─────────────────────────────────────────────────────────────────
 
 export default async function handler(req, res) {
@@ -509,6 +544,16 @@ export default async function handler(req, res) {
   }
   if (docType === 'DK' && !docId) {
     return res.status(400).json({ error: 'docId is required for docType=DK' })
+  }
+
+  // ── Proxy to Railway crawler if configured ──
+  if (process.env.CRAWLER_URL) {
+    try {
+      return await proxyToCrawler(req, res)
+    } catch (err) {
+      console.error('[hr-download] crawler proxy error:', err.message)
+      return res.status(502).json({ error: 'Fehler beim Abrufen des Dokuments.', detail: err.message })
+    }
   }
 
   const cacheKey = `${registerArt}:${registerNummer}:${registerGericht}:${docType}:${docId}`
