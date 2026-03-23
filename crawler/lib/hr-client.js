@@ -12,7 +12,8 @@
 const { load } = require('cheerio')
 
 const HR_BASE = 'https://www.handelsregister.de'
-const HR_SEARCH_URL = `${HR_BASE}/rp_web/erweitertesuche.xhtml`
+const HR_WELCOME_URL = `${HR_BASE}/rp_web/welcome.xhtml`
+const HR_SEARCH_URL = `${HR_BASE}/rp_web/erweitertesuche/welcome.xhtml`
 
 // ─── User-Agent rotation ──────────────────────────────────────────────────────
 
@@ -158,20 +159,58 @@ function returnSession(session) {
 }
 
 async function createSession() {
-  const res = await fetchHR(HR_SEARCH_URL, {
+  // Step 1: GET welcome page to establish JSESSIONID and ViewState
+  const welcomeRes = await fetchHR(HR_WELCOME_URL, {
     headers: browserHeaders(),
     redirect: 'follow',
   })
-  if (!res.ok) throw new Error(`HR session init failed: HTTP ${res.status}`)
+  if (!welcomeRes.ok) throw new Error(`HR welcome page failed: HTTP ${welcomeRes.status}`)
 
-  const html = await res.text()
-  const cookies = mergeCookies(res)
+  const welcomeHtml = await welcomeRes.text()
+  let cookies = mergeCookies(welcomeRes)
+  const $w = load(welcomeHtml)
+
+  // Extract ViewState and form action URL (includes jsessionid path param)
+  const naviForm = $w('#naviForm')
+  const viewStateWelcome =
+    naviForm.find('input[name="javax.faces.ViewState"]').val() ||
+    $w('input[name="javax.faces.ViewState"]').first().val() ||
+    ''
+  const formAction = naviForm.attr('action') || '/rp_web/welcome.xhtml'
+  const postUrl = formAction.startsWith('http') ? formAction : `${HR_BASE}${formAction}`
+
+  // Step 2: POST naviForm simulating a click on "Erweiterte Suche"
+  const navFormData = new URLSearchParams({
+    naviForm: 'naviForm',
+    'naviForm:erweiterteSucheLink': 'naviForm:erweiterteSucheLink',
+    target: 'erweiterteSucheLink',
+    'javax.faces.ViewState': viewStateWelcome,
+  })
+
+  const navRes = await fetchHR(postUrl, {
+    method: 'POST',
+    headers: {
+      ...browserHeaders(),
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Referer: HR_WELCOME_URL,
+      Cookie: cookies,
+    },
+    body: navFormData.toString(),
+    redirect: 'follow',
+  })
+  if (!navRes.ok) throw new Error(`HR navigation to Erweiterte Suche failed: HTTP ${navRes.status}`)
+
+  cookies = mergeCookies(navRes, cookies)
+  const html = await navRes.text()
   const $ = load(html)
 
-  const viewState = $('input[name="javax.faces.ViewState"]').val() || ''
-  const formId = $('form').first().attr('id') || 'form1'
+  // The search form on erweitertesuche has id="form"; cookieForm/headerForm are unrelated
+  const searchForm = $('#form').length ? $('#form') : $('form').filter((_, el) => $(el).find('[name*="schlagwoerter"]').length > 0).first()
+  const formId = searchForm.attr('id') || 'form'
+  const viewState = searchForm.find('input[name="javax.faces.ViewState"]').val() ||
+    $('input[name="javax.faces.ViewState"]').val() || ''
 
-  console.log('[hr-client] created new session, viewState length:', viewState.length)
+  console.log('[hr-client] created new session via welcome page, formId:', formId, 'viewState length:', viewState.length)
   return { cookies, viewState, formId, html, createdAt: Date.now() }
 }
 
