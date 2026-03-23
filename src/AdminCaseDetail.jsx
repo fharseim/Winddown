@@ -114,107 +114,313 @@ const DOC_TYPE_LABEL = {
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
 
-const MOCK_CASE = {
-  id: 'mock-001',
-  created_at: '2026-03-23T09:15:00Z',
-  status: 'intake',
-  contact_name: 'Sarah Müller',
-  contact_email: 'sarah@techventure.de',
-  contact_phone: '+49 176 5534221',
-  rolle: 'Gründer',
-  firma_name: 'TechVenture GmbH',
-  firma_rechtsform: 'GmbH',
-  firma_gruendungsjahr: 2019,
-  firma_sitz: 'Frankfurt am Main',
-  hrb_nummer: 'HRB 198234',
-  registergericht: 'AG Frankfurt',
-  hr_validated: false,
-  operativ_aktiv: false,
-  operativ_inaktiv_seit: '6 Monate',
-  mitarbeiter: false,
-  mitarbeiter_anzahl: 0,
-  glaeubiger: 'nein',
-  jahresabschluesse_aktuell: false,
-  rueckstand_jahre: 0,
-  steuerberater: false,
-  gesellschafter_anzahl: '2',
-  vsop_esop: 'nein',
-  investoren: true,
-  investoren_typ: 'VC-finanziert',
-  vermoegensfrei: 'ja',
-  satzung_filename: 'satzung_techventure.pdf',
-  calculated_fee: null,
-  internal_notes: '',
+const MOCK_CASES_BY_ID = {
+  'mock-001': {
+    case: {
+      id: 'mock-001',
+      created_at: '2026-03-23T09:15:00Z',
+      status: 'intake',
+      contact_name: 'Sarah Müller',
+      contact_email: 'sarah@techventure.de',
+      contact_phone: '+49 176 5534221',
+      rolle: 'Gründer',
+      firma_name: 'TechVenture GmbH',
+      firma_rechtsform: 'GmbH',
+      firma_gruendungsjahr: 2019,
+      firma_sitz: 'Frankfurt am Main',
+      hrb_nummer: 'HRB 198234',
+      registergericht: 'AG Frankfurt',
+      hr_validated: false,
+      operativ_aktiv: false,
+      operativ_inaktiv_seit: '6 Monate',
+      mitarbeiter: false,
+      mitarbeiter_anzahl: 0,
+      glaeubiger: 'nein',
+      jahresabschluesse_aktuell: false,
+      rueckstand_jahre: 0,
+      steuerberater: false,
+      gesellschafter_anzahl: '2',
+      vsop_esop: 'nein',
+      investoren: true,
+      investoren_typ: 'VC-finanziert',
+      vermoegensfrei: 'ja',
+      satzung_filename: 'satzung_techventure.pdf',
+      calculated_fee: null,
+      internal_notes: '',
+    },
+    documents: [
+      { id: 'd1', type: 'ersteinschaetzung', filename: 'ersteinschaetzung_techventure_2026-03-23.pdf', status: 'freigegeben', created_at: '2026-03-23T10:00:00Z' },
+      { id: 'd2', type: 'kostenangebot', filename: 'kostenangebot_techventure_2026-03-23.pdf', status: 'entwurf', created_at: '2026-03-23T10:30:00Z' },
+    ],
+    activity: [
+      { id: 'a1', created_at: '2026-03-23T09:15:00Z', action: 'Intake-Formular eingereicht', actor: 'system', detail: 'Via Website — Formular vollständig ausgefüllt' },
+      { id: 'a2', created_at: '2026-03-23T09:16:00Z', action: 'Bestätigungs-E-Mail gesendet', actor: 'system', detail: 'An sarah@techventure.de' },
+      { id: 'a3', created_at: '2026-03-23T10:00:00Z', action: 'Ersteinschätzung generiert', actor: 'admin', detail: 'ersteinschaetzung_techventure_2026-03-23.pdf erstellt' },
+      { id: 'a4', created_at: '2026-03-23T10:30:00Z', action: 'Kostenangebot erstellt (Entwurf)', actor: 'admin', detail: 'Kalkuliertes Honorar: noch offen' },
+    ],
+    messages: [
+      { id: 'm1', created_at: '2026-03-23T09:16:00Z', type: 'email_out', subject: 'Ihre Anfrage bei Rise Legal — Eingangsbestätigung', body: 'Sehr geehrte Frau Müller,\n\nwir haben Ihre Anfrage erhalten und werden uns in Kürze bei Ihnen melden.\n\nMit freundlichen Grüßen\nRise Legal', from: 'kontakt@rise-legal.de', to: 'sarah@techventure.de' },
+      { id: 'm2', created_at: '2026-03-23T11:15:00Z', type: 'email_in', subject: 'Re: Ihre Anfrage bei Rise Legal', body: 'Guten Morgen,\n\nvielen Dank für die schnelle Rückmeldung. Haben Sie noch Fragen zur Satzung? Ich kann die Original-Urkunde zusenden.\n\nViele Grüße\nSarah Müller', from: 'sarah@techventure.de', to: 'kontakt@rise-legal.de' },
+    ],
+  },
+
+  'mock-002': {
+    case: {
+      id: 'mock-002',
+      created_at: '2026-03-21T14:30:00Z',
+      status: 'ersteinschaetzung',
+      contact_name: 'Markus Weber',
+      contact_email: 'm.weber@dataflow.io',
+      contact_phone: '+49 89 3456789',
+      rolle: 'Geschäftsführer',
+      firma_name: 'DataFlow Analytics GmbH',
+      firma_rechtsform: 'GmbH',
+      firma_gruendungsjahr: 2018,
+      firma_sitz: 'München',
+      hrb_nummer: 'HRB 187456',
+      registergericht: 'AG München',
+      hr_validated: true,
+      operativ_aktiv: false,
+      operativ_inaktiv_seit: '1 Jahr',
+      mitarbeiter: true,
+      mitarbeiter_anzahl: 3,
+      glaeubiger: 'nein',
+      jahresabschluesse_aktuell: false,
+      rueckstand_jahre: 1,
+      steuerberater: true,
+      gesellschafter_anzahl: '3',
+      vsop_esop: 'nein',
+      investoren: false,
+      investoren_typ: '',
+      vermoegensfrei: 'nein',
+      satzung_filename: 'satzung_dataflow.pdf',
+      calculated_fee: null,
+      internal_notes: 'Steuerberater bereits kontaktiert.',
+    },
+    documents: [
+      { id: 'd1', type: 'ersteinschaetzung', filename: 'ersteinschaetzung_dataflow_2026-03-21.pdf', status: 'versendet', created_at: '2026-03-21T16:00:00Z' },
+    ],
+    activity: [
+      { id: 'a1', created_at: '2026-03-21T14:30:00Z', action: 'Intake-Formular eingereicht', actor: 'system', detail: 'Via Website — Formular vollständig ausgefüllt' },
+      { id: 'a2', created_at: '2026-03-21T14:31:00Z', action: 'Bestätigungs-E-Mail gesendet', actor: 'system', detail: 'An m.weber@dataflow.io' },
+      { id: 'a3', created_at: '2026-03-21T16:00:00Z', action: 'Ersteinschätzung generiert und versendet', actor: 'admin', detail: 'ersteinschaetzung_dataflow_2026-03-21.pdf per E-Mail versandt' },
+      { id: 'a4', created_at: '2026-03-22T09:00:00Z', action: 'Status auf Ersteinschätzung gesetzt', actor: 'admin', detail: 'Reguläres Liquidationsverfahren erforderlich' },
+    ],
+    messages: [
+      { id: 'm1', created_at: '2026-03-21T14:31:00Z', type: 'email_out', subject: 'Ihre Anfrage bei Rise Legal — Eingangsbestätigung', body: 'Sehr geehrter Herr Weber,\n\nwir haben Ihre Anfrage erhalten und werden uns in Kürze bei Ihnen melden.\n\nMit freundlichen Grüßen\nRise Legal', from: 'kontakt@rise-legal.de', to: 'm.weber@dataflow.io' },
+      { id: 'm2', created_at: '2026-03-21T16:00:00Z', type: 'email_out', subject: 'Ersteinschätzung — DataFlow Analytics GmbH', body: 'Sehr geehrter Herr Weber,\n\nerbei übersende ich Ihnen unsere Ersteinschätzung zu Ihrer Liquidationsanfrage.\n\nMit freundlichen Grüßen\nRise Legal', from: 'kontakt@rise-legal.de', to: 'm.weber@dataflow.io' },
+      { id: 'm3', created_at: '2026-03-22T10:45:00Z', type: 'email_in', subject: 'Re: Ersteinschätzung — DataFlow Analytics GmbH', body: 'Guten Tag,\n\nvielen Dank für die Ersteinschätzung. Wir werden uns intern besprechen und dann auf Ihr Angebot zurückkommen.\n\nViele Grüße\nMarkus Weber', from: 'm.weber@dataflow.io', to: 'kontakt@rise-legal.de' },
+    ],
+  },
+
+  'mock-003': {
+    case: {
+      id: 'mock-003',
+      created_at: '2026-03-18T11:45:00Z',
+      status: 'angebot',
+      contact_name: 'Anna Schmidt',
+      contact_email: 'anna@greenlogistics.de',
+      contact_phone: '+49 30 9876543',
+      rolle: 'Gründer',
+      firma_name: 'GreenLogistics UG',
+      firma_rechtsform: 'UG',
+      firma_gruendungsjahr: 2021,
+      firma_sitz: 'Berlin',
+      hrb_nummer: 'HRB 210987',
+      registergericht: 'AG Berlin',
+      hr_validated: true,
+      operativ_aktiv: false,
+      operativ_inaktiv_seit: '3 Monate',
+      mitarbeiter: false,
+      mitarbeiter_anzahl: 0,
+      glaeubiger: 'nein',
+      jahresabschluesse_aktuell: true,
+      rueckstand_jahre: 0,
+      steuerberater: false,
+      gesellschafter_anzahl: '1',
+      vsop_esop: 'nein',
+      investoren: false,
+      investoren_typ: '',
+      vermoegensfrei: 'ja',
+      satzung_filename: 'satzung_greenlogistics.pdf',
+      calculated_fee: 1490,
+      internal_notes: '',
+    },
+    documents: [
+      { id: 'd1', type: 'ersteinschaetzung', filename: 'ersteinschaetzung_greenlogistics_2026-03-18.pdf', status: 'freigegeben', created_at: '2026-03-18T13:00:00Z' },
+      { id: 'd2', type: 'kostenangebot', filename: 'kostenangebot_greenlogistics_2026-03-19.pdf', status: 'freigegeben', created_at: '2026-03-19T09:30:00Z' },
+    ],
+    activity: [
+      { id: 'a1', created_at: '2026-03-18T11:45:00Z', action: 'Intake-Formular eingereicht', actor: 'system', detail: 'Via Website — Formular vollständig ausgefüllt' },
+      { id: 'a2', created_at: '2026-03-18T11:46:00Z', action: 'Bestätigungs-E-Mail gesendet', actor: 'system', detail: 'An anna@greenlogistics.de' },
+      { id: 'a3', created_at: '2026-03-18T13:00:00Z', action: 'Ersteinschätzung generiert', actor: 'admin', detail: 'Vereinfachte Löschung nach §394 FamFG möglich' },
+      { id: 'a4', created_at: '2026-03-19T09:30:00Z', action: 'Kostenangebot erstellt', actor: 'admin', detail: 'Honorar: 1.490 € (Pauschalpreis §394 FamFG)' },
+      { id: 'a5', created_at: '2026-03-19T10:00:00Z', action: 'Status auf Angebot gesetzt', actor: 'admin', detail: '' },
+    ],
+    messages: [
+      { id: 'm1', created_at: '2026-03-18T11:46:00Z', type: 'email_out', subject: 'Ihre Anfrage bei Rise Legal — Eingangsbestätigung', body: 'Sehr geehrte Frau Schmidt,\n\nwir haben Ihre Anfrage erhalten und werden uns in Kürze bei Ihnen melden.\n\nMit freundlichen Grüßen\nRise Legal', from: 'kontakt@rise-legal.de', to: 'anna@greenlogistics.de' },
+      { id: 'm2', created_at: '2026-03-19T10:15:00Z', type: 'email_out', subject: 'Kostenangebot — GreenLogistics UG', body: 'Sehr geehrte Frau Schmidt,\n\nanbei übersende ich Ihnen unser Kostenangebot für die Löschung der GreenLogistics UG.\n\nMit freundlichen Grüßen\nRise Legal', from: 'kontakt@rise-legal.de', to: 'anna@greenlogistics.de' },
+    ],
+  },
+
+  'mock-004': {
+    case: {
+      id: 'mock-004',
+      created_at: '2026-03-10T16:00:00Z',
+      status: 'aktiv',
+      contact_name: 'Thomas Richter',
+      contact_email: 't.richter@cloudbase.tech',
+      contact_phone: '+49 40 1234567',
+      rolle: 'VC-Fonds',
+      firma_name: 'CloudBase Solutions GmbH',
+      firma_rechtsform: 'GmbH',
+      firma_gruendungsjahr: 2017,
+      firma_sitz: 'Hamburg',
+      hrb_nummer: 'HRB 165432',
+      registergericht: 'AG Hamburg',
+      hr_validated: true,
+      operativ_aktiv: false,
+      operativ_inaktiv_seit: '18 Monate',
+      mitarbeiter: false,
+      mitarbeiter_anzahl: 0,
+      glaeubiger: 'ja',
+      jahresabschluesse_aktuell: false,
+      rueckstand_jahre: 2,
+      steuerberater: true,
+      gesellschafter_anzahl: '4',
+      vsop_esop: 'ja',
+      investoren: true,
+      investoren_typ: 'VC-finanziert',
+      vermoegensfrei: 'nein',
+      satzung_filename: 'satzung_cloudbase.pdf',
+      calculated_fee: 3800,
+      internal_notes: 'Gesellschafterversammlung für Auflösungsbeschluss einberufen.',
+    },
+    documents: [
+      { id: 'd1', type: 'ersteinschaetzung', filename: 'ersteinschaetzung_cloudbase_2026-03-10.pdf', status: 'versendet', created_at: '2026-03-10T18:00:00Z' },
+      { id: 'd2', type: 'kostenangebot', filename: 'kostenangebot_cloudbase_2026-03-11.pdf', status: 'versendet', created_at: '2026-03-11T09:00:00Z' },
+      { id: 'd3', type: 'aufloesungsbeschluss', filename: 'aufloesungsbeschluss_cloudbase_2026-03-15.pdf', status: 'entwurf', created_at: '2026-03-15T14:00:00Z' },
+    ],
+    activity: [
+      { id: 'a1', created_at: '2026-03-10T16:00:00Z', action: 'Intake-Formular eingereicht', actor: 'system', detail: 'Via Website — Formular vollständig ausgefüllt' },
+      { id: 'a2', created_at: '2026-03-10T18:00:00Z', action: 'Ersteinschätzung generiert und versendet', actor: 'admin', detail: 'Reguläres Liquidationsverfahren' },
+      { id: 'a3', created_at: '2026-03-11T09:00:00Z', action: 'Kostenangebot versendet', actor: 'admin', detail: 'Honorar: 3.800 € inkl. Jahresabschlüsse' },
+      { id: 'a4', created_at: '2026-03-12T10:30:00Z', action: 'Mandat erteilt', actor: 'system', detail: 'Auftragsbestätigung eingegangen' },
+      { id: 'a5', created_at: '2026-03-15T14:00:00Z', action: 'Auflösungsbeschluss erstellt (Entwurf)', actor: 'admin', detail: 'Zur Prüfung durch Gesellschafter' },
+    ],
+    messages: [
+      { id: 'm1', created_at: '2026-03-10T16:01:00Z', type: 'email_out', subject: 'Ihre Anfrage bei Rise Legal — Eingangsbestätigung', body: 'Sehr geehrter Herr Richter,\n\nwir haben Ihre Anfrage erhalten und werden uns in Kürze bei Ihnen melden.\n\nMit freundlichen Grüßen\nRise Legal', from: 'kontakt@rise-legal.de', to: 't.richter@cloudbase.tech' },
+      { id: 'm2', created_at: '2026-03-12T09:00:00Z', type: 'email_in', subject: 'Re: Kostenangebot — CloudBase Solutions GmbH', body: 'Guten Morgen,\n\nwir erteilen hiermit den Auftrag. Bitte senden Sie uns den Auflösungsbeschluss zur Prüfung.\n\nViele Grüße\nThomas Richter', from: 't.richter@cloudbase.tech', to: 'kontakt@rise-legal.de' },
+    ],
+  },
+
+  'mock-005': {
+    case: {
+      id: 'mock-005',
+      created_at: '2026-03-05T10:20:00Z',
+      status: 'aktiv',
+      contact_name: 'Julia Becker',
+      contact_email: 'julia@finpay.de',
+      contact_phone: '+49 69 8765432',
+      rolle: 'Anwalt',
+      firma_name: 'FinPay GmbH',
+      firma_rechtsform: 'GmbH',
+      firma_gruendungsjahr: 2016,
+      firma_sitz: 'Frankfurt am Main',
+      hrb_nummer: 'HRB 178901',
+      registergericht: 'AG Frankfurt',
+      hr_validated: true,
+      operativ_aktiv: false,
+      operativ_inaktiv_seit: '2 Jahre',
+      mitarbeiter: false,
+      mitarbeiter_anzahl: 0,
+      glaeubiger: 'nein',
+      jahresabschluesse_aktuell: false,
+      rueckstand_jahre: 2,
+      steuerberater: true,
+      gesellschafter_anzahl: '2',
+      vsop_esop: 'nein',
+      investoren: false,
+      investoren_typ: '',
+      vermoegensfrei: 'ja',
+      satzung_filename: 'satzung_finpay.pdf',
+      calculated_fee: 1890,
+      internal_notes: 'Jahresabschlüsse 2023 und 2024 noch ausstehend — Steuerberater klärt.',
+    },
+    documents: [
+      { id: 'd1', type: 'ersteinschaetzung', filename: 'ersteinschaetzung_finpay_2026-03-05.pdf', status: 'versendet', created_at: '2026-03-05T12:00:00Z' },
+      { id: 'd2', type: 'kostenangebot', filename: 'kostenangebot_finpay_2026-03-06.pdf', status: 'versendet', created_at: '2026-03-06T10:00:00Z' },
+      { id: 'd3', type: 'aufloesungsbeschluss', filename: 'aufloesungsbeschluss_finpay_2026-03-12.pdf', status: 'versendet', created_at: '2026-03-12T11:00:00Z' },
+    ],
+    activity: [
+      { id: 'a1', created_at: '2026-03-05T10:20:00Z', action: 'Intake-Formular eingereicht', actor: 'system', detail: 'Via Website — Kontakt als Anwalt' },
+      { id: 'a2', created_at: '2026-03-05T12:00:00Z', action: 'Ersteinschätzung versendet', actor: 'admin', detail: 'Vereinfachte Löschung §394 FamFG möglich' },
+      { id: 'a3', created_at: '2026-03-06T10:00:00Z', action: 'Kostenangebot versendet', actor: 'admin', detail: 'Honorar: 1.890 € inkl. fehlende Jahresabschlüsse' },
+      { id: 'a4', created_at: '2026-03-07T08:30:00Z', action: 'Mandat erteilt', actor: 'system', detail: 'Auftragsbestätigung per E-Mail eingegangen' },
+      { id: 'a5', created_at: '2026-03-12T11:00:00Z', action: 'Auflösungsbeschluss versendet', actor: 'admin', detail: 'Unterzeichnung durch Gesellschafter ausstehend' },
+    ],
+    messages: [
+      { id: 'm1', created_at: '2026-03-05T10:21:00Z', type: 'email_out', subject: 'Ihre Anfrage bei Rise Legal — Eingangsbestätigung', body: 'Sehr geehrte Frau Becker,\n\nwir haben Ihre Anfrage erhalten und werden uns in Kürze bei Ihnen melden.\n\nMit freundlichen Grüßen\nRise Legal', from: 'kontakt@rise-legal.de', to: 'julia@finpay.de' },
+      { id: 'm2', created_at: '2026-03-07T08:30:00Z', type: 'email_in', subject: 'Auftragsbestätigung — FinPay GmbH', body: 'Sehr geehrte Damen und Herren,\n\nim Namen meiner Mandantin erteile ich hiermit den Auftrag zur Durchführung der Löschung der FinPay GmbH.\n\nMit freundlichen Grüßen\nJulia Becker', from: 'julia@finpay.de', to: 'kontakt@rise-legal.de' },
+    ],
+  },
+
+  'mock-006': {
+    case: {
+      id: 'mock-006',
+      created_at: '2026-02-15T08:00:00Z',
+      status: 'abgeschlossen',
+      contact_name: 'Dr. Stefan Lang',
+      contact_email: 's.lang@meditech.de',
+      contact_phone: '+49 221 5432109',
+      rolle: 'Gründer',
+      firma_name: 'MediTech Innovations GmbH',
+      firma_rechtsform: 'GmbH',
+      firma_gruendungsjahr: 2015,
+      firma_sitz: 'Köln',
+      hrb_nummer: 'HRB 145678',
+      registergericht: 'AG Köln',
+      hr_validated: true,
+      operativ_aktiv: false,
+      operativ_inaktiv_seit: '3 Jahre',
+      mitarbeiter: false,
+      mitarbeiter_anzahl: 0,
+      glaeubiger: 'nein',
+      jahresabschluesse_aktuell: true,
+      rueckstand_jahre: 0,
+      steuerberater: true,
+      gesellschafter_anzahl: '1',
+      vsop_esop: 'nein',
+      investoren: false,
+      investoren_typ: '',
+      vermoegensfrei: 'ja',
+      satzung_filename: 'satzung_meditech.pdf',
+      calculated_fee: 1490,
+      internal_notes: 'Abgeschlossen am 14.03.2026. Löschung im Handelsregister eingetragen.',
+    },
+    documents: [
+      { id: 'd1', type: 'ersteinschaetzung', filename: 'ersteinschaetzung_meditech_2026-02-15.pdf', status: 'versendet', created_at: '2026-02-15T10:00:00Z' },
+      { id: 'd2', type: 'kostenangebot', filename: 'kostenangebot_meditech_2026-02-16.pdf', status: 'versendet', created_at: '2026-02-16T09:00:00Z' },
+      { id: 'd3', type: 'aufloesungsbeschluss', filename: 'aufloesungsbeschluss_meditech_2026-02-20.pdf', status: 'versendet', created_at: '2026-02-20T11:00:00Z' },
+      { id: 'd4', type: 'umlaufbeschluss', filename: 'umlaufbeschluss_meditech_2026-03-01.pdf', status: 'versendet', created_at: '2026-03-01T14:00:00Z' },
+    ],
+    activity: [
+      { id: 'a1', created_at: '2026-02-15T08:00:00Z', action: 'Intake-Formular eingereicht', actor: 'system', detail: 'Via Website — Formular vollständig ausgefüllt' },
+      { id: 'a2', created_at: '2026-02-15T10:00:00Z', action: 'Ersteinschätzung versendet', actor: 'admin', detail: 'Vereinfachte Löschung §394 FamFG möglich' },
+      { id: 'a3', created_at: '2026-02-16T09:00:00Z', action: 'Kostenangebot versendet', actor: 'admin', detail: 'Pauschalhonorar: 1.490 €' },
+      { id: 'a4', created_at: '2026-02-17T07:45:00Z', action: 'Mandat erteilt', actor: 'system', detail: 'Auftragsbestätigung von Dr. Lang eingegangen' },
+      { id: 'a5', created_at: '2026-02-20T11:00:00Z', action: 'Auflösungsbeschluss unterzeichnet', actor: 'admin', detail: 'Original per Post erhalten und eingescannt' },
+      { id: 'a6', created_at: '2026-03-01T14:00:00Z', action: 'Umlaufbeschluss erstellt und versendet', actor: 'admin', detail: 'Schlussverteilung bestätigt' },
+      { id: 'a7', created_at: '2026-03-14T09:00:00Z', action: 'Löschung im Handelsregister eingetragen', actor: 'system', detail: 'HRB 145678 AG Köln — Löschung bestätigt' },
+      { id: 'a8', created_at: '2026-03-14T09:30:00Z', action: 'Case abgeschlossen', actor: 'admin', detail: '' },
+    ],
+    messages: [
+      { id: 'm1', created_at: '2026-02-15T08:01:00Z', type: 'email_out', subject: 'Ihre Anfrage bei Rise Legal — Eingangsbestätigung', body: 'Sehr geehrter Herr Dr. Lang,\n\nwir haben Ihre Anfrage erhalten und werden uns in Kürze bei Ihnen melden.\n\nMit freundlichen Grüßen\nRise Legal', from: 'kontakt@rise-legal.de', to: 's.lang@meditech.de' },
+      { id: 'm2', created_at: '2026-02-17T07:45:00Z', type: 'email_in', subject: 'Auftragsbestätigung — MediTech Innovations GmbH', body: 'Sehr geehrte Damen und Herren,\n\nhiermit erteile ich den Auftrag und überweise das Honorar in den nächsten Tagen.\n\nFreundliche Grüße\nDr. Stefan Lang', from: 's.lang@meditech.de', to: 'kontakt@rise-legal.de' },
+      { id: 'm3', created_at: '2026-03-14T09:30:00Z', type: 'email_out', subject: 'Abschlussbestätigung — MediTech Innovations GmbH gelöscht', body: 'Sehr geehrter Herr Dr. Lang,\n\nwir freuen uns, Ihnen mitteilen zu können, dass die MediTech Innovations GmbH heute erfolgreich im Handelsregister gelöscht wurde.\n\nMit freundlichen Grüßen\nRise Legal', from: 'kontakt@rise-legal.de', to: 's.lang@meditech.de' },
+    ],
+  },
 }
-
-const MOCK_DOCUMENTS = [
-  {
-    id: 'd1',
-    type: 'ersteinschaetzung',
-    filename: 'ersteinschaetzung_techventure_2026-03-23.pdf',
-    status: 'freigegeben',
-    created_at: '2026-03-23T10:00:00Z',
-  },
-  {
-    id: 'd2',
-    type: 'kostenangebot',
-    filename: 'kostenangebot_techventure_2026-03-23.pdf',
-    status: 'entwurf',
-    created_at: '2026-03-23T10:30:00Z',
-  },
-]
-
-const MOCK_ACTIVITY = [
-  {
-    id: 'a1',
-    created_at: '2026-03-23T09:15:00Z',
-    action: 'Intake-Formular eingereicht',
-    actor: 'system',
-    detail: 'Via Website — Formular vollständig ausgefüllt',
-  },
-  {
-    id: 'a2',
-    created_at: '2026-03-23T09:16:00Z',
-    action: 'Bestätigungs-E-Mail gesendet',
-    actor: 'system',
-    detail: 'An sarah@techventure.de',
-  },
-  {
-    id: 'a3',
-    created_at: '2026-03-23T10:00:00Z',
-    action: 'Ersteinschätzung generiert',
-    actor: 'admin',
-    detail: 'ersteinschaetzung_techventure_2026-03-23.pdf erstellt',
-  },
-  {
-    id: 'a4',
-    created_at: '2026-03-23T10:30:00Z',
-    action: 'Kostenangebot erstellt (Entwurf)',
-    actor: 'admin',
-    detail: 'Kalkuliertes Honorar: noch offen',
-  },
-]
-
-const MOCK_MESSAGES = [
-  {
-    id: 'm1',
-    created_at: '2026-03-23T09:16:00Z',
-    type: 'email_out',
-    subject: 'Ihre Anfrage bei Rise Legal — Eingangsbestätigung',
-    body: 'Sehr geehrte Frau Müller,\n\nwir haben Ihre Anfrage erhalten und werden uns in Kürze bei Ihnen melden.\n\nMit freundlichen Grüßen\nRise Legal',
-    from: 'kontakt@rise-legal.de',
-    to: 'sarah@techventure.de',
-  },
-  {
-    id: 'm2',
-    created_at: '2026-03-23T11:15:00Z',
-    type: 'email_in',
-    subject: 'Re: Ihre Anfrage bei Rise Legal',
-    body: 'Guten Morgen,\n\nvielen Dank für die schnelle Rückmeldung. Haben Sie noch Fragen zur Satzung? Ich kann die Original-Urkunde zusenden.\n\nViele Grüße\nSarah Müller',
-    from: 'sarah@techventure.de',
-    to: 'kontakt@rise-legal.de',
-  },
-]
 
 // ─── Components ───────────────────────────────────────────────────────────────
 
@@ -265,12 +471,15 @@ function formatDateShort(iso) {
 // ─── Email Modal ──────────────────────────────────────────────────────────────
 
 function EmailModal({ doc, caseData, onClose, onSent }) {
+  const docLabel = doc ? (DOC_TYPE_LABEL[doc.type] ?? doc.type) : null
   const [to, setTo] = useState(caseData.contact_email)
   const [subject, setSubject] = useState(
-    `${DOC_TYPE_LABEL[doc.type] ?? doc.type} – ${caseData.firma_name}`
+    docLabel ? `${docLabel} – ${caseData.firma_name}` : `Ihre Anfrage – ${caseData.firma_name}`
   )
   const [body, setBody] = useState(
-    `Sehr geehrte/r ${caseData.contact_name},\n\nanbei übersende ich Ihnen ${DOC_TYPE_LABEL[doc.type] ?? doc.type} für die ${caseData.firma_name}.\n\nBitte prüfen Sie das Dokument und melden Sie sich bei Fragen.\n\nMit freundlichen Grüßen\nRise Legal`
+    docLabel
+      ? `Sehr geehrte/r ${caseData.contact_name},\n\nanbei übersende ich Ihnen ${docLabel} für die ${caseData.firma_name}.\n\nBitte prüfen Sie das Dokument und melden Sie sich bei Fragen.\n\nMit freundlichen Grüßen\nRise Legal`
+      : `Sehr geehrte/r ${caseData.contact_name},\n\n\n\nMit freundlichen Grüßen\nRise Legal`
   )
 
   function handleSend() {
@@ -296,12 +505,14 @@ function EmailModal({ doc, caseData, onClose, onSent }) {
 
         <div className="px-7 py-6 space-y-5">
           {/* Attachment */}
-          <div className="flex items-center gap-3 p-4 bg-rise-bg rounded-xl border border-rise-border">
-            <svg className="w-5 h-5 text-rise-muted flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13" />
-            </svg>
-            <span className="text-sm text-rise-dark font-medium truncate">{doc.filename}</span>
-          </div>
+          {doc && (
+            <div className="flex items-center gap-3 p-4 bg-rise-bg rounded-xl border border-rise-border">
+              <svg className="w-5 h-5 text-rise-muted flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13" />
+              </svg>
+              <span className="text-sm text-rise-dark font-medium truncate">{doc.filename}</span>
+            </div>
+          )}
 
           {/* To */}
           <div>
@@ -388,11 +599,18 @@ function Toast({ message, variant = 'success', onClose }) {
 
 export default function AdminCaseDetail() {
   const { id } = useParams()
+  const caseEntry = MOCK_CASES_BY_ID[id] ?? MOCK_CASES_BY_ID['mock-001']
+  const c = caseEntry.case
+  const caseDocs = caseEntry.documents
+  const caseActivity = caseEntry.activity
+  const caseMessages = caseEntry.messages
+
   const [tab, setTab] = useState('uebersicht')
-  const [status, setStatus] = useState(MOCK_CASE.status)
-  const [notes, setNotes] = useState(MOCK_CASE.internal_notes)
+  const [status, setStatus] = useState(c.status)
+  const [notes, setNotes] = useState(c.internal_notes)
   const [loadingDoc, setLoadingDoc] = useState(null)
   const [emailModal, setEmailModal] = useState(null)
+  const [showEmailModal, setShowEmailModal] = useState(false)
   const [toast, setToast] = useState(null)
 
   // HR document state
@@ -400,9 +618,6 @@ export default function AdminCaseDetail() {
   const [hrDocsLoading, setHrDocsLoading] = useState(false)
   const [hrDocsError, setHrDocsError] = useState(null)
   const [hrDownloading, setHrDownloading] = useState(null) // key of currently downloading doc
-
-  // In production: fetch case by `id` from Supabase
-  const c = MOCK_CASE
 
   function showToast(msg, variant = 'success') {
     setToast({ msg, variant })
@@ -488,7 +703,7 @@ export default function AdminCaseDetail() {
 
               {/* Quick actions */}
               <button
-                onClick={() => setTab('kommunikation')}
+                onClick={() => setShowEmailModal(true)}
                 className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium font-sans text-rise-muted bg-white border border-rise-border rounded-xl hover:bg-rise-bg transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -779,11 +994,11 @@ export default function AdminCaseDetail() {
                   <div className="px-6 py-4 border-l-4 border-rise-coral bg-rise-bg-warm">
                     <p className="text-xs font-medium text-rise-muted uppercase tracking-widest">Vorhandene Dokumente</p>
                   </div>
-                  {MOCK_DOCUMENTS.length === 0 ? (
+                  {caseDocs.length === 0 ? (
                     <p className="px-6 py-10 text-center text-sm text-rise-muted">Keine Dokumente vorhanden.</p>
                   ) : (
                     <div className="divide-y divide-rise-border">
-                      {MOCK_DOCUMENTS.map(d => (
+                      {caseDocs.map(d => (
                         <div key={d.id} className="flex items-center gap-5 px-6 py-5 hover:bg-rise-bg transition-colors">
                           {/* Icon */}
                           <div className="w-10 h-10 rounded-xl bg-rise-bg flex items-center justify-center flex-shrink-0">
@@ -834,13 +1049,13 @@ export default function AdminCaseDetail() {
             {tab === 'aktivitaet' && (
               <div className="bg-white rounded-2xl border border-rise-border shadow-sm p-7">
                 <div className="space-y-0">
-                  {MOCK_ACTIVITY.map((a, i) => (
+                  {caseActivity.map((a, i) => (
                     <div key={a.id} className="flex gap-5">
                       <div className="flex flex-col items-center">
                         <div className={`w-3.5 h-3.5 rounded-full mt-1 flex-shrink-0 ring-2 ring-white ${
                           a.actor === 'admin' ? 'bg-rise-dark' : 'bg-rise-muted-light'
                         }`} />
-                        {i < MOCK_ACTIVITY.length - 1 && (
+                        {i < caseActivity.length - 1 && (
                           <div className="w-px bg-rise-border flex-1 my-1.5" />
                         )}
                       </div>
@@ -877,7 +1092,7 @@ export default function AdminCaseDetail() {
                 </div>
 
                 <div className="space-y-4">
-                  {MOCK_MESSAGES.map(m => (
+                  {caseMessages.map(m => (
                     <div
                       key={m.id}
                       className="bg-white rounded-2xl border border-rise-border shadow-sm overflow-hidden"
@@ -971,12 +1186,22 @@ export default function AdminCaseDetail() {
         </div>
       </div>
 
-      {/* Email modal */}
+      {/* Email modal — from document list */}
       {emailModal && (
         <EmailModal
           doc={emailModal}
           caseData={c}
           onClose={() => setEmailModal(null)}
+          onSent={() => showToast('E-Mail wurde erfolgreich gesendet.', 'success')}
+        />
+      )}
+
+      {/* Email modal — from header "E-Mail senden" button */}
+      {showEmailModal && (
+        <EmailModal
+          doc={null}
+          caseData={c}
+          onClose={() => setShowEmailModal(false)}
           onSent={() => showToast('E-Mail wurde erfolgreich gesendet.', 'success')}
         />
       )}

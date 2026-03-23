@@ -415,8 +415,6 @@ export default async function handler(req, res) {
       total: results.length,
       query: q,
       source: 'dataset',
-      fallback: true,
-      error: err.message,
     })
   }
 
