@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import AdminLayout from './AdminLayout'
 
@@ -345,6 +345,8 @@ export default function AdminCaseDetail() {
   const [loadingDoc, setLoadingDoc] = useState(null)
   const [emailModal, setEmailModal] = useState(null)
   const [toast, setToast] = useState(null)
+  const [hrDocs, setHrDocs] = useState(null)       // null | { loading } | { available_types, dokumente, error }
+  const [hrDocsLoading, setHrDocsLoading] = useState(false)
 
   // In production: fetch case by `id` from Supabase
   const c = MOCK_CASE
@@ -353,6 +355,37 @@ export default function AdminCaseDetail() {
     setToast(msg)
     setTimeout(() => setToast(null), 4000)
   }
+
+  const fetchHrDocuments = useCallback(async () => {
+    if (!c.hrb_nummer || !c.registergericht) return
+    setHrDocsLoading(true)
+
+    // Parse "HRB 198234" → art=HRB, nummer=198234
+    // Parse "AG Frankfurt" → gericht=Frankfurt am Main
+    const hrbMatch  = c.hrb_nummer.match(/^(HRB|HRA|PR|GnR|VR)\s+(.+)$/i)
+    const gerichtRaw = c.registergericht.replace(/^AG\s+/i, '').trim()
+
+    if (!hrbMatch) {
+      setHrDocs({ error: 'HRB-Nummer konnte nicht geparst werden.' })
+      setHrDocsLoading(false)
+      return
+    }
+
+    const registerArt    = hrbMatch[1].toUpperCase()
+    const registerNummer = hrbMatch[2].trim()
+    const registerGericht = gerichtRaw
+
+    try {
+      const params = new URLSearchParams({ registerArt, registerNummer, registerGericht })
+      const res    = await fetch(`/api/hr-documents?${params}`)
+      const data   = await res.json()
+      setHrDocs(data.documents || { available_types: [], dokumente: [] })
+    } catch (err) {
+      setHrDocs({ error: err.message, available_types: [], dokumente: [] })
+    } finally {
+      setHrDocsLoading(false)
+    }
+  }, [c.hrb_nummer, c.registergericht])
 
   const TABS = [
     { key: 'uebersicht',     label: 'Übersicht' },
@@ -611,6 +644,133 @@ export default function AdminCaseDetail() {
                     </div>
                   )}
                 </div>
+
+                {/* Handelsregister-Dokumente card */}
+                {c.hrb_nummer && c.registergericht && (
+                  <div className="bg-white rounded-2xl border border-rise-border shadow-sm overflow-hidden">
+                    <div className="px-6 py-4 border-l-4 border-blue-400 bg-blue-50/60 flex items-center justify-between">
+                      <div>
+                        <p className="text-xs font-medium text-blue-700 uppercase tracking-widest">Handelsregister-Dokumente</p>
+                        <p className="text-xs text-blue-500 mt-0.5">{c.hrb_nummer} · {c.registergericht}</p>
+                      </div>
+                      {hrDocs && !hrDocsLoading && (
+                        <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-blue-100 text-blue-700">
+                          {hrDocs.available_types?.length ?? 0} Typen
+                          {hrDocs.dokumente?.length > 0 && ` · ${hrDocs.dokumente.length} Dok.`}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="px-6 py-5">
+                      {!hrDocs && !hrDocsLoading && (
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm text-rise-muted">
+                            Verfügbare Dokumente aus dem Handelsregister abrufen.
+                          </p>
+                          <button
+                            onClick={fetchHrDocuments}
+                            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium font-sans text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors"
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m.75 12l3 3m0 0l3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                            </svg>
+                            Verfügbare Dokumente abrufen
+                          </button>
+                        </div>
+                      )}
+
+                      {hrDocsLoading && (
+                        <div className="flex items-center gap-3 py-2">
+                          <svg className="w-4 h-4 animate-spin text-blue-500" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                          </svg>
+                          <span className="text-sm text-rise-muted">Handelsregister wird abgefragt…</span>
+                        </div>
+                      )}
+
+                      {hrDocs && !hrDocsLoading && (
+                        <div className="space-y-4">
+                          {/* Available document types */}
+                          {hrDocs.available_types?.length > 0 && (
+                            <div>
+                              <p className="text-xs text-rise-muted uppercase tracking-wider mb-2">Verfügbare Typen</p>
+                              <div className="flex flex-wrap gap-2">
+                                {hrDocs.available_types.map(t => (
+                                  <span
+                                    key={t}
+                                    className="inline-block px-2.5 py-1 rounded-lg text-xs font-mono font-medium bg-blue-50 text-blue-700 border border-blue-100"
+                                    title={hrDocs.available_labels?.[t] || t}
+                                  >
+                                    {t}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Document list from DK tree */}
+                          {hrDocs.dokumente?.length > 0 && (
+                            <div>
+                              <p className="text-xs text-rise-muted uppercase tracking-wider mb-2">Dokumente</p>
+                              <div className="divide-y divide-rise-border rounded-xl border border-rise-border overflow-hidden">
+                                {hrDocs.dokumente.map(doc => (
+                                  <div key={doc.id} className="flex items-center gap-4 px-4 py-3 hover:bg-rise-bg transition-colors">
+                                    <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                                      <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                      </svg>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-medium text-rise-dark truncate">{doc.name}</p>
+                                      <div className="flex items-center gap-2 mt-0.5">
+                                        <span className="text-xs text-rise-muted">{doc.type}</span>
+                                        {doc.date && (
+                                          <>
+                                            <span className="text-rise-border">·</span>
+                                            <span className="text-xs text-rise-muted">
+                                              {new Date(doc.date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                            </span>
+                                          </>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div title="Download kommt in Phase C" className="flex-shrink-0">
+                                      <button
+                                        disabled
+                                        className="px-3 py-1.5 text-xs font-medium font-sans text-rise-muted-light bg-rise-bg border border-rise-border rounded-lg cursor-not-allowed"
+                                        title="Kommt bald — Phase C"
+                                      >
+                                        Download
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {hrDocs.available_types?.length === 0 && !hrDocs.error && (
+                            <p className="text-sm text-rise-muted">
+                              Keine Dokumente im Handelsregister gefunden. Möglicherweise ist der Eintrag nicht online verfügbar.
+                            </p>
+                          )}
+
+                          {hrDocs.error && (
+                            <p className="text-sm text-red-600">{hrDocs.error}</p>
+                          )}
+
+                          <button
+                            onClick={fetchHrDocuments}
+                            className="text-xs text-rise-muted hover:text-rise-dark transition-colors underline underline-offset-2"
+                          >
+                            Erneut abrufen
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

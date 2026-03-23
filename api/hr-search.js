@@ -2,6 +2,10 @@ import { load } from 'cheerio'
 import { readFileSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
+import {
+  getSession,
+  searchByName,
+} from './lib/hr-client.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -41,36 +45,19 @@ function checkAuth(req) {
 
 // ─── Scope filter ─────────────────────────────────────────────────────────────
 
-// Only GmbH, UG, Personengesellschaften — no AG, SE, KGaA
-const ALLOWED_RECHTSFORMEN = [
-  'gmbh',
-  'ug',
-  'gmbh & co. kg',
-  'gmbh & co kg',
-  'kg',
-  'ohg',
-  'partg',
-  'partg mbb',
-  'partgmbb',
-  'eg',
-]
-
 function isInScope(name, registerArt) {
   if (!name) return false
   const lower = name.toLowerCase()
-  // Exclude AG, SE, KGaA by name suffix
   if (/\bag\b/.test(lower)) return false
   if (/\bse\b/.test(lower) && !/\bgmbh\b/.test(lower)) return false
   if (/\bkgaa\b/.test(lower)) return false
   if (/kommanditgesellschaft auf aktien/.test(lower)) return false
-  // Include if contains a known in-scope form
   if (/\bgmbh\b/.test(lower)) return true
   if (/\bug\b/.test(lower)) return true
   if (/\bkg\b/.test(lower)) return true
   if (/\bohg\b/.test(lower)) return true
   if (/\bpartg\b/.test(lower)) return true
   if (/\beg\b/.test(lower) && !/\bvere/.test(lower)) return true
-  // Register-based: HRB = GmbH/UG/AG/SE; HRA = KG/OHG; PR = PartG; GnR = eG
   if (registerArt === 'HRA') return true
   if (registerArt === 'PR') return true
   if (registerArt === 'GnR') return true
@@ -79,16 +66,13 @@ function isInScope(name, registerArt) {
 
 // ─── In-memory cache ─────────────────────────────────────────────────────────
 
-const cache = new Map() // query → { ts, results }
+const cache = new Map()
 const CACHE_TTL = 60 * 60 * 1000 // 1 hour
 
 function getCached(key) {
   const entry = cache.get(key)
   if (!entry) return null
-  if (Date.now() - entry.ts > CACHE_TTL) {
-    cache.delete(key)
-    return null
-  }
+  if (Date.now() - entry.ts > CACHE_TTL) { cache.delete(key); return null }
   return entry.results
 }
 
@@ -163,98 +147,9 @@ function searchDataset(q) {
 
 // ─── Live Handelsregister search ──────────────────────────────────────────────
 
-const HR_BASE = 'https://www.handelsregister.de'
-const HR_SEARCH_URL = `${HR_BASE}/rp_web/erweitertesuche.xhtml`
-
-const BROWSER_HEADERS = {
-  'User-Agent':
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-  Accept:
-    'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-  'Accept-Language': 'de-DE,de;q=0.9,en;q=0.8',
-  'Accept-Encoding': 'gzip, deflate, br',
-  Connection: 'keep-alive',
-}
-
-async function fetchWithTimeout(url, opts, timeoutMs = 12000) {
-  const ctrl = new AbortController()
-  const timer = setTimeout(() => ctrl.abort(), timeoutMs)
-  try {
-    const res = await fetch(url, { ...opts, signal: ctrl.signal })
-    return res
-  } finally {
-    clearTimeout(timer)
-  }
-}
-
 async function searchHandelsregister(query, schlagwortOptionen = '2') {
-  // Step 1: GET the search page to obtain JSF ViewState + cookies
-  let viewState = ''
-  let cookies = ''
-
-  try {
-    const getRes = await fetchWithTimeout(HR_SEARCH_URL, {
-      headers: { ...BROWSER_HEADERS },
-      redirect: 'follow',
-    })
-    if (!getRes.ok) throw new Error(`GET ${getRes.status}`)
-
-    // Collect cookies
-    const setCookie = getRes.headers.getSetCookie?.() ?? []
-    if (setCookie.length) {
-      cookies = setCookie.map(c => c.split(';')[0]).join('; ')
-    } else {
-      const raw = getRes.headers.get('set-cookie') || ''
-      cookies = raw
-        .split(',')
-        .map(c => c.trim().split(';')[0])
-        .join('; ')
-    }
-
-    const html = await getRes.text()
-    const $ = load(html)
-
-    // Extract javax.faces.ViewState
-    viewState = $('input[name="javax.faces.ViewState"]').val() || ''
-    if (!viewState) {
-      // Try alternate attribute
-      viewState = $('[id$="ViewState"]').val() || ''
-    }
-  } catch (err) {
-    console.warn('[hr-search] GET phase failed:', err.message)
-    throw err
-  }
-
-  // Step 2: POST the search form
-  const formData = new URLSearchParams({
-    'form1': 'form1',
-    'form1:schlagwoerter': query,
-    'form1:schlagwortOptionen': schlagwortOptionen,
-    'form1:btnSuche': 'Suche',
-    'javax.faces.ViewState': viewState,
-  })
-
-  let resultsHtml = ''
-  try {
-    const postRes = await fetchWithTimeout(HR_SEARCH_URL, {
-      method: 'POST',
-      headers: {
-        ...BROWSER_HEADERS,
-        'Content-Type': 'application/x-www-form-urlencoded',
-        Referer: HR_SEARCH_URL,
-        Cookie: cookies,
-      },
-      body: formData.toString(),
-      redirect: 'follow',
-    })
-    if (!postRes.ok) throw new Error(`POST ${postRes.status}`)
-    resultsHtml = await postRes.text()
-  } catch (err) {
-    console.warn('[hr-search] POST phase failed:', err.message)
-    throw err
-  }
-
-  // Step 3: Parse results
+  const session     = await getSession()
+  const resultsHtml = await searchByName(query, session, schlagwortOptionen)
   return parseResults(resultsHtml, query)
 }
 
@@ -262,35 +157,32 @@ function parseResults(html, query) {
   const $ = load(html)
   const companies = []
 
-  // The results table — handelsregister.de uses a table with id containing "ergebnisTable"
-  // Row structure: Firmennamen | Ort | Registergericht | Registerart | Registernummer | Status
   const table = $('table[id*="ergebnis"], table[id*="result"], #ergebnisse table, .ergebnisTabelle').first()
 
   if (table.length) {
     table.find('tr').each((i, row) => {
-      if (i === 0) return // skip header
+      if (i === 0) return
       const cells = $(row).find('td')
       if (cells.length < 4) return
 
       const firma_name = $(cells[0]).text().trim()
       if (!firma_name) return
 
-      const ort = $(cells[1]).text().trim()
-      const gericht = $(cells[2]).text().trim()
-      const regText = $(cells[3]).text().trim()
+      const ort      = $(cells[1]).text().trim()
+      const gericht  = $(cells[2]).text().trim()
+      const regText  = $(cells[3]).text().trim()
       const regNummer = $(cells[4])?.text?.().trim() || ''
       const statusText = $(cells[5])?.text?.().trim() || ''
 
-      // Parse register art from combined field or separate cells
-      let register_art = ''
+      let register_art    = ''
       let register_nummer = regNummer || regText
 
       const regMatch = regText.match(/^(HRB|HRA|PR|GnR|VR)\s*(.*)/)
       if (regMatch) {
-        register_art = regMatch[1]
+        register_art    = regMatch[1]
         register_nummer = regMatch[2] || regNummer
       } else if (['HRB', 'HRA', 'PR', 'GnR', 'VR'].includes(regText)) {
-        register_art = regText
+        register_art    = regText
         register_nummer = regNummer
       }
 
@@ -298,9 +190,7 @@ function parseResults(html, query) {
 
       const status = /aktiv|active|eingetragen/i.test(statusText)
         ? 'aktiv'
-        : statusText
-          ? 'gelöscht'
-          : 'aktiv'
+        : statusText ? 'gelöscht' : 'aktiv'
 
       companies.push({
         id: `hr_${register_art}_${register_nummer}_${gericht}`.replace(/\s+/g, '_'),
@@ -316,7 +206,7 @@ function parseResults(html, query) {
     })
   }
 
-  // Fallback: try to find data in any table if primary selector missed
+  // Fallback: scan all tables
   if (companies.length === 0) {
     $('table').each((_, tbl) => {
       const rows = $(tbl).find('tr')
@@ -331,12 +221,11 @@ function parseResults(html, query) {
         const firma_name = $(cells[0]).text().trim()
         if (!firma_name || firma_name.length < 2) return
 
-        const allText = $(row).text()
-        const regMatch = allText.match(/\b(HRB|HRA|PR|GnR|VR)\s+(\S+)/i)
-        const register_art = regMatch ? regMatch[1].toUpperCase() : ''
+        const allText   = $(row).text()
+        const regMatch  = allText.match(/\b(HRB|HRA|PR|GnR|VR)\s+(\S+)/i)
+        const register_art    = regMatch ? regMatch[1].toUpperCase() : ''
         const register_nummer = regMatch ? regMatch[2] : ''
-
-        const gerichtMatch = allText.match(/AG\s+\w+/i)
+        const gerichtMatch    = allText.match(/AG\s+\w+/i)
         const register_gericht = gerichtMatch ? gerichtMatch[0] : ''
 
         if (!isInScope(firma_name, register_art)) return
@@ -354,7 +243,7 @@ function parseResults(html, query) {
         })
       })
 
-      if (companies.length > 0) return false // break $.each
+      if (companies.length > 0) return false
     })
   }
 
@@ -395,7 +284,7 @@ export default async function handler(req, res) {
   }
 
   const cacheKey = `${q.trim().toLowerCase()}:${schlagwortOptionen}`
-  const cached = getCached(cacheKey)
+  const cached   = getCached(cacheKey)
   if (cached) {
     console.log(`[hr-search] cache hit for "${q}"`)
     return res.status(200).json({ results: cached, total: cached.length, query: q, source: 'handelsregister.de', cached: true })
@@ -404,11 +293,10 @@ export default async function handler(req, res) {
   let results = []
   try {
     results = await searchHandelsregister(q.trim(), schlagwortOptionen)
-    console.log(`[hr-search] got ${results.length} results from handelsregister.de for "${q}"`)
+    console.log(`[hr-search] ${results.length} results from handelsregister.de for "${q}"`)
     setCached(cacheKey, results)
   } catch (err) {
     console.warn(`[hr-search] live search failed for "${q}": ${err.message} — falling back to dataset`)
-    // Fallback to static dataset
     results = searchDataset(q).map(c => ({ ...c, source: 'dataset' }))
     return res.status(200).json({
       results,
