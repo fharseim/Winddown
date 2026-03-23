@@ -11,6 +11,16 @@ import AdminLogin from './AdminLogin.jsx'
 import AdminDashboard from './AdminDashboard.jsx'
 import AdminCaseDetail from './AdminCaseDetail.jsx'
 
+const AdminSettings = () => (
+  <div style={{minHeight:'100vh',background:'#FAFAF9',display:'flex',alignItems:'center',justifyContent:'center'}}>
+    <div style={{textAlign:'center'}}>
+      <h1 style={{fontFamily:'"DM Serif Display",serif',fontSize:'2rem',color:'#1C1917'}}>Einstellungen</h1>
+      <p style={{color:'#78716C',marginTop:'1rem'}}>Demnächst verfügbar</p>
+      <a href="/admin" style={{color:'#E85D40',marginTop:'2rem',display:'inline-block'}}>← Zurück zur Übersicht</a>
+    </div>
+  </div>
+);
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
@@ -22,6 +32,8 @@ createRoot(document.getElementById('root')).render(
         <Route path="/datenschutz" element={<DatenschutzPage />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/cases" element={<AdminDashboard />} />
+        <Route path="/admin/einstellungen" element={<AdminSettings />} />
         <Route path="/admin/case/:id" element={<AdminCaseDetail />} />
       </Routes>
     </BrowserRouter>
