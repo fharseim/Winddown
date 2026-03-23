@@ -2,6 +2,35 @@ import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import AdminLayout from './AdminLayout'
 
+// ─── Document generation ──────────────────────────────────────────────────────
+
+async function downloadDocument(type, caseData, setLoadingDoc) {
+  setLoadingDoc(type)
+  try {
+    const res = await fetch('/api/generate-document', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, caseData }),
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Unbekannter Fehler' }))
+      alert(`Fehler: ${err.error || res.statusText}`)
+      return
+    }
+    const blob = await res.blob()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = res.headers.get('Content-Disposition')?.match(/filename="([^"]+)"/)?.[1] ?? `${type}.docx`
+    a.click()
+    URL.revokeObjectURL(url)
+  } catch (err) {
+    alert(`Netzwerkfehler: ${err.message}`)
+  } finally {
+    setLoadingDoc(null)
+  }
+}
+
 const STATUS_OPTIONS = [
   { value: 'intake',            label: 'Intake' },
   { value: 'ersteinschaetzung', label: 'Ersteinschätzung' },
@@ -106,6 +135,7 @@ export default function AdminCaseDetail() {
   const [tab, setTab] = useState('uebersicht')
   const [status, setStatus] = useState(MOCK_CASE.status)
   const [notes, setNotes] = useState(MOCK_CASE.internal_notes)
+  const [loadingDoc, setLoadingDoc] = useState(null)
 
   // In production: fetch case by `id` from Supabase
   const c = MOCK_CASE
@@ -248,42 +278,85 @@ export default function AdminCaseDetail() {
 
             {/* Dokumente */}
             {tab === 'dokumente' && (
-              <div className="bg-white rounded-xl border border-rise-border overflow-hidden">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-rise-border">
-                      <th className="px-5 py-3 text-left font-sans text-xs font-medium text-rise-muted uppercase tracking-wide">Dokument</th>
-                      <th className="px-5 py-3 text-left font-sans text-xs font-medium text-rise-muted uppercase tracking-wide">Typ</th>
-                      <th className="px-5 py-3 text-left font-sans text-xs font-medium text-rise-muted uppercase tracking-wide">Status</th>
-                      <th className="px-5 py-3 text-left font-sans text-xs font-medium text-rise-muted uppercase tracking-wide">Erstellt</th>
-                      <th className="px-5 py-3" />
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-rise-border">
-                    {MOCK_DOCUMENTS.map(d => (
-                      <tr key={d.id} className="hover:bg-rise-bg/50 transition-colors">
-                        <td className="px-5 py-3.5 font-sans text-sm text-rise-dark">{d.filename}</td>
-                        <td className="px-5 py-3.5 font-sans text-sm text-rise-muted">{d.type}</td>
-                        <td className="px-5 py-3.5">
-                          <span className={`inline-block px-2.5 py-0.5 rounded-full font-sans text-xs font-medium ${DOC_STATUS_COLOR[d.status]}`}>
-                            {d.status}
-                          </span>
-                        </td>
-                        <td className="px-5 py-3.5 font-sans text-sm text-rise-muted whitespace-nowrap">
-                          {formatDate(d.created_at)}
-                        </td>
-                        <td className="px-5 py-3.5 text-right">
-                          <button className="font-sans text-xs font-medium text-rise-dark hover:text-rise-coral transition-colors">
-                            Download
-                          </button>
-                        </td>
-                      </tr>
+              <div className="space-y-4">
+                {/* Generate buttons */}
+                <div className="bg-white rounded-xl border border-rise-border p-5">
+                  <p className="font-sans text-xs font-medium text-rise-muted uppercase tracking-wide mb-4">Dokument erstellen</p>
+                  <div className="flex flex-wrap gap-3">
+                    {[
+                      { type: 'ersteinschaetzung',    label: 'Ersteinschätzung generieren' },
+                      { type: 'kostenangebot',         label: 'Kostenangebot generieren' },
+                      { type: 'aufloesungsbeschluss',  label: 'Auflösungsbeschluss generieren' },
+                    ].map(({ type, label }) => (
+                      <button
+                        key={type}
+                        onClick={() => downloadDocument(type, c, setLoadingDoc)}
+                        disabled={loadingDoc !== null}
+                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border font-sans text-sm font-medium transition-colors ${
+                          loadingDoc === type
+                            ? 'bg-rise-bg border-rise-border text-rise-muted cursor-not-allowed'
+                            : 'bg-white border-rise-dark text-rise-dark hover:bg-rise-dark hover:text-white'
+                        }`}
+                      >
+                        {loadingDoc === type ? (
+                          <>
+                            <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                            </svg>
+                            Generiere…
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m.75 12l3 3m0 0l3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                            </svg>
+                            {label}
+                          </>
+                        )}
+                      </button>
                     ))}
-                  </tbody>
-                </table>
-                {MOCK_DOCUMENTS.length === 0 && (
-                  <p className="px-5 py-8 text-center font-sans text-sm text-rise-muted">Keine Dokumente vorhanden.</p>
-                )}
+                  </div>
+                </div>
+
+                {/* Existing documents table */}
+                <div className="bg-white rounded-xl border border-rise-border overflow-hidden">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-rise-border">
+                        <th className="px-5 py-3 text-left font-sans text-xs font-medium text-rise-muted uppercase tracking-wide">Dokument</th>
+                        <th className="px-5 py-3 text-left font-sans text-xs font-medium text-rise-muted uppercase tracking-wide">Typ</th>
+                        <th className="px-5 py-3 text-left font-sans text-xs font-medium text-rise-muted uppercase tracking-wide">Status</th>
+                        <th className="px-5 py-3 text-left font-sans text-xs font-medium text-rise-muted uppercase tracking-wide">Erstellt</th>
+                        <th className="px-5 py-3" />
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-rise-border">
+                      {MOCK_DOCUMENTS.map(d => (
+                        <tr key={d.id} className="hover:bg-rise-bg/50 transition-colors">
+                          <td className="px-5 py-3.5 font-sans text-sm text-rise-dark">{d.filename}</td>
+                          <td className="px-5 py-3.5 font-sans text-sm text-rise-muted">{d.type}</td>
+                          <td className="px-5 py-3.5">
+                            <span className={`inline-block px-2.5 py-0.5 rounded-full font-sans text-xs font-medium ${DOC_STATUS_COLOR[d.status]}`}>
+                              {d.status}
+                            </span>
+                          </td>
+                          <td className="px-5 py-3.5 font-sans text-sm text-rise-muted whitespace-nowrap">
+                            {formatDate(d.created_at)}
+                          </td>
+                          <td className="px-5 py-3.5 text-right">
+                            <button className="font-sans text-xs font-medium text-rise-dark hover:text-rise-coral transition-colors">
+                              Download
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {MOCK_DOCUMENTS.length === 0 && (
+                    <p className="px-5 py-8 text-center font-sans text-sm text-rise-muted">Keine Dokumente vorhanden.</p>
+                  )}
+                </div>
               </div>
             )}
 
