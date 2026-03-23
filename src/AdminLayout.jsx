@@ -34,23 +34,23 @@ export default function AdminLayout({ children }) {
   return (
     <div className="min-h-screen flex">
       {/* Sidebar */}
-      <aside className="w-56 bg-[#1C1917] flex flex-col flex-shrink-0">
-        <div className="px-6 py-5 border-b border-white/8">
-          <span className="font-serif text-white tracking-logo text-xl uppercase">Rise</span>
-          <span className="ml-2 font-sans text-white/40 text-xs uppercase tracking-widest">Admin</span>
+      <aside className="w-64 bg-[#1C1917] flex flex-col flex-shrink-0">
+        <div className="px-7 py-6 border-b border-white/8">
+          <span className="font-serif text-white tracking-logo text-2xl uppercase">Rise</span>
+          <span className="ml-2.5 font-sans text-white/40 text-xs uppercase tracking-widest">Admin</span>
         </div>
 
-        <nav className="flex-1 px-3 py-4 space-y-0.5">
+        <nav className="flex-1 px-4 py-5 space-y-1">
           {navItems.map(item => (
             <NavLink
               key={item.to}
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
-                `flex items-center justify-between px-3 py-2 rounded-lg font-sans text-sm transition-colors ${
+                `flex items-center justify-between px-4 py-3 rounded-xl font-sans text-[15px] transition-all duration-200 ${
                   isActive
                     ? 'bg-rise-coral/20 text-rise-coral font-medium'
-                    : 'text-white/60 hover:text-white hover:bg-white/8'
+                    : 'text-white/60 hover:text-white hover:bg-white/10'
                 }`
               }
             >
@@ -64,16 +64,16 @@ export default function AdminLayout({ children }) {
           ))}
         </nav>
 
-        <div className="px-3 py-4 border-t border-white/8">
+        <div className="px-4 py-5 border-t border-white/8">
           {demoMode && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 mb-2">
+            <div className="flex items-center gap-1.5 px-4 py-2 mb-2">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />
               <span className="font-sans text-xs text-white/40">Demo-Modus</span>
             </div>
           )}
           <button
             onClick={handleSignOut}
-            className="block w-full text-left px-3 py-2 rounded-lg font-sans text-sm text-white/40 hover:text-white hover:bg-white/8 transition-colors"
+            className="block w-full text-left px-4 py-3 rounded-xl font-sans text-[15px] text-white/40 hover:text-white hover:bg-white/10 transition-all duration-200"
           >
             Abmelden
           </button>
@@ -83,8 +83,8 @@ export default function AdminLayout({ children }) {
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top bar */}
-        <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between flex-shrink-0">
-          <span className="font-sans text-sm font-medium text-gray-900">Rise Admin</span>
+        <header className="h-16 bg-white border-b border-rise-border px-8 flex items-center justify-between flex-shrink-0">
+          <span className="font-serif text-rise-dark text-lg tracking-wide">Rise Admin</span>
           <div className="flex items-center gap-3">
             {demoMode && (
               <span className="font-sans text-xs text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">
@@ -100,7 +100,7 @@ export default function AdminLayout({ children }) {
         </header>
 
         {/* Content */}
-        <main className="flex-1 bg-gray-50 overflow-auto">
+        <main className="flex-1 bg-rise-bg overflow-auto">
           {children}
         </main>
       </div>

@@ -105,12 +105,12 @@ function RechtsformBadge({ rechtsform }) {
 
 function StatCard({ label, value, dotColor }) {
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-5 shadow-sm">
-      <div className="flex items-center gap-2 mb-3">
+    <div className="bg-white rounded-2xl border border-rise-border p-8 shadow-sm">
+      <div className="flex items-center gap-2 mb-4">
         <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dotColor}`} />
-        <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">{label}</p>
+        <p className="text-xs text-rise-muted font-medium uppercase tracking-widest">{label}</p>
       </div>
-      <p className="text-2xl font-semibold text-gray-900 font-sans">{value}</p>
+      <p className="text-4xl font-serif text-rise-dark">{value}</p>
     </div>
   )
 }
@@ -134,14 +134,14 @@ export default function AdminDashboard() {
 
   return (
     <AdminLayout>
-      <div className="p-6 max-w-6xl mx-auto">
-        <div className="mb-6">
-          <h1 className="font-sans font-semibold text-gray-900 text-xl">Übersicht</h1>
-          <p className="font-sans text-sm text-gray-500 mt-0.5">Alle Liquidierungsanfragen im Überblick</p>
+      <div className="p-8 max-w-6xl mx-auto">
+        <div className="mb-8">
+          <h1 className="font-serif text-rise-dark text-3xl">Übersicht</h1>
+          <p className="font-sans text-sm text-rise-muted mt-1">Alle Liquidierungsanfragen im Überblick</p>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
           <StatCard label="Neue Anfragen" value={neue} dotColor="bg-rise-coral" />
           <StatCard label="In Bearbeitung" value={inBearbeitung} dotColor="bg-amber-400" />
           <StatCard label="Aktiv" value={aktiv} dotColor="bg-emerald-400" />
@@ -149,12 +149,12 @@ export default function AdminDashboard() {
         </div>
 
         {/* Cases table */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-rise-border shadow-sm overflow-hidden">
           {/* Table header bar */}
-          <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between gap-4">
-            <h2 className="font-sans font-medium text-gray-900 text-sm whitespace-nowrap">Alle Cases</h2>
+          <div className="px-7 py-5 border-b border-rise-border flex items-center justify-between gap-4">
+            <h2 className="font-serif text-rise-dark text-xl whitespace-nowrap">Alle Cases</h2>
             <div className="relative max-w-xs w-full">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-rise-muted-light" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
               </svg>
               <input
@@ -162,52 +162,52 @@ export default function AdminDashboard() {
                 placeholder="Firma, Kontakt suchen…"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 text-sm font-sans text-gray-900 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-gray-400 transition-colors placeholder:text-gray-400"
+                className="w-full pl-10 pr-4 py-2 text-sm font-sans text-rise-dark bg-rise-bg border border-rise-border rounded-xl shadow-sm focus:outline-none focus:border-rise-muted transition-colors placeholder:text-rise-muted-light"
               />
             </div>
           </div>
 
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-200 bg-gray-50">
-                <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+              <tr className="border-b border-rise-border bg-rise-bg-warm">
+                <th className="px-7 py-4 text-left text-xs font-medium text-rise-muted uppercase tracking-widest">
                   Firma
                 </th>
-                <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                <th className="px-7 py-4 text-left text-xs font-medium text-rise-muted uppercase tracking-widest">
                   Kontakt
                 </th>
-                <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                <th className="px-7 py-4 text-left text-xs font-medium text-rise-muted uppercase tracking-widest">
                   Status
                 </th>
-                <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                <th className="px-7 py-4 text-left text-xs font-medium text-rise-muted uppercase tracking-widest">
                   Letzte Aktivität
                 </th>
-                <th className="px-5 py-3" />
+                <th className="px-7 py-4" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-rise-border">
               {filtered.map(c => (
-                <tr key={c.id} className="hover:bg-gray-50 transition-colors group">
-                  <td className="px-5 py-3.5">
+                <tr key={c.id} className="hover:bg-rise-bg transition-colors duration-150 group">
+                  <td className="px-7 py-5">
                     <div className="flex items-center gap-0">
-                      <span className="font-sans text-sm font-medium text-gray-900">{c.firma_name}</span>
+                      <span className="font-sans text-[15px] font-medium text-rise-dark">{c.firma_name}</span>
                       <RechtsformBadge rechtsform={c.firma_rechtsform} />
                     </div>
                   </td>
-                  <td className="px-5 py-3.5">
-                    <p className="font-sans text-sm text-gray-800">{c.contact_name}</p>
-                    <p className="font-sans text-xs text-gray-400 mt-0.5">{c.contact_email}</p>
+                  <td className="px-7 py-5">
+                    <p className="font-sans text-[15px] text-rise-dark">{c.contact_name}</p>
+                    <p className="font-sans text-xs text-rise-muted-light mt-0.5">{c.contact_email}</p>
                   </td>
-                  <td className="px-5 py-3.5">
+                  <td className="px-7 py-5">
                     <StatusBadge status={c.status} />
                   </td>
-                  <td className="px-5 py-3.5 font-sans text-sm text-gray-400 whitespace-nowrap">
+                  <td className="px-7 py-5 font-sans text-sm text-rise-muted whitespace-nowrap">
                     {relativeTime(c.created_at)}
                   </td>
-                  <td className="px-5 py-3.5 text-right">
+                  <td className="px-7 py-5 text-right">
                     <Link
                       to={`/admin/case/${c.id}`}
-                      className="inline-flex items-center gap-1 font-sans text-xs font-medium text-gray-400 hover:text-gray-900 group-hover:text-gray-700 transition-colors"
+                      className="inline-flex items-center gap-1.5 font-sans text-xs font-medium text-rise-muted-light hover:text-rise-dark group-hover:text-rise-muted transition-colors duration-150"
                     >
                       Öffnen
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -219,7 +219,7 @@ export default function AdminDashboard() {
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-5 py-10 text-center font-sans text-sm text-gray-400">
+                  <td colSpan={5} className="px-7 py-12 text-center font-sans text-sm text-rise-muted">
                     Keine Cases gefunden.
                   </td>
                 </tr>

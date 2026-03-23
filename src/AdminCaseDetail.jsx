@@ -188,11 +188,11 @@ function StatusBadge({ status }) {
 
 function InfoCard({ title, children }) {
   return (
-    <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-      <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
-        <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wide">{title}</h3>
+    <div className="bg-white rounded-2xl border border-rise-border shadow-sm overflow-hidden">
+      <div className="px-6 py-4 border-l-4 border-rise-coral bg-rise-bg-warm">
+        <h3 className="text-xs font-medium text-rise-muted uppercase tracking-widest">{title}</h3>
       </div>
-      <div className="px-5 py-1">{children}</div>
+      <div className="px-6 py-1">{children}</div>
     </div>
   )
 }
@@ -200,9 +200,9 @@ function InfoCard({ title, children }) {
 function InfoRow({ label, value }) {
   if (value === null || value === undefined || value === '') return null
   return (
-    <div className="flex py-2.5 border-b border-gray-100 last:border-0">
-      <span className="text-sm text-gray-400 w-44 flex-shrink-0">{label}</span>
-      <span className="text-sm text-gray-900">{String(value)}</span>
+    <div className="flex py-3 border-b border-rise-border last:border-0">
+      <span className="text-sm text-rise-muted w-44 flex-shrink-0">{label}</span>
+      <span className="text-sm text-rise-dark">{String(value)}</span>
     </div>
   )
 }
@@ -238,10 +238,10 @@ function EmailModal({ doc, caseData, onClose, onSent }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-          <h2 className="font-sans font-medium text-gray-900">Dokument per E-Mail senden</h2>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+        <div className="px-7 py-5 border-b border-rise-border flex items-center justify-between">
+          <h2 className="font-serif text-rise-dark text-xl">Dokument per E-Mail senden</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -252,59 +252,59 @@ function EmailModal({ doc, caseData, onClose, onSent }) {
           </button>
         </div>
 
-        <div className="px-6 py-5 space-y-4">
+        <div className="px-7 py-6 space-y-5">
           {/* Attachment */}
-          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-            <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <div className="flex items-center gap-3 p-4 bg-rise-bg rounded-xl border border-rise-border">
+            <svg className="w-5 h-5 text-rise-muted flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13" />
             </svg>
-            <span className="text-sm text-gray-700 font-medium truncate">{doc.filename}</span>
+            <span className="text-sm text-rise-dark font-medium truncate">{doc.filename}</span>
           </div>
 
           {/* To */}
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1.5">Empfänger</label>
+            <label className="block text-xs font-medium text-rise-muted uppercase tracking-widest mb-2">Empfänger</label>
             <input
               type="email"
               value={to}
               onChange={e => setTo(e.target.value)}
-              className="w-full px-3 py-2 text-sm font-sans text-gray-900 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-gray-400 transition-colors"
+              className="w-full px-4 py-2.5 text-sm font-sans text-rise-dark bg-white border border-rise-border rounded-xl focus:outline-none focus:border-rise-muted transition-colors"
             />
           </div>
 
           {/* Subject */}
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1.5">Betreff</label>
+            <label className="block text-xs font-medium text-rise-muted uppercase tracking-widest mb-2">Betreff</label>
             <input
               type="text"
               value={subject}
               onChange={e => setSubject(e.target.value)}
-              className="w-full px-3 py-2 text-sm font-sans text-gray-900 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-gray-400 transition-colors"
+              className="w-full px-4 py-2.5 text-sm font-sans text-rise-dark bg-white border border-rise-border rounded-xl focus:outline-none focus:border-rise-muted transition-colors"
             />
           </div>
 
           {/* Body */}
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1.5">Nachricht</label>
+            <label className="block text-xs font-medium text-rise-muted uppercase tracking-widest mb-2">Nachricht</label>
             <textarea
               value={body}
               onChange={e => setBody(e.target.value)}
               rows={6}
-              className="w-full px-3 py-2 text-sm font-sans text-gray-900 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-gray-400 transition-colors resize-none"
+              className="w-full px-4 py-3 text-sm font-sans text-rise-dark bg-white border border-rise-border rounded-xl focus:outline-none focus:border-rise-muted transition-colors resize-none"
             />
           </div>
         </div>
 
-        <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+        <div className="px-7 py-5 border-t border-rise-border flex justify-end gap-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium font-sans text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            className="px-5 py-2.5 text-sm font-medium font-sans text-rise-muted bg-white border border-rise-border rounded-xl hover:bg-rise-bg transition-colors"
           >
             Abbrechen
           </button>
           <button
             onClick={handleSend}
-            className="px-4 py-2 text-sm font-medium font-sans text-white bg-rise-dark rounded-lg hover:bg-rise-dark/90 transition-colors inline-flex items-center gap-2"
+            className="px-5 py-2.5 text-sm font-medium font-sans text-white bg-rise-dark rounded-xl hover:bg-rise-dark/90 transition-colors inline-flex items-center gap-2"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
@@ -363,29 +363,29 @@ export default function AdminCaseDetail() {
 
   return (
     <AdminLayout>
-      <div className="p-6 max-w-6xl mx-auto">
+      <div className="p-8 max-w-6xl mx-auto">
         {/* Breadcrumb */}
-        <div className="flex items-center gap-2 mb-5">
-          <Link to="/admin" className="text-sm text-gray-400 hover:text-gray-700 transition-colors">
+        <div className="flex items-center gap-2 mb-6">
+          <Link to="/admin" className="text-sm text-rise-muted hover:text-rise-dark transition-colors">
             Übersicht
           </Link>
-          <svg className="w-3.5 h-3.5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg className="w-3.5 h-3.5 text-rise-muted-light" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
           </svg>
-          <span className="text-sm text-gray-700">{c.firma_name}</span>
+          <span className="text-sm text-rise-dark">{c.firma_name}</span>
         </div>
 
         {/* Header */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm px-6 py-5 mb-6">
+        <div className="bg-white rounded-2xl border border-rise-border shadow-sm px-8 py-7 mb-7">
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
-              <div className="flex items-center gap-3 mb-1">
-                <h1 className="font-sans font-semibold text-gray-900 text-xl">{c.firma_name}</h1>
-                <span className="inline-block px-1.5 py-0 rounded text-xs font-mono text-gray-500 bg-gray-100 border border-gray-200">
+              <div className="flex items-center gap-3 mb-2">
+                <h1 className="font-serif text-rise-dark text-3xl">{c.firma_name}</h1>
+                <span className="inline-block px-2 py-0.5 rounded-lg text-xs font-mono text-rise-muted bg-rise-bg border border-rise-border">
                   {c.firma_rechtsform}
                 </span>
               </div>
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-rise-muted">
                 Eingegangen: {formatDate(c.created_at)} · Case {id}
               </p>
             </div>
@@ -397,7 +397,7 @@ export default function AdminCaseDetail() {
                 <select
                   value={status}
                   onChange={e => setStatus(e.target.value)}
-                  className="text-sm font-sans text-gray-700 bg-white border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-gray-400 transition-colors cursor-pointer"
+                  className="text-sm font-sans text-rise-dark bg-white border border-rise-border rounded-xl px-3 py-2 focus:outline-none focus:border-rise-muted transition-colors cursor-pointer"
                 >
                   {STATUS_OPTIONS.map(o => (
                     <option key={o.value} value={o.value}>{o.label}</option>
@@ -408,7 +408,7 @@ export default function AdminCaseDetail() {
               {/* Quick actions */}
               <button
                 onClick={() => setTab('kommunikation')}
-                className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium font-sans text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium font-sans text-rise-muted bg-white border border-rise-border rounded-xl hover:bg-rise-bg transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
@@ -417,7 +417,7 @@ export default function AdminCaseDetail() {
               </button>
               <button
                 onClick={() => setTab('dokumente')}
-                className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium font-sans text-white bg-rise-dark rounded-lg hover:bg-rise-dark/90 transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium font-sans text-white bg-rise-dark rounded-xl hover:bg-rise-dark/90 transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
@@ -432,15 +432,15 @@ export default function AdminCaseDetail() {
           {/* Main content */}
           <div className="flex-1 min-w-0">
             {/* Tabs */}
-            <div className="flex gap-0 border-b border-gray-200 mb-6">
+            <div className="flex gap-0 border-b border-rise-border mb-7">
               {TABS.map(t => (
                 <button
                   key={t.key}
                   onClick={() => setTab(t.key)}
-                  className={`px-4 py-2.5 font-sans text-sm font-medium border-b-2 -mb-px transition-colors ${
+                  className={`px-5 py-3.5 font-sans text-sm font-medium border-b-2 -mb-px transition-all duration-200 ${
                     tab === t.key
-                      ? 'border-gray-900 text-gray-900'
-                      : 'border-transparent text-gray-400 hover:text-gray-700'
+                      ? 'border-rise-coral text-rise-dark'
+                      : 'border-transparent text-rise-muted hover:text-rise-dark'
                   }`}
                 >
                   {t.label}
@@ -519,8 +519,8 @@ export default function AdminCaseDetail() {
             {tab === 'dokumente' && (
               <div className="space-y-4">
                 {/* Generate buttons */}
-                <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-4">Neues Dokument erstellen</p>
+                <div className="bg-white rounded-2xl border border-rise-border shadow-sm p-6">
+                  <p className="text-xs font-medium text-rise-muted uppercase tracking-widest mb-5">Neues Dokument erstellen</p>
                   <div className="flex flex-wrap gap-3">
                     {[
                       { type: 'ersteinschaetzung',   label: 'Ersteinschätzung' },
@@ -531,10 +531,10 @@ export default function AdminCaseDetail() {
                         key={type}
                         onClick={() => downloadDocument(type, c, setLoadingDoc)}
                         disabled={loadingDoc !== null}
-                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border font-sans text-sm font-medium transition-colors ${
+                        className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border font-sans text-sm font-medium transition-colors ${
                           loadingDoc === type
-                            ? 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed'
-                            : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
+                            ? 'bg-rise-bg border-rise-border text-rise-muted-light cursor-not-allowed'
+                            : 'bg-white border-rise-border text-rise-dark hover:bg-rise-bg hover:border-rise-muted-light'
                         }`}
                       >
                         {loadingDoc === type ? (
@@ -559,30 +559,30 @@ export default function AdminCaseDetail() {
                 </div>
 
                 {/* Document list */}
-                <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-                  <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Vorhandene Dokumente</p>
+                <div className="bg-white rounded-2xl border border-rise-border shadow-sm overflow-hidden">
+                  <div className="px-6 py-4 border-l-4 border-rise-coral bg-rise-bg-warm">
+                    <p className="text-xs font-medium text-rise-muted uppercase tracking-widest">Vorhandene Dokumente</p>
                   </div>
                   {MOCK_DOCUMENTS.length === 0 ? (
-                    <p className="px-5 py-8 text-center text-sm text-gray-400">Keine Dokumente vorhanden.</p>
+                    <p className="px-6 py-10 text-center text-sm text-rise-muted">Keine Dokumente vorhanden.</p>
                   ) : (
-                    <div className="divide-y divide-gray-100">
+                    <div className="divide-y divide-rise-border">
                       {MOCK_DOCUMENTS.map(d => (
-                        <div key={d.id} className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors">
+                        <div key={d.id} className="flex items-center gap-5 px-6 py-5 hover:bg-rise-bg transition-colors">
                           {/* Icon */}
-                          <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
-                            <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                          <div className="w-10 h-10 rounded-xl bg-rise-bg flex items-center justify-center flex-shrink-0">
+                            <svg className="w-5 h-5 text-rise-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                               <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                             </svg>
                           </div>
 
                           {/* Name + type */}
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">{d.filename}</p>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-xs text-gray-400">{DOC_TYPE_LABEL[d.type] ?? d.type}</span>
-                              <span className="text-gray-200">·</span>
-                              <span className="text-xs text-gray-400">{formatDateShort(d.created_at)}</span>
+                            <p className="text-[15px] font-medium text-rise-dark truncate">{d.filename}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-xs text-rise-muted">{DOC_TYPE_LABEL[d.type] ?? d.type}</span>
+                              <span className="text-rise-border">·</span>
+                              <span className="text-xs text-rise-muted">{formatDateShort(d.created_at)}</span>
                             </div>
                           </div>
 
@@ -595,14 +595,14 @@ export default function AdminCaseDetail() {
                           <div className="flex items-center gap-2 flex-shrink-0">
                             <button
                               onClick={() => setEmailModal(d)}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium font-sans text-white bg-rise-dark rounded-lg hover:bg-rise-dark/90 transition-colors"
+                              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium font-sans text-white bg-rise-dark rounded-xl hover:bg-rise-dark/90 transition-colors"
                             >
                               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
                               </svg>
                               Per E-Mail
                             </button>
-                            <button className="px-3 py-1.5 text-xs font-medium font-sans text-gray-500 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                            <button className="px-3.5 py-2 text-xs font-medium font-sans text-rise-muted bg-white border border-rise-border rounded-xl hover:bg-rise-bg transition-colors">
                               Download
                             </button>
                           </div>
@@ -616,27 +616,27 @@ export default function AdminCaseDetail() {
 
             {/* ── Tab: Aktivität ─────────────────────────────────────── */}
             {tab === 'aktivitaet' && (
-              <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
+              <div className="bg-white rounded-2xl border border-rise-border shadow-sm p-7">
                 <div className="space-y-0">
                   {MOCK_ACTIVITY.map((a, i) => (
-                    <div key={a.id} className="flex gap-4">
+                    <div key={a.id} className="flex gap-5">
                       <div className="flex flex-col items-center">
-                        <div className={`w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0 ${
-                          a.actor === 'admin' ? 'bg-rise-dark' : 'bg-gray-300'
+                        <div className={`w-3.5 h-3.5 rounded-full mt-1 flex-shrink-0 ring-2 ring-white ${
+                          a.actor === 'admin' ? 'bg-rise-dark' : 'bg-rise-muted-light'
                         }`} />
                         {i < MOCK_ACTIVITY.length - 1 && (
-                          <div className="w-px bg-gray-100 flex-1 my-1" />
+                          <div className="w-px bg-rise-border flex-1 my-1.5" />
                         )}
                       </div>
-                      <div className="pb-6">
-                        <p className="text-sm font-medium text-gray-900">{a.action}</p>
+                      <div className="pb-8">
+                        <p className="text-[15px] font-medium text-rise-dark">{a.action}</p>
                         {a.detail && (
-                          <p className="text-xs text-gray-400 mt-0.5">{a.detail}</p>
+                          <p className="text-sm text-rise-muted mt-1">{a.detail}</p>
                         )}
-                        <p className="text-xs text-gray-400 mt-1">
+                        <p className="text-xs text-rise-muted-light mt-1.5">
                           {formatDate(a.created_at)}
-                          <span className={`ml-2 inline-block px-1.5 py-0 rounded text-xs ${
-                            a.actor === 'admin' ? 'bg-gray-100 text-gray-500' : 'bg-gray-50 text-gray-400'
+                          <span className={`ml-2 inline-block px-2 py-0.5 rounded-full text-xs ${
+                            a.actor === 'admin' ? 'bg-rise-bg text-rise-muted' : 'bg-rise-bg text-rise-muted-light'
                           }`}>
                             {a.actor === 'admin' ? 'Admin' : 'System'}
                           </span>
@@ -652,7 +652,7 @@ export default function AdminCaseDetail() {
             {tab === 'kommunikation' && (
               <div className="space-y-4">
                 <div className="flex justify-end">
-                  <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium font-sans text-white bg-rise-dark rounded-lg hover:bg-rise-dark/90 transition-colors">
+                  <button className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium font-sans text-white bg-rise-dark rounded-xl hover:bg-rise-dark/90 transition-colors">
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                     </svg>
@@ -660,38 +660,36 @@ export default function AdminCaseDetail() {
                   </button>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {MOCK_MESSAGES.map(m => (
                     <div
                       key={m.id}
-                      className={`bg-white rounded-lg border shadow-sm overflow-hidden ${
-                        m.type === 'email_in' ? 'border-gray-200' : 'border-gray-200'
-                      }`}
+                      className="bg-white rounded-2xl border border-rise-border shadow-sm overflow-hidden"
                     >
-                      <div className={`px-5 py-3 border-b flex items-center justify-between ${
+                      <div className={`px-6 py-4 border-b flex items-center justify-between ${
                         m.type === 'email_in'
-                          ? 'bg-gray-50 border-gray-100'
+                          ? 'bg-rise-bg-warm border-rise-border'
                           : 'bg-blue-50 border-blue-100'
                       }`}>
-                        <div className="flex items-center gap-2">
-                          <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                            m.type === 'email_in' ? 'bg-gray-400' : 'bg-blue-500'
+                        <div className="flex items-center gap-2.5">
+                          <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                            m.type === 'email_in' ? 'bg-rise-muted-light' : 'bg-blue-500'
                           }`} />
-                          <span className="text-xs font-medium text-gray-600">
+                          <span className="text-xs font-medium text-rise-muted uppercase tracking-wider">
                             {m.type === 'email_in' ? 'Eingehend' : 'Ausgehend'}
                           </span>
-                          <span className="text-gray-300">·</span>
-                          <span className="text-xs text-gray-500 font-medium">{m.subject}</span>
+                          <span className="text-rise-border">·</span>
+                          <span className="text-sm text-rise-dark font-medium">{m.subject}</span>
                         </div>
-                        <span className="text-xs text-gray-400">{formatDate(m.created_at)}</span>
+                        <span className="text-xs text-rise-muted-light">{formatDate(m.created_at)}</span>
                       </div>
-                      <div className="px-5 py-4">
-                        <div className="flex gap-1.5 text-xs text-gray-400 mb-3">
-                          <span>Von: <span className="text-gray-600">{m.from}</span></span>
+                      <div className="px-6 py-5">
+                        <div className="flex gap-1.5 text-xs text-rise-muted-light mb-4">
+                          <span>Von: <span className="text-rise-muted">{m.from}</span></span>
                           <span>→</span>
-                          <span>An: <span className="text-gray-600">{m.to}</span></span>
+                          <span>An: <span className="text-rise-muted">{m.to}</span></span>
                         </div>
-                        <p className="text-sm text-gray-700 whitespace-pre-line">{m.body}</p>
+                        <p className="text-sm text-rise-dark whitespace-pre-line leading-relaxed">{m.body}</p>
                       </div>
                     </div>
                   ))}
@@ -701,22 +699,22 @@ export default function AdminCaseDetail() {
           </div>
 
           {/* Sidebar */}
-          <div className="w-60 flex-shrink-0 space-y-4">
+          <div className="w-64 flex-shrink-0 space-y-4">
             {/* Handelsregister */}
             {c.hrb_nummer && (
-              <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Handelsregister</p>
-                <p className="text-sm font-medium text-gray-900 mb-0.5">{c.hrb_nummer}</p>
-                <p className="text-xs text-gray-400 mb-3">{c.registergericht}</p>
+              <div className="bg-white rounded-2xl border border-rise-border shadow-sm p-5">
+                <p className="text-xs font-medium text-rise-muted uppercase tracking-widest mb-4">Handelsregister</p>
+                <p className="text-sm font-medium text-rise-dark mb-1">{c.hrb_nummer}</p>
+                <p className="text-xs text-rise-muted mb-4">{c.registergericht}</p>
                 {c.hr_validated ? (
-                  <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-medium">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-medium">
                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                     Validiert
                   </span>
                 ) : (
-                  <span className="inline-block px-2 py-1 rounded-full bg-gray-100 text-gray-500 text-xs font-medium mb-2">
+                  <span className="inline-block px-2.5 py-1 rounded-full bg-rise-bg text-rise-muted text-xs font-medium mb-3">
                     Nicht validiert
                   </span>
                 )}
@@ -724,7 +722,7 @@ export default function AdminCaseDetail() {
                   href={`https://www.handelsregister.de/rp_web/mask.do?Typ=e&Schlagwort=${encodeURIComponent(c.firma_name)}&Bundesland=0`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block mt-3 text-xs font-medium text-gray-500 hover:text-gray-900 transition-colors"
+                  className="block mt-4 text-xs font-medium text-rise-muted hover:text-rise-dark transition-colors"
                 >
                   Im HR prüfen →
                 </a>
@@ -733,24 +731,24 @@ export default function AdminCaseDetail() {
 
             {/* Satzung */}
             {c.satzung_filename && (
-              <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Satzung</p>
-                <p className="text-sm text-gray-700 mb-2 break-all">{c.satzung_filename}</p>
-                <button className="text-xs font-medium text-gray-500 hover:text-gray-900 transition-colors">
+              <div className="bg-white rounded-2xl border border-rise-border shadow-sm p-5">
+                <p className="text-xs font-medium text-rise-muted uppercase tracking-widest mb-3">Satzung</p>
+                <p className="text-sm text-rise-dark mb-3 break-all">{c.satzung_filename}</p>
+                <button className="text-xs font-medium text-rise-muted hover:text-rise-dark transition-colors">
                   Herunterladen →
                 </button>
               </div>
             )}
 
             {/* Internal notes */}
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Interne Notizen</p>
+            <div className="bg-white rounded-2xl border border-rise-border shadow-sm p-5">
+              <p className="text-xs font-medium text-rise-muted uppercase tracking-widest mb-3">Interne Notizen</p>
               <textarea
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
                 placeholder="Notizen hinzufügen…"
                 rows={5}
-                className="w-full text-sm font-sans text-gray-700 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-gray-400 transition-colors placeholder:text-gray-300"
+                className="w-full text-sm font-sans text-rise-dark bg-rise-bg border border-rise-border rounded-xl px-3.5 py-2.5 resize-none focus:outline-none focus:border-rise-muted transition-colors placeholder:text-rise-muted-light"
               />
             </div>
           </div>
