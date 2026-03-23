@@ -84,8 +84,9 @@ function letterhead() {
       border: {
         bottom: { style: BorderStyle.SINGLE, size: 6, color: 'cc5533', space: 4 },
       },
-      spacing: { after: 240 },
+      spacing: { after: 120 },
     }),
+    para([new TextRun({ text: 'Rise begleitet Sie durch den gesamten Abwicklungsprozess — von der ersten Analyse bis zur Löschung im Handelsregister.', font: 'Calibri', size: 20, color: '888888', italics: true })], { spacing: { after: 240 } }),
   ]
 }
 

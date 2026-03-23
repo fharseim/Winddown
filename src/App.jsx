@@ -35,8 +35,7 @@ function Hero() {
         <span className="italic text-rise-muted">Ein Ansprechpartner.</span>
       </h1>
       <p className="font-sans font-light text-rise-muted text-lg md:text-xl leading-relaxed max-w-xl mb-3">
-        Rise übernimmt den gesamten Abwicklungsprozess — Anwälte, Steuerberater,
-        Handelsregister, Sperrjahr. Sie müssen nichts selbst koordinieren.
+        Rise begleitet Sie durch den gesamten Abwicklungsprozess — von der ersten Analyse bis zur Löschung im Handelsregister.
       </p>
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mt-10">
         <a
