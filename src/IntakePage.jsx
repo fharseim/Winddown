@@ -349,9 +349,6 @@ function Step3({ state, dispatch, onBack, onNext }) {
           options={[
             { value: 'GmbH', label: 'GmbH' },
             { value: 'UG (haftungsbeschränkt)', label: 'UG (haftungsbeschränkt)' },
-            { value: 'AG', label: 'AG (Aktiengesellschaft)' },
-            { value: 'SE', label: 'SE (Societas Europaea)' },
-            { value: 'KGaA', label: 'KGaA (Kommanditges. auf Aktien)' },
             { value: 'GmbH & Co. KG', label: 'GmbH & Co. KG' },
             { value: 'KG', label: 'KG (Kommanditgesellschaft)' },
             { value: 'OHG', label: 'OHG (Offene Handelsgesellschaft)' },
@@ -389,9 +386,6 @@ function Step3({ state, dispatch, onBack, onNext }) {
 const RECHTSFORM_COLORS = {
   'GmbH':                    'bg-blue-100 text-blue-700',
   'UG (haftungsbeschränkt)': 'bg-sky-100 text-sky-700',
-  'AG':                      'bg-violet-100 text-violet-700',
-  'SE':                      'bg-purple-100 text-purple-700',
-  'KGaA':                    'bg-fuchsia-100 text-fuchsia-700',
   'GmbH & Co. KG':           'bg-amber-100 text-amber-700',
   'KG':                      'bg-orange-100 text-orange-700',
   'OHG':                     'bg-yellow-100 text-yellow-700',
@@ -414,36 +408,66 @@ function RechtsformBadge({ rechtsform }) {
 // ─── Step 3b: Handelsregister Validation ─────────────────────────────────────
 
 function Step3b({ state, dispatch, onBack, onNext }) {
-  const [loading, setLoading] = useState(true)
+  const [loadingDataset, setLoadingDataset] = useState(true)
+  const [loadingLive, setLoadingLive] = useState(true)
   const [results, setResults] = useState([])
   const [selected, setSelected] = useState(state.hrMatchedCompany)
   const [searchError, setSearchError] = useState(null)
 
+  const loading = loadingDataset || loadingLive
+
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
+    setLoadingDataset(true)
+    setLoadingLive(true)
     setSearchError(null)
+    setResults([])
 
     const apiToken = import.meta.env.VITE_INTERNAL_API_TOKEN || ''
-    fetch(`/api/companies?q=${encodeURIComponent(state.firmenname)}&limit=5`, {
-      headers: apiToken ? { 'x-api-token': apiToken } : {},
-    })
+    const headers = apiToken ? { 'x-api-token': apiToken } : {}
+
+    // 1) Static dataset — fast
+    fetch(`/api/companies?q=${encodeURIComponent(state.firmenname)}&limit=5`, { headers })
       .then(r => r.json())
       .then(data => {
         if (!cancelled) {
-          setResults(data.results || [])
-          setLoading(false)
+          const datasetResults = (data.results || []).map(c => ({ ...c, source: 'dataset' }))
+          setResults(prev => mergeResults(prev, datasetResults))
+          setLoadingDataset(false)
         }
       })
       .catch(() => {
+        if (!cancelled) setLoadingDataset(false)
+      })
+
+    // 2) Live Handelsregister search
+    fetch(`/api/hr-search?q=${encodeURIComponent(state.firmenname)}`, { headers })
+      .then(r => r.json())
+      .then(data => {
         if (!cancelled) {
-          setSearchError('Suche konnte nicht durchgeführt werden.')
-          setLoading(false)
+          const liveResults = (data.results || []).map(c => ({ ...c, source: c.source || 'handelsregister.de' }))
+          setResults(prev => mergeResults(prev, liveResults))
+          setLoadingLive(false)
         }
+      })
+      .catch(() => {
+        if (!cancelled) setLoadingLive(false)
       })
 
     return () => { cancelled = true }
   }, [state.firmenname])
+
+  // Merge: live HR results first, then dataset; deduplicate by register_nummer+gericht
+  function mergeResults(existing, incoming) {
+    const combined = [...incoming, ...existing]
+    const seen = new Set()
+    return combined.filter(c => {
+      const key = `${c.register_nummer}|${c.register_gericht}`.toLowerCase()
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+  }
 
   function selectCompany(company) {
     setSelected(company)
@@ -471,20 +495,22 @@ function Step3b({ state, dispatch, onBack, onNext }) {
         </svg>
         <p className="font-sans font-light text-rise-dark text-sm leading-relaxed">
           Wir gleichen Ihre Angaben mit dem Handelsregister ab, um Tippfehler zu vermeiden. Dieser Schritt ist optional — Sie können jederzeit mit manuellen Angaben fortfahren.
+          <span className="block mt-1 text-rise-muted">Hinweis: Die Handelsregister-Suche ist für GmbHs und Personengesellschaften verfügbar.</span>
         </p>
       </div>
 
-      {loading && (
+      {/* Loading states — show partial results as they arrive */}
+      {loadingDataset && results.length === 0 && (
         <div className="flex items-center gap-3 py-8 justify-center">
           <svg className="animate-spin h-5 w-5 text-rise-sage" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
-          <span className="font-sans text-sm text-rise-muted">Suche im Handelsregister…</span>
+          <span className="font-sans text-sm text-rise-muted">Suche in der Datenbank…</span>
         </div>
       )}
 
-      {!loading && searchError && (
+      {searchError && (
         <p className="font-sans text-sm text-rise-muted text-center py-6">{searchError}</p>
       )}
 
@@ -494,10 +520,11 @@ function Step3b({ state, dispatch, onBack, onNext }) {
         </div>
       )}
 
-      {!loading && !searchError && results.length > 0 && (
+      {results.length > 0 && (
         <div className="space-y-3 mb-4">
           {results.map(company => {
             const isSelected = selected?.id === company.id
+            const isLive = company.source === 'handelsregister.de'
             return (
               <button
                 key={company.id}
@@ -520,6 +547,10 @@ function Step3b({ state, dispatch, onBack, onNext }) {
                     <div className="flex items-center gap-2 mt-1">
                       <RechtsformBadge rechtsform={company.rechtsform} />
                       <span className="font-sans font-light text-xs text-rise-muted">{company.sitz}</span>
+                      {isLive
+                        ? <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-sans font-semibold bg-emerald-100 text-emerald-700 tracking-wide">Live</span>
+                        : <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-sans font-medium bg-stone-100 text-stone-500 tracking-wide">Datenbank</span>
+                      }
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
@@ -541,6 +572,17 @@ function Step3b({ state, dispatch, onBack, onNext }) {
               </button>
             )
           })}
+        </div>
+      )}
+
+      {/* Live search spinner — shown while HR search is in flight, even if dataset results are visible */}
+      {loadingLive && !loadingDataset && (
+        <div className="flex items-center gap-2 py-3 text-xs text-rise-muted font-sans">
+          <svg className="animate-spin h-3.5 w-3.5 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          Suche im Handelsregister…
         </div>
       )}
 
