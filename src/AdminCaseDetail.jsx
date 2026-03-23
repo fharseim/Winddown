@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import AdminLayout from './AdminLayout'
 
@@ -28,6 +28,48 @@ async function downloadDocument(type, caseData, setLoadingDoc) {
     alert(`Netzwerkfehler: ${err.message}`)
   } finally {
     setLoadingDoc(null)
+  }
+}
+
+// ─── HR document helpers ──────────────────────────────────────────────────────
+
+/** Parses 'HRB 198234' → { registerArt: 'HRB', registerNummer: '198234' } */
+function parseHRBNummer(hrb) {
+  if (!hrb) return {}
+  const m = hrb.trim().match(/^(HRB|HRA|PR|GnR|VR)\s+(.+)$/i)
+  return m ? { registerArt: m[1].toUpperCase(), registerNummer: m[2].trim() } : {}
+}
+
+/** Parses 'AG Frankfurt am Main' → 'Frankfurt am Main' */
+function parseGericht(gericht) {
+  if (!gericht) return ''
+  return gericht.replace(/^AG\s+/i, '').trim()
+}
+
+async function downloadHRDocument(registerArt, registerNummer, registerGericht, docType, docId, setDownloading, showToast) {
+  const key = `${docType}:${docId || ''}`
+  setDownloading(key)
+  try {
+    const params = new URLSearchParams({ registerArt, registerNummer, registerGericht, docType })
+    if (docId) params.set('docId', docId)
+    const res = await fetch(`/api/hr-download?${params}`)
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Unbekannter Fehler' }))
+      showToast(`Fehler: ${err.error || res.statusText}`, 'error')
+      return
+    }
+    const blob = await res.blob()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = res.headers.get('Content-Disposition')?.match(/filename="([^"]+)"/)?.[1]
+      ?? `HR_${registerArt}_${registerNummer}_${docType}.${blob.type.includes('pdf') ? 'pdf' : 'xml'}`
+    a.click()
+    URL.revokeObjectURL(url)
+  } catch (err) {
+    showToast(`Netzwerkfehler: ${err.message}`, 'error')
+  } finally {
+    setDownloading(null)
   }
 }
 
@@ -319,12 +361,19 @@ function EmailModal({ doc, caseData, onClose, onSent }) {
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
 
-function Toast({ message, onClose }) {
+function Toast({ message, variant = 'success', onClose }) {
+  const isError = variant === 'error'
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-gray-900 text-white px-4 py-3 rounded-lg shadow-lg text-sm font-sans">
-      <svg className="w-4 h-4 text-emerald-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-      </svg>
+    <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg text-sm font-sans text-white ${isError ? 'bg-red-700' : 'bg-gray-900'}`}>
+      {isError ? (
+        <svg className="w-4 h-4 text-red-300 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+        </svg>
+      ) : (
+        <svg className="w-4 h-4 text-emerald-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+        </svg>
+      )}
       {message}
       <button onClick={onClose} className="ml-2 text-white/50 hover:text-white transition-colors">
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -346,13 +395,45 @@ export default function AdminCaseDetail() {
   const [emailModal, setEmailModal] = useState(null)
   const [toast, setToast] = useState(null)
 
+  // HR document state
+  const [hrDocs, setHrDocs] = useState(null)       // null = not fetched, [] = none found
+  const [hrDocsLoading, setHrDocsLoading] = useState(false)
+  const [hrDocsError, setHrDocsError] = useState(null)
+  const [hrDownloading, setHrDownloading] = useState(null) // key of currently downloading doc
+
   // In production: fetch case by `id` from Supabase
   const c = MOCK_CASE
 
-  function showToast(msg) {
-    setToast(msg)
-    setTimeout(() => setToast(null), 4000)
+  function showToast(msg, variant = 'success') {
+    setToast({ msg, variant })
+    setTimeout(() => setToast(null), 5000)
   }
+
+  // Parse register data from case
+  const { registerArt, registerNummer } = parseHRBNummer(c.hrb_nummer)
+  const registerGericht = parseGericht(c.registergericht)
+
+  // Fetch HR document list when Dokumente tab is first opened
+  useEffect(() => {
+    if (tab !== 'dokumente') return
+    if (hrDocs !== null || hrDocsLoading) return
+    if (!registerArt || !registerNummer || !registerGericht) return
+
+    setHrDocsLoading(true)
+    setHrDocsError(null)
+
+    const params = new URLSearchParams({ registerArt, registerNummer, registerGericht })
+    fetch(`/api/hr-documents?${params}`)
+      .then(r => r.json())
+      .then(data => {
+        setHrDocs(data.documents ?? [])
+      })
+      .catch(err => {
+        setHrDocsError('Dokumentenliste konnte nicht geladen werden.')
+        console.error('[AdminCaseDetail] hr-documents:', err)
+      })
+      .finally(() => setHrDocsLoading(false))
+  }, [tab, hrDocs, hrDocsLoading, registerArt, registerNummer, registerGericht])
 
   const TABS = [
     { key: 'uebersicht',     label: 'Übersicht' },
@@ -558,6 +639,141 @@ export default function AdminCaseDetail() {
                   </div>
                 </div>
 
+                {/* ── Handelsregister-Dokumente ─────────────────────── */}
+                {registerArt && registerNummer && registerGericht && (
+                  <div className="bg-white rounded-2xl border border-rise-border shadow-sm overflow-hidden">
+                    <div className="px-6 py-4 border-l-4 border-blue-400 bg-blue-50 flex items-center justify-between">
+                      <p className="text-xs font-medium text-blue-700 uppercase tracking-widest">
+                        Handelsregister-Dokumente
+                      </p>
+                      {hrDocs !== null && !hrDocsLoading && (
+                        <button
+                          onClick={() => { setHrDocs(null); setHrDocsError(null) }}
+                          className="text-xs text-blue-500 hover:text-blue-700 transition-colors"
+                        >
+                          Aktualisieren
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Loading */}
+                    {hrDocsLoading && (
+                      <div className="flex items-center gap-3 px-6 py-5 text-sm text-rise-muted">
+                        <svg className="w-4 h-4 animate-spin text-blue-400 flex-shrink-0" viewBox="0 0 24 24" fill="none">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                        </svg>
+                        Lade Dokumente vom Handelsregister…
+                      </div>
+                    )}
+
+                    {/* Error */}
+                    {hrDocsError && !hrDocsLoading && (
+                      <div className="flex items-start gap-3 px-6 py-5">
+                        <svg className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                        </svg>
+                        <p className="text-sm text-red-600">{hrDocsError}</p>
+                      </div>
+                    )}
+
+                    {/* Document buttons */}
+                    {!hrDocsLoading && !hrDocsError && hrDocs !== null && (
+                      <div className="px-6 py-5 space-y-4">
+                        {/* SI + AD — always available if HR data exists */}
+                        <div className="flex flex-wrap gap-3">
+                          {[
+                            { docType: 'SI', label: 'Strukturierte Inhalte (XML)', icon: 'M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m.75 12l3 3m0 0l3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z' },
+                            { docType: 'AD', label: 'Aktueller Abdruck (PDF)', icon: 'M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z' },
+                          ].map(({ docType, label, icon }) => {
+                            const key = `${docType}:`
+                            const loading = hrDownloading === key
+                            return (
+                              <button
+                                key={docType}
+                                disabled={hrDownloading !== null}
+                                onClick={() => downloadHRDocument(registerArt, registerNummer, registerGericht, docType, '', setHrDownloading, showToast)}
+                                className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border font-sans text-sm font-medium transition-colors ${
+                                  loading
+                                    ? 'bg-blue-50 border-blue-200 text-blue-400 cursor-not-allowed'
+                                    : hrDownloading
+                                      ? 'bg-rise-bg border-rise-border text-rise-muted-light cursor-not-allowed'
+                                      : 'bg-white border-blue-200 text-blue-700 hover:bg-blue-50'
+                                }`}
+                              >
+                                {loading ? (
+                                  <>
+                                    <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                                    </svg>
+                                    Lade…
+                                  </>
+                                ) : (
+                                  <>
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                      <path strokeLinecap="round" strokeLinejoin="round" d={icon} />
+                                    </svg>
+                                    {label} herunterladen
+                                  </>
+                                )}
+                              </button>
+                            )
+                          })}
+                        </div>
+
+                        {/* DK documents from tree */}
+                        {hrDocs.filter(d => d.type === 'DK').length > 0 && (
+                          <div className="border-t border-rise-border pt-4">
+                            <p className="text-xs font-medium text-rise-muted uppercase tracking-widest mb-3">Dokumente aus dem Strukturbaum</p>
+                            <div className="space-y-2">
+                              {hrDocs.filter(d => d.type === 'DK').map(doc => {
+                                const key = `DK:${doc.linkId}`
+                                const loading = hrDownloading === key
+                                return (
+                                  <div key={doc.linkId} className="flex items-center justify-between gap-4 py-2">
+                                    <span className="text-sm text-rise-dark">{doc.label}</span>
+                                    <button
+                                      disabled={hrDownloading !== null}
+                                      onClick={() => downloadHRDocument(registerArt, registerNummer, registerGericht, 'DK', doc.linkId, setHrDownloading, showToast)}
+                                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium font-sans rounded-lg border transition-colors flex-shrink-0 ${
+                                        loading
+                                          ? 'bg-blue-50 border-blue-200 text-blue-400 cursor-not-allowed'
+                                          : hrDownloading
+                                            ? 'bg-rise-bg border-rise-border text-rise-muted-light cursor-not-allowed'
+                                            : 'bg-white border-rise-border text-rise-muted hover:bg-rise-bg hover:text-rise-dark'
+                                      }`}
+                                    >
+                                      {loading ? (
+                                        <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                                        </svg>
+                                      ) : (
+                                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                        </svg>
+                                      )}
+                                      {loading ? 'Lade…' : 'Herunterladen'}
+                                    </button>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* No HR docs found */}
+                        {hrDocs.length === 0 && (
+                          <p className="text-sm text-rise-muted">
+                            Keine Dokumente im Handelsregister gefunden.
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Document list */}
                 <div className="bg-white rounded-2xl border border-rise-border shadow-sm overflow-hidden">
                   <div className="px-6 py-4 border-l-4 border-rise-coral bg-rise-bg-warm">
@@ -761,12 +977,12 @@ export default function AdminCaseDetail() {
           doc={emailModal}
           caseData={c}
           onClose={() => setEmailModal(null)}
-          onSent={() => showToast('E-Mail wurde erfolgreich gesendet.')}
+          onSent={() => showToast('E-Mail wurde erfolgreich gesendet.', 'success')}
         />
       )}
 
       {/* Toast */}
-      {toast && <Toast message={toast} onClose={() => setToast(null)} />}
+      {toast && <Toast message={toast.msg} variant={toast.variant} onClose={() => setToast(null)} />}
     </AdminLayout>
   )
 }
