@@ -1,9 +1,11 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
 
+const CASES_COUNT = 6
+
 const navItems = [
   { to: '/admin', label: 'Übersicht', end: true },
-  { to: '/admin/cases', label: 'Cases' },
+  { to: '/admin/cases', label: 'Cases', badge: CASES_COUNT },
   { to: '/admin/einstellungen', label: 'Einstellungen' },
 ]
 
@@ -32,9 +34,10 @@ export default function AdminLayout({ children }) {
   return (
     <div className="min-h-screen flex">
       {/* Sidebar */}
-      <aside className="w-56 bg-rise-dark flex flex-col flex-shrink-0">
-        <div className="px-6 py-5 border-b border-white/10">
+      <aside className="w-56 bg-[#1C1917] flex flex-col flex-shrink-0">
+        <div className="px-6 py-5 border-b border-white/8">
           <span className="font-serif text-white tracking-logo text-xl uppercase">Rise</span>
+          <span className="ml-2 font-sans text-white/40 text-xs uppercase tracking-widest">Admin</span>
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-0.5">
@@ -44,22 +47,33 @@ export default function AdminLayout({ children }) {
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
-                `block px-3 py-2 rounded-lg font-sans text-sm transition-colors ${
+                `flex items-center justify-between px-3 py-2 rounded-lg font-sans text-sm transition-colors ${
                   isActive
-                    ? 'bg-white/15 text-white font-medium'
-                    : 'text-white/60 hover:text-white hover:bg-white/10'
+                    ? 'bg-rise-coral/20 text-rise-coral font-medium'
+                    : 'text-white/60 hover:text-white hover:bg-white/8'
                 }`
               }
             >
-              {item.label}
+              <span>{item.label}</span>
+              {item.badge && (
+                <span className="text-xs bg-white/10 text-white/60 px-1.5 py-0.5 rounded-full font-medium">
+                  {item.badge}
+                </span>
+              )}
             </NavLink>
           ))}
         </nav>
 
-        <div className="px-3 py-4 border-t border-white/10">
+        <div className="px-3 py-4 border-t border-white/8">
+          {demoMode && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 mb-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />
+              <span className="font-sans text-xs text-white/40">Demo-Modus</span>
+            </div>
+          )}
           <button
             onClick={handleSignOut}
-            className="block w-full text-left px-3 py-2 rounded-lg font-sans text-sm text-white/50 hover:text-white hover:bg-white/10 transition-colors"
+            className="block w-full text-left px-3 py-2 rounded-lg font-sans text-sm text-white/40 hover:text-white hover:bg-white/8 transition-colors"
           >
             Abmelden
           </button>
@@ -68,28 +82,25 @@ export default function AdminLayout({ children }) {
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Demo banner */}
-        {demoMode && (
-          <div className="bg-amber-50 border-b border-amber-200 px-6 py-2 flex items-center gap-2 flex-shrink-0">
-            <svg className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className="font-sans text-xs text-amber-700">
-              Demo-Modus — Supabase nicht konfiguriert. Alle Daten sind Beispieldaten.
-            </span>
-          </div>
-        )}
-
         {/* Top bar */}
-        <header className="bg-white border-b border-rise-border px-6 py-3 flex items-center justify-between flex-shrink-0">
-          <div />
-          <span className="font-sans text-xs font-medium text-white bg-rise-muted px-2.5 py-1 rounded-full uppercase tracking-wide">
-            Admin
-          </span>
+        <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between flex-shrink-0">
+          <span className="font-sans text-sm font-medium text-gray-900">Rise Admin</span>
+          <div className="flex items-center gap-3">
+            {demoMode && (
+              <span className="font-sans text-xs text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">
+                Demo
+              </span>
+            )}
+            <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center">
+              <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+              </svg>
+            </div>
+          </div>
         </header>
 
         {/* Content */}
-        <main className="flex-1 bg-rise-bg overflow-auto">
+        <main className="flex-1 bg-gray-50 overflow-auto">
           {children}
         </main>
       </div>
