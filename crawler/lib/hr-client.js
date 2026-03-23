@@ -12,7 +12,9 @@
 const { load } = require('cheerio')
 
 const HR_BASE = 'https://www.handelsregister.de'
-const HR_SEARCH_URL = `${HR_BASE}/rp_web/erweitertesuche.xhtml`
+const HR_WELCOME_URL = `${HR_BASE}/rp_web/welcome.xhtml`
+const HR_SEARCH_URL = `${HR_BASE}/rp_web/erweitertesuche/welcome.xhtml`
+const HR_RESULTS_URL = `${HR_BASE}/rp_web/sucheErgebnisse/welcome.xhtml`
 
 // ─── User-Agent rotation ──────────────────────────────────────────────────────
 
@@ -158,20 +160,68 @@ function returnSession(session) {
 }
 
 async function createSession() {
-  const res = await fetchHR(HR_SEARCH_URL, {
+  // Step 1: GET welcome page to establish JSESSIONID and naviForm ViewState
+  const welcomeRes = await fetchHR(HR_WELCOME_URL, {
     headers: browserHeaders(),
     redirect: 'follow',
   })
-  if (!res.ok) throw new Error(`HR session init failed: HTTP ${res.status}`)
+  if (!welcomeRes.ok) throw new Error(`HR welcome page failed: HTTP ${welcomeRes.status}`)
 
-  const html = await res.text()
-  const cookies = mergeCookies(res)
+  const welcomeHtml = await welcomeRes.text()
+  let cookies = mergeCookies(welcomeRes)
+  const $w = load(welcomeHtml)
+
+  const naviVS =
+    $w('#naviForm input[name="javax.faces.ViewState"]').val() ||
+    $w('input[name="javax.faces.ViewState"]').first().val() ||
+    ''
+  const naviAction = $w('#naviForm').attr('action') || '/rp_web/welcome.xhtml'
+  const postUrl = naviAction.startsWith('http') ? naviAction : `${HR_BASE}${naviAction}`
+
+  // Step 2: POST naviForm to navigate to Erweiterte Suche, handle redirect manually
+  const navRes = await fetchHR(postUrl, {
+    method: 'POST',
+    headers: {
+      ...browserHeaders(),
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Referer: HR_WELCOME_URL,
+      Cookie: cookies,
+    },
+    body: new URLSearchParams({
+      naviForm: 'naviForm',
+      'naviForm:erweiterteSucheLink': 'naviForm:erweiterteSucheLink',
+      target: 'erweiterteSucheLink',
+      'javax.faces.ViewState': naviVS,
+    }).toString(),
+    redirect: 'manual',
+  })
+  cookies = mergeCookies(navRes, cookies)
+
+  // Step 3: GET the search page WITH cookies (manual redirect follow)
+  const location = navRes.headers.get('location')
+  const searchPageUrl = location
+    ? location.startsWith('http') ? location : `${HR_BASE}${location}`
+    : HR_SEARCH_URL
+  const searchPageRes = await fetchHR(searchPageUrl, {
+    headers: { ...browserHeaders(), Cookie: cookies },
+    redirect: 'follow',
+  })
+  if (!searchPageRes.ok) throw new Error(`HR search page failed: HTTP ${searchPageRes.status}`)
+
+  cookies = mergeCookies(searchPageRes, cookies)
+  const html = await searchPageRes.text()
   const $ = load(html)
 
-  const viewState = $('input[name="javax.faces.ViewState"]').val() || ''
-  const formId = $('form').first().attr('id') || 'form1'
+  const searchForm = $('#form').length
+    ? $('#form')
+    : $('form').filter((_, el) => $(el).find('[name*="schlagwoerter"]').length > 0).first()
+  const formId = searchForm.attr('id') || 'form'
+  const viewState =
+    searchForm.find('input[name="javax.faces.ViewState"]').val() ||
+    $('input[name="javax.faces.ViewState"]').val() ||
+    ''
 
-  console.log('[hr-client] created new session, viewState length:', viewState.length)
+  console.log('[hr-client] created new session via welcome page, formId:', formId, 'viewState length:', viewState.length)
   return { cookies, viewState, formId, html, createdAt: Date.now() }
 }
 
@@ -184,9 +234,10 @@ async function searchByRegister(registerArt, registerNummer, registerGericht, se
   const formData = new URLSearchParams({
     [formId]: formId,
     [`${formId}:schlagwoerter`]: searchTerm,
-    [`${formId}:schlagwortOptionen`]: '2',
-    [`${formId}:btnSuche`]: 'Suche',
+    [`${formId}:schlagwortOptionen`]: '1',
+    [`${formId}:btnSuche`]: 'Suchen',
     'javax.faces.ViewState': sViewState,
+    suchTyp: 'e',
   })
 
   const res = await fetchHR(HR_SEARCH_URL, {
@@ -205,11 +256,22 @@ async function searchByRegister(registerArt, registerNummer, registerGericht, se
   const html = await res.text()
   const cookies = mergeCookies(res, sCookies)
   const $ = load(html)
-  const viewState = $('input[name="javax.faces.ViewState"]').val() || sViewState
 
+  // Extract ergebnissForm viewState and action URL for document downloads
+  const ergebnissForm = $('#ergebnissForm')
+  const resultsViewState =
+    ergebnissForm.find('input[name="javax.faces.ViewState"]').val() ||
+    $('input[name="javax.faces.ViewState"]').first().val() ||
+    sViewState
+  const resultsFormAction = ergebnissForm.attr('action') || '/rp_web/sucheErgebnisse/welcome.xhtml'
+  const resultsUrl = resultsFormAction.startsWith('http')
+    ? resultsFormAction
+    : `${HR_BASE}${resultsFormAction}`
+
+  // Find the matching row by data-ri index
   let rowIndex = -1
-  $('table tr').each((i, row) => {
-    if (i === 0) return
+  $('tr[data-ri]').each((_, row) => {
+    const ri = parseInt($(row).attr('data-ri') || '-1', 10)
     const text = $(row).text()
     const normGericht = registerGericht.toLowerCase().replace(/\s+/g, ' ').trim()
     if (
@@ -217,12 +279,19 @@ async function searchByRegister(registerArt, registerNummer, registerGericht, se
       text.toUpperCase().includes(registerArt) &&
       (text.toLowerCase().replace(/\s+/g, ' ').includes(normGericht) || rowIndex === -1)
     ) {
-      rowIndex = i - 1
+      rowIndex = ri
       return false
     }
   })
 
-  return { cookies, viewState, formId, resultsHtml: html, rowIndex }
+  return {
+    cookies,
+    viewState: resultsViewState,
+    formId: 'ergebnissForm',
+    resultsUrl,
+    resultsHtml: html,
+    rowIndex,
+  }
 }
 
 // ─── Company name search (for /api/search) ────────────────────────────────────
@@ -234,9 +303,10 @@ async function searchByName(query, schlagwortOptionen = '2') {
   const formData = new URLSearchParams({
     [formId]: formId,
     [`${formId}:schlagwoerter`]: query,
-    [`${formId}:schlagwortOptionen`]: schlagwortOptionen,
-    [`${formId}:btnSuche`]: 'Suche',
+    [`${formId}:schlagwortOptionen`]: '1',
+    [`${formId}:btnSuche`]: 'Suchen',
     'javax.faces.ViewState': sViewState,
+    suchTyp: 'e',
   })
 
   const res = await fetchHR(HR_SEARCH_URL, {
@@ -261,94 +331,55 @@ function parseSearchResults(html, query) {
   const $ = load(html)
   const companies = []
 
-  const table = $('table[id*="ergebnis"], table[id*="result"], #ergebnisse table, .ergebnisTabelle').first()
+  // Results are in a PrimeFaces datatable: each result is a <tr data-ri="N"> row.
+  // Inside each row is a nested table with:
+  //   row 0: one td containing "<Land> <bold-span: Gericht Registerart Registernummer>"
+  //   row 1: td[0]=company name, td[1]=Sitz, td[2]=Status, td[3]=doc buttons
+  $('tr[data-ri]').each((_, row) => {
+    const nestedTable = $(row).find('table').first()
+    if (!nestedTable.length) return
 
-  if (table.length) {
-    table.find('tr').each((i, row) => {
-      if (i === 0) return
-      const cells = $(row).find('td')
-      if (cells.length < 4) return
+    const nestedRows = nestedTable.find('tr')
+    if (nestedRows.length < 2) return
 
-      const firma_name = $(cells[0]).text().trim()
-      if (!firma_name) return
+    // Row 0: gericht/registerart/registernummer are in a bold span
+    const headerSpan = $(nestedRows[0]).find('span.fontWeightBold').first()
+    const headerText = headerSpan.length
+      ? headerSpan.text().trim()
+      : $(nestedRows[0]).find('td').first().text().trim()
 
-      const ort = $(cells[1]).text().trim()
-      const gericht = $(cells[2]).text().trim()
-      const regText = $(cells[3]).text().trim()
-      const regNummer = $(cells[4])?.text?.().trim() || ''
-      const statusText = $(cells[5])?.text?.().trim() || ''
+    // Parse "Amtsgericht Berlin (Charlottenburg) HRB 271697"
+    const regMatch = headerText.match(/\b(HRB|HRA|GnR|VR|PR)\s+(\S+)/)
+    if (!regMatch) return
+    const register_art = regMatch[1]
+    const register_nummer = regMatch[2]
+    const register_gericht = headerText.slice(0, regMatch.index).trim()
 
-      let register_art = ''
-      let register_nummer = regNummer || regText
+    // Row 1: company data
+    const dataCells = $(nestedRows[1]).find('td')
+    if (dataCells.length < 2) return
 
-      const regMatch = regText.match(/^(HRB|HRA|PR|GnR|VR)\s*(.*)/)
-      if (regMatch) {
-        register_art = regMatch[1]
-        register_nummer = regMatch[2] || regNummer
-      } else if (['HRB', 'HRA', 'PR', 'GnR', 'VR'].includes(regText)) {
-        register_art = regText
-        register_nummer = regNummer
-      }
+    const firma_name = $(dataCells[0]).text().trim()
+    if (!firma_name) return
 
-      if (!isInScope(firma_name, register_art)) return
+    const sitz = $(dataCells[1]).text().trim()
+    const statusText = dataCells.length >= 3 ? $(dataCells[2]).text().trim() : ''
+    const status = /aktuell|eingetragen/i.test(statusText) ? 'aktiv' : 'gelöscht'
 
-      const status = /aktiv|active|eingetragen/i.test(statusText) ? 'aktiv' : statusText ? 'gelöscht' : 'aktiv'
+    if (!isInScope(firma_name, register_art)) return
 
-      companies.push({
-        id: `hr_${register_art}_${register_nummer}_${gericht}`.replace(/\s+/g, '_'),
-        firma_name,
-        rechtsform: inferRechtsform(firma_name),
-        register_art,
-        register_nummer,
-        register_gericht: gericht,
-        sitz: ort,
-        status,
-        source: 'handelsregister.de',
-      })
+    companies.push({
+      id: `hr_${register_art}_${register_nummer}_${register_gericht}`.replace(/\s+/g, '_'),
+      firma_name,
+      rechtsform: inferRechtsform(firma_name),
+      register_art,
+      register_nummer,
+      register_gericht,
+      sitz,
+      status,
+      source: 'handelsregister.de',
     })
-  }
-
-  // Fallback: scan all tables
-  if (companies.length === 0) {
-    $('table').each((_, tbl) => {
-      const rows = $(tbl).find('tr')
-      if (rows.length < 2) return
-      const headerText = $(rows[0]).text().toLowerCase()
-      if (!headerText.includes('firma') && !headerText.includes('name') && !headerText.includes('register')) return
-
-      rows.each((i, row) => {
-        if (i === 0) return
-        const cells = $(row).find('td')
-        if (cells.length < 3) return
-        const firma_name = $(cells[0]).text().trim()
-        if (!firma_name || firma_name.length < 2) return
-
-        const allText = $(row).text()
-        const regMatch = allText.match(/\b(HRB|HRA|PR|GnR|VR)\s+(\S+)/i)
-        const register_art = regMatch ? regMatch[1].toUpperCase() : ''
-        const register_nummer = regMatch ? regMatch[2] : ''
-
-        const gerichtMatch = allText.match(/AG\s+\w+/i)
-        const register_gericht = gerichtMatch ? gerichtMatch[0] : ''
-
-        if (!isInScope(firma_name, register_art)) return
-
-        companies.push({
-          id: `hr_${register_art}_${register_nummer}`.replace(/\s+/g, '_'),
-          firma_name,
-          rechtsform: inferRechtsform(firma_name),
-          register_art,
-          register_nummer,
-          register_gericht,
-          sitz: '',
-          status: 'aktiv',
-          source: 'handelsregister.de',
-        })
-      })
-
-      if (companies.length > 0) return false
-    })
-  }
+  })
 
   return companies.slice(0, 10)
 }
@@ -357,12 +388,12 @@ function parseSearchResults(html, query) {
 
 function parseDocumentLinks($, rowIndex, formId) {
   const docs = []
-  const row = $('table tr').eq(rowIndex + 1)
+  const row = $(`tr[data-ri="${rowIndex}"]`)
 
-  row.find('a, button').each((_, el) => {
+  row.find('a[id], button[id]').each((_, el) => {
     const text = $(el).text().trim().toUpperCase()
     const id = $(el).attr('id') || ''
-    if (['SI', 'AD', 'CD', 'DK'].includes(text)) {
+    if (['SI', 'AD', 'CD', 'DK', 'HD'].includes(text)) {
       docs.push({ type: text, linkId: id, label: labelForDocType(text) })
     }
   })
@@ -405,24 +436,9 @@ async function fetchDocumentList(registerArt, registerNummer, registerGericht) {
 // ─── JSF link helpers ─────────────────────────────────────────────────────────
 
 function findDocLinkId($, rowIndex, docType, formId) {
-  const patterns = [
-    `${formId}:ergebnistable:${rowIndex}:lnk${docType}`,
-    `${formId}:ergebnistable:${rowIndex}:btn${docType}`,
-    `${formId}:recordsTable:${rowIndex}:lnk${docType}`,
-    `${formId}:recordsTable:${rowIndex}:btn${docType}`,
-    `${formId}:j_idt42:${rowIndex}:lnk${docType}`,
-    `${formId}:j_idt42:${rowIndex}:btn${docType}`,
-    `${formId}:j_idt44:${rowIndex}:lnk${docType}`,
-  ]
-
-  for (const id of patterns) {
-    // CSS.escape is available in browser; in Node use a simple colon-safe approach
-    const escaped = id.replace(/:/g, '\\:')
-    if ($(`#${escaped}`).length) return id
-  }
-
+  // Search the data-ri row directly for a link/button matching the doc type
   let found = null
-  $('table tr').eq(rowIndex + 1).find('a, button').each((_, el) => {
+  $(`tr[data-ri="${rowIndex}"]`).find('a[id], button[id]').each((_, el) => {
     if ($(el).text().trim().toUpperCase() === docType) {
       found = $(el).attr('id') || null
       return false
@@ -431,7 +447,8 @@ function findDocLinkId($, rowIndex, docType, formId) {
   return found
 }
 
-async function clickJSFLink(linkId, formId, viewState, cookies, ajaxRender = '') {
+async function clickJSFLink(linkId, formId, viewState, cookies, resultsUrl = '', ajaxRender = '') {
+  const postUrl = resultsUrl || HR_RESULTS_URL
   const formData = new URLSearchParams({
     [formId]: formId,
     [linkId]: linkId,
@@ -443,12 +460,12 @@ async function clickJSFLink(linkId, formId, viewState, cookies, ajaxRender = '')
   })
   if (ajaxRender) formData.set('javax.faces.partial.render', ajaxRender)
 
-  return fetchHR(HR_SEARCH_URL, {
+  return fetchHR(postUrl, {
     method: 'POST',
     headers: {
       ...browserHeaders(),
       'Content-Type': 'application/x-www-form-urlencoded',
-      Referer: HR_SEARCH_URL,
+      Referer: postUrl,
       Cookie: cookies,
       'Faces-Request': 'partial/ajax',
       'X-Requested-With': 'XMLHttpRequest',
@@ -462,7 +479,7 @@ async function clickJSFLink(linkId, formId, viewState, cookies, ajaxRender = '')
 
 async function downloadSI(registerArt, registerNummer, registerGericht) {
   const session = await getSession()
-  const { cookies, viewState, formId, resultsHtml, rowIndex } =
+  const { cookies, viewState, formId, resultsHtml, resultsUrl, rowIndex } =
     await searchByRegister(registerArt, registerNummer, registerGericht, session)
 
   if (rowIndex === -1) throw new Error(`Company not found: ${registerArt} ${registerNummer}`)
@@ -471,7 +488,7 @@ async function downloadSI(registerArt, registerNummer, registerGericht) {
   const linkId = findDocLinkId($, rowIndex, 'SI', formId)
   if (!linkId) throw new Error('No SI link found')
 
-  const res = await clickJSFLink(linkId, formId, viewState, cookies)
+  const res = await clickJSFLink(linkId, formId, viewState, cookies, resultsUrl)
   const body = await res.arrayBuffer()
   const ct = res.headers.get('content-type') || ''
 
@@ -493,7 +510,7 @@ async function downloadSI(registerArt, registerNummer, registerGericht) {
 
 async function downloadAD(registerArt, registerNummer, registerGericht) {
   const session = await getSession()
-  const { cookies, viewState, formId, resultsHtml, rowIndex } =
+  const { cookies, viewState, formId, resultsHtml, resultsUrl, rowIndex } =
     await searchByRegister(registerArt, registerNummer, registerGericht, session)
 
   if (rowIndex === -1) throw new Error(`Company not found: ${registerArt} ${registerNummer}`)
@@ -502,7 +519,7 @@ async function downloadAD(registerArt, registerNummer, registerGericht) {
   const linkId = findDocLinkId($, rowIndex, 'AD', formId)
   if (!linkId) throw new Error('No AD link found')
 
-  const res = await clickJSFLink(linkId, formId, viewState, cookies)
+  const res = await clickJSFLink(linkId, formId, viewState, cookies, resultsUrl)
   const ct = res.headers.get('content-type') || ''
 
   if (ct.includes('pdf')) {
@@ -525,7 +542,7 @@ async function downloadAD(registerArt, registerNummer, registerGericht) {
 
 async function downloadDK(registerArt, registerNummer, registerGericht, docId) {
   const session = await getSession()
-  const { cookies, viewState, formId, resultsHtml, rowIndex } =
+  const { cookies, viewState, formId, resultsHtml, resultsUrl, rowIndex } =
     await searchByRegister(registerArt, registerNummer, registerGericht, session)
 
   if (rowIndex === -1) throw new Error(`Company not found: ${registerArt} ${registerNummer}`)
@@ -534,7 +551,7 @@ async function downloadDK(registerArt, registerNummer, registerGericht, docId) {
   const dkLinkId = findDocLinkId($, rowIndex, 'DK', formId)
   if (!dkLinkId) throw new Error('No DK link found')
 
-  const treeRes = await clickJSFLink(dkLinkId, formId, viewState, cookies)
+  const treeRes = await clickJSFLink(dkLinkId, formId, viewState, cookies, resultsUrl)
   const treeHtml = await treeRes.text()
   const treeCookies = mergeCookies(treeRes, cookies)
   const $tree = load(treeHtml)
@@ -563,12 +580,12 @@ async function downloadDK(registerArt, registerNummer, registerGericht, docId) {
     'javax.faces.ViewState': treeViewState,
   })
 
-  const dlRes = await fetchHR(HR_SEARCH_URL, {
+  const dlRes = await fetchHR(resultsUrl || HR_RESULTS_URL, {
     method: 'POST',
     headers: {
       ...browserHeaders(),
       'Content-Type': 'application/x-www-form-urlencoded',
-      Referer: HR_SEARCH_URL,
+      Referer: resultsUrl || HR_RESULTS_URL,
       Cookie: treeCookies,
     },
     body: dlFormData.toString(),

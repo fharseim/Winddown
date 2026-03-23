@@ -11,7 +11,9 @@
 import { load } from 'cheerio'
 
 export const HR_BASE = 'https://www.handelsregister.de'
-export const HR_SEARCH_URL = `${HR_BASE}/rp_web/erweitertesuche.xhtml`
+export const HR_WELCOME_URL = `${HR_BASE}/rp_web/welcome.xhtml`
+export const HR_SEARCH_URL = `${HR_BASE}/rp_web/erweitertesuche/welcome.xhtml`
+export const HR_RESULTS_URL = `${HR_BASE}/rp_web/sucheErgebnisse/welcome.xhtml`
 
 export const BROWSER_HEADERS = {
   'User-Agent':
@@ -70,18 +72,66 @@ export function mergeCookies(res, existing = '') {
  *   { cookies, viewState, formId, html }
  */
 export async function createSession() {
-  const res = await fetchWithTimeout(HR_SEARCH_URL, {
+  // Step 1: GET welcome page to establish JSESSIONID and naviForm ViewState
+  const welcomeRes = await fetchWithTimeout(HR_WELCOME_URL, {
     headers: { ...BROWSER_HEADERS },
     redirect: 'follow',
   })
-  if (!res.ok) throw new Error(`HR session init failed: HTTP ${res.status}`)
+  if (!welcomeRes.ok) throw new Error(`HR welcome page failed: HTTP ${welcomeRes.status}`)
 
-  const html = await res.text()
-  const cookies = mergeCookies(res)
+  const welcomeHtml = await welcomeRes.text()
+  let cookies = mergeCookies(welcomeRes)
+  const $w = load(welcomeHtml)
+
+  const naviVS =
+    $w('#naviForm input[name="javax.faces.ViewState"]').val() ||
+    $w('input[name="javax.faces.ViewState"]').first().val() ||
+    ''
+  const naviAction = $w('#naviForm').attr('action') || '/rp_web/welcome.xhtml'
+  const postUrl = naviAction.startsWith('http') ? naviAction : `${HR_BASE}${naviAction}`
+
+  // Step 2: POST naviForm, follow redirect manually to keep cookies
+  const navRes = await fetchWithTimeout(postUrl, {
+    method: 'POST',
+    headers: {
+      ...BROWSER_HEADERS,
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Referer: HR_WELCOME_URL,
+      Cookie: cookies,
+    },
+    body: new URLSearchParams({
+      naviForm: 'naviForm',
+      'naviForm:erweiterteSucheLink': 'naviForm:erweiterteSucheLink',
+      target: 'erweiterteSucheLink',
+      'javax.faces.ViewState': naviVS,
+    }).toString(),
+    redirect: 'manual',
+  })
+  cookies = mergeCookies(navRes, cookies)
+
+  // Step 3: GET search page WITH cookies
+  const location = navRes.headers.get('location')
+  const searchPageUrl = location
+    ? location.startsWith('http') ? location : `${HR_BASE}${location}`
+    : HR_SEARCH_URL
+  const searchPageRes = await fetchWithTimeout(searchPageUrl, {
+    headers: { ...BROWSER_HEADERS, Cookie: cookies },
+    redirect: 'follow',
+  })
+  if (!searchPageRes.ok) throw new Error(`HR search page failed: HTTP ${searchPageRes.status}`)
+
+  cookies = mergeCookies(searchPageRes, cookies)
+  const html = await searchPageRes.text()
   const $ = load(html)
 
-  const viewState = $('input[name="javax.faces.ViewState"]').val() || ''
-  const formId = $('form').first().attr('id') || 'form1'
+  const searchForm = $('#form').length
+    ? $('#form')
+    : $('form').filter((_, el) => $(el).find('[name*="schlagwoerter"]').length > 0).first()
+  const formId = searchForm.attr('id') || 'form'
+  const viewState =
+    searchForm.find('input[name="javax.faces.ViewState"]').val() ||
+    $('input[name="javax.faces.ViewState"]').val() ||
+    ''
 
   return { cookies, viewState, formId, html }
 }
@@ -100,9 +150,10 @@ export async function searchByRegister(registerArt, registerNummer, registerGeri
   const formData = new URLSearchParams({
     [formId]: formId,
     [`${formId}:schlagwoerter`]: searchTerm,
-    [`${formId}:schlagwortOptionen`]: '2',
-    [`${formId}:btnSuche`]: 'Suche',
+    [`${formId}:schlagwortOptionen`]: '1',
+    [`${formId}:btnSuche`]: 'Suchen',
     'javax.faces.ViewState': sViewState,
+    suchTyp: 'e',
   })
 
   const res = await fetchWithTimeout(HR_SEARCH_URL, {
@@ -121,12 +172,22 @@ export async function searchByRegister(registerArt, registerNummer, registerGeri
   const html = await res.text()
   const cookies = mergeCookies(res, sCookies)
   const $ = load(html)
-  const viewState = $('input[name="javax.faces.ViewState"]').val() || sViewState
 
-  // Find the row that matches register art + nummer + gericht
+  // Extract ergebnissForm viewState and action URL for document downloads
+  const ergebnissForm = $('#ergebnissForm')
+  const resultsViewState =
+    ergebnissForm.find('input[name="javax.faces.ViewState"]').val() ||
+    $('input[name="javax.faces.ViewState"]').first().val() ||
+    sViewState
+  const resultsFormAction = ergebnissForm.attr('action') || '/rp_web/sucheErgebnisse/welcome.xhtml'
+  const resultsUrl = resultsFormAction.startsWith('http')
+    ? resultsFormAction
+    : `${HR_BASE}${resultsFormAction}`
+
+  // Find the matching row by data-ri index
   let rowIndex = -1
-  $('table tr').each((i, row) => {
-    if (i === 0) return
+  $('tr[data-ri]').each((_, row) => {
+    const ri = parseInt($(row).attr('data-ri') || '-1', 10)
     const text = $(row).text()
     const normGericht = registerGericht.toLowerCase().replace(/\s+/g, ' ').trim()
     if (
@@ -134,12 +195,19 @@ export async function searchByRegister(registerArt, registerNummer, registerGeri
       text.toUpperCase().includes(registerArt) &&
       (text.toLowerCase().replace(/\s+/g, ' ').includes(normGericht) || rowIndex === -1)
     ) {
-      rowIndex = i - 1
+      rowIndex = ri
       return false
     }
   })
 
-  return { cookies, viewState, formId, resultsHtml: html, rowIndex }
+  return {
+    cookies,
+    viewState: resultsViewState,
+    formId: 'ergebnissForm',
+    resultsUrl,
+    resultsHtml: html,
+    rowIndex,
+  }
 }
 
 // ─── Document list ────────────────────────────────────────────────────────────
@@ -151,12 +219,12 @@ export async function searchByRegister(registerArt, registerNummer, registerGeri
  */
 export function parseDocumentLinks($, rowIndex, formId) {
   const docs = []
-  const row = $('table tr').eq(rowIndex + 1) // +1 for header
+  const row = $(`tr[data-ri="${rowIndex}"]`)
 
-  row.find('a, button').each((_, el) => {
+  row.find('a[id], button[id]').each((_, el) => {
     const text = $(el).text().trim().toUpperCase()
     const id = $(el).attr('id') || ''
-    if (['SI', 'AD', 'CD', 'DK'].includes(text)) {
+    if (['SI', 'AD', 'CD', 'DK', 'HD'].includes(text)) {
       docs.push({ type: text, linkId: id, label: labelForDocType(text) })
     }
   })
@@ -181,24 +249,9 @@ function labelForDocType(type) {
  * Tries common naming patterns used by handelsregister.de.
  */
 export function findDocLinkId($, rowIndex, docType, formId) {
-  const patterns = [
-    `${formId}:ergebnistable:${rowIndex}:lnk${docType}`,
-    `${formId}:ergebnistable:${rowIndex}:btn${docType}`,
-    `${formId}:recordsTable:${rowIndex}:lnk${docType}`,
-    `${formId}:recordsTable:${rowIndex}:btn${docType}`,
-    `${formId}:j_idt42:${rowIndex}:lnk${docType}`,
-    `${formId}:j_idt42:${rowIndex}:btn${docType}`,
-    `${formId}:j_idt44:${rowIndex}:lnk${docType}`,
-  ]
-
-  for (const id of patterns) {
-    if ($(`#${CSS.escape(id)}`).length) return id
-  }
-
-  // Fallback: scan the correct row
   let found = null
-  $('table tr').eq(rowIndex + 1).find('a, button').each((_, el) => {
-    if ($( el).text().trim().toUpperCase() === docType) {
+  $(`tr[data-ri="${rowIndex}"]`).find('a[id], button[id]').each((_, el) => {
+    if ($(el).text().trim().toUpperCase() === docType) {
       found = $(el).attr('id') || null
       return false
     }
@@ -210,7 +263,8 @@ export function findDocLinkId($, rowIndex, docType, formId) {
  * Simulates a JSF command link click via form POST.
  * Returns the raw fetch Response.
  */
-export async function clickJSFLink(linkId, formId, viewState, cookies, ajaxRender = '') {
+export async function clickJSFLink(linkId, formId, viewState, cookies, resultsUrl = '', ajaxRender = '') {
+  const postUrl = resultsUrl || HR_RESULTS_URL
   const formData = new URLSearchParams({
     [formId]: formId,
     [linkId]: linkId,
@@ -222,12 +276,12 @@ export async function clickJSFLink(linkId, formId, viewState, cookies, ajaxRende
   })
   if (ajaxRender) formData.set('javax.faces.partial.render', ajaxRender)
 
-  return fetchWithTimeout(HR_SEARCH_URL, {
+  return fetchWithTimeout(postUrl, {
     method: 'POST',
     headers: {
       ...BROWSER_HEADERS,
       'Content-Type': 'application/x-www-form-urlencoded',
-      Referer: HR_SEARCH_URL,
+      Referer: postUrl,
       Cookie: cookies,
       'Faces-Request': 'partial/ajax',
       'X-Requested-With': 'XMLHttpRequest',
@@ -241,7 +295,7 @@ export async function clickJSFLink(linkId, formId, viewState, cookies, ajaxRende
 
 export async function downloadSI(registerArt, registerNummer, registerGericht) {
   const session = await createSession()
-  const { cookies, viewState, formId, resultsHtml, rowIndex } =
+  const { cookies, viewState, formId, resultsHtml, resultsUrl, rowIndex } =
     await searchByRegister(registerArt, registerNummer, registerGericht, session)
 
   if (rowIndex === -1) throw new Error(`Company not found: ${registerArt} ${registerNummer}`)
@@ -250,7 +304,7 @@ export async function downloadSI(registerArt, registerNummer, registerGericht) {
   const linkId = findDocLinkId($, rowIndex, 'SI', formId)
   if (!linkId) throw new Error('No SI link found')
 
-  const res = await clickJSFLink(linkId, formId, viewState, cookies)
+  const res = await clickJSFLink(linkId, formId, viewState, cookies, resultsUrl)
   const body = await res.arrayBuffer()
   const ct = res.headers.get('content-type') || ''
 
@@ -275,7 +329,7 @@ export async function downloadSI(registerArt, registerNummer, registerGericht) {
 
 export async function downloadAD(registerArt, registerNummer, registerGericht) {
   const session = await createSession()
-  const { cookies, viewState, formId, resultsHtml, rowIndex } =
+  const { cookies, viewState, formId, resultsHtml, resultsUrl, rowIndex } =
     await searchByRegister(registerArt, registerNummer, registerGericht, session)
 
   if (rowIndex === -1) throw new Error(`Company not found: ${registerArt} ${registerNummer}`)
@@ -284,7 +338,7 @@ export async function downloadAD(registerArt, registerNummer, registerGericht) {
   const linkId = findDocLinkId($, rowIndex, 'AD', formId)
   if (!linkId) throw new Error('No AD link found')
 
-  const res = await clickJSFLink(linkId, formId, viewState, cookies)
+  const res = await clickJSFLink(linkId, formId, viewState, cookies, resultsUrl)
   const ct = res.headers.get('content-type') || ''
 
   if (ct.includes('pdf')) {
@@ -309,7 +363,7 @@ export async function downloadAD(registerArt, registerNummer, registerGericht) {
 
 export async function downloadDK(registerArt, registerNummer, registerGericht, docId) {
   const session = await createSession()
-  const { cookies, viewState, formId, resultsHtml, rowIndex } =
+  const { cookies, viewState, formId, resultsHtml, resultsUrl, rowIndex } =
     await searchByRegister(registerArt, registerNummer, registerGericht, session)
 
   if (rowIndex === -1) throw new Error(`Company not found: ${registerArt} ${registerNummer}`)
@@ -319,7 +373,7 @@ export async function downloadDK(registerArt, registerNummer, registerGericht, d
   if (!dkLinkId) throw new Error('No DK link found')
 
   // Open document tree
-  const treeRes = await clickJSFLink(dkLinkId, formId, viewState, cookies)
+  const treeRes = await clickJSFLink(dkLinkId, formId, viewState, cookies, resultsUrl)
   const treeHtml = await treeRes.text()
   const treeCookies = mergeCookies(treeRes, cookies)
   const $tree = load(treeHtml)
@@ -349,12 +403,12 @@ export async function downloadDK(registerArt, registerNummer, registerGericht, d
     'javax.faces.ViewState': treeViewState,
   })
 
-  const dlRes = await fetchWithTimeout(HR_SEARCH_URL, {
+  const dlRes = await fetchWithTimeout(resultsUrl || HR_RESULTS_URL, {
     method: 'POST',
     headers: {
       ...BROWSER_HEADERS,
       'Content-Type': 'application/x-www-form-urlencoded',
-      Referer: HR_SEARCH_URL,
+      Referer: resultsUrl || HR_RESULTS_URL,
       Cookie: treeCookies,
     },
     body: formData.toString(),
