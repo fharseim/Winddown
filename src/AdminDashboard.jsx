@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import AdminLayout from './AdminLayout'
+import { supabase, isDemoMode } from './lib/supabase'
 
 const STATUS_CONFIG = {
   intake:            { label: 'Intake',           color: 'bg-gray-100 text-gray-600' },
@@ -117,13 +118,25 @@ function StatCard({ label, value, dotColor }) {
 
 export default function AdminDashboard() {
   const [search, setSearch] = useState('')
+  const [cases, setCases] = useState(MOCK_CASES)
 
-  const neue = MOCK_CASES.filter(c => c.status === 'intake').length
-  const inBearbeitung = MOCK_CASES.filter(c => ['ersteinschaetzung', 'angebot'].includes(c.status)).length
-  const aktiv = MOCK_CASES.filter(c => c.status === 'aktiv').length
-  const abgeschlossen = MOCK_CASES.filter(c => c.status === 'abgeschlossen').length
+  useEffect(() => {
+    if (isDemoMode) return
+    supabase
+      .from('cases')
+      .select('id, created_at, firma_name, firma_rechtsform, contact_name, contact_email, rolle, status')
+      .order('created_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (!error && data) setCases(data)
+      })
+  }, [])
 
-  const filtered = MOCK_CASES.filter(c => {
+  const neue = cases.filter(c => c.status === 'intake').length
+  const inBearbeitung = cases.filter(c => ['ersteinschaetzung', 'angebot'].includes(c.status)).length
+  const aktiv = cases.filter(c => c.status === 'aktiv').length
+  const abgeschlossen = cases.filter(c => c.status === 'abgeschlossen').length
+
+  const filtered = cases.filter(c => {
     const q = search.toLowerCase()
     return (
       c.firma_name.toLowerCase().includes(q) ||

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import AdminLayout from './AdminLayout'
+import { supabase, isDemoMode } from './lib/supabase'
 
 // ─── Document generation ──────────────────────────────────────────────────────
 
@@ -599,7 +600,9 @@ function Toast({ message, variant = 'success', onClose }) {
 
 export default function AdminCaseDetail() {
   const { id } = useParams()
-  const caseEntry = MOCK_CASES_BY_ID[id] ?? MOCK_CASES_BY_ID['mock-001']
+
+  const fallback = MOCK_CASES_BY_ID[id] ?? MOCK_CASES_BY_ID['mock-001']
+  const [caseEntry, setCaseEntry] = useState(fallback)
   const c = caseEntry.case
   const caseDocs = caseEntry.documents
   const caseActivity = caseEntry.activity
@@ -608,6 +611,22 @@ export default function AdminCaseDetail() {
   const [tab, setTab] = useState('uebersicht')
   const [status, setStatus] = useState(c.status)
   const [notes, setNotes] = useState(c.internal_notes)
+
+  useEffect(() => {
+    if (isDemoMode) return
+    supabase
+      .from('cases')
+      .select('*')
+      .eq('id', id)
+      .single()
+      .then(({ data, error }) => {
+        if (!error && data) {
+          setCaseEntry(prev => ({ ...prev, case: data }))
+          setStatus(data.status)
+          setNotes(data.internal_notes ?? '')
+        }
+      })
+  }, [id])
   const [loadingDoc, setLoadingDoc] = useState(null)
   const [emailModal, setEmailModal] = useState(null)
   const [showEmailModal, setShowEmailModal] = useState(false)

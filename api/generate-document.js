@@ -1,6 +1,7 @@
 import { generateErsteinschaetzung } from '../src/templates/ersteinschaetzung.js'
 import { generateKostenangebot } from '../src/templates/kostenangebot.js'
 import { generateAufloesungsbeschluss } from '../src/templates/aufloesungsbeschluss.js'
+import { createClient } from '@supabase/supabase-js'
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
@@ -89,6 +90,23 @@ export default async function handler(req, res) {
       .slice(0, 40)
 
     const filename = `${generator.label}_${firmaSafe}.docx`
+
+    // Persist document record to Supabase if configured
+    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
+    if (supabaseUrl && supabaseKey && caseData.id) {
+      try {
+        const sb = createClient(supabaseUrl, supabaseKey)
+        await sb.from('documents').insert({
+          case_id: caseData.id,
+          type: generator.label,
+          filename,
+          status: 'entwurf',
+        })
+      } catch (sbErr) {
+        console.warn('[generate-document] Supabase insert failed (non-fatal):', sbErr.message)
+      }
+    }
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
