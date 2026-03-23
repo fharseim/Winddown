@@ -13,7 +13,7 @@ const { load } = require('cheerio')
 
 const HR_BASE = 'https://www.handelsregister.de'
 const HR_WELCOME_URL = `${HR_BASE}/rp_web/welcome.xhtml`
-const HR_SEARCH_URL = `${HR_BASE}/rp_web/erweitertesuche/welcome.xhtml`
+const HR_SEARCH_URL = `${HR_BASE}/rp_web/normalesuche/welcome.xhtml`
 const HR_RESULTS_URL = `${HR_BASE}/rp_web/sucheErgebnisse/welcome.xhtml`
 
 // ─── User-Agent rotation ──────────────────────────────────────────────────────
@@ -189,8 +189,8 @@ async function createSession() {
     },
     body: new URLSearchParams({
       naviForm: 'naviForm',
-      'naviForm:erweiterteSucheLink': 'naviForm:erweiterteSucheLink',
-      target: 'erweiterteSucheLink',
+      'naviForm:normaleSucheLink': 'naviForm:normaleSucheLink',
+      target: 'normaleSucheLink',
       'javax.faces.ViewState': naviVS,
     }).toString(),
     redirect: 'manual',
@@ -229,15 +229,21 @@ async function createSession() {
 
 async function searchByRegister(registerArt, registerNummer, registerGericht, session) {
   const { cookies: sCookies, viewState: sViewState, formId } = session
-  const searchTerm = `${registerArt} ${registerNummer}`
+
+  // Strip "Amtsgericht " prefix for the court search field
+  const gerichtShort = registerGericht.replace(/^Amtsgericht\s*/i, '').trim()
 
   const formData = new URLSearchParams({
     [formId]: formId,
-    [`${formId}:schlagwoerter`]: searchTerm,
+    [`${formId}:schlagwoerter`]: '',
     [`${formId}:schlagwortOptionen`]: '1',
-    [`${formId}:btnSuche`]: 'Suchen',
+    [`${formId}:registerArt_input`]: registerArt,
+    [`${formId}:registerNummer`]: registerNummer,
+    [`${formId}:registerGericht_input`]: gerichtShort,
+    [`${formId}:ergebnisseProSeite_input`]: '10',
+    [`${formId}:btnSuche`]: `${formId}:btnSuche`,
     'javax.faces.ViewState': sViewState,
-    suchTyp: 'e',
+    suchTyp: 'n',
   })
 
   const res = await fetchHR(HR_SEARCH_URL, {
@@ -304,9 +310,10 @@ async function searchByName(query, schlagwortOptionen = '2') {
     [formId]: formId,
     [`${formId}:schlagwoerter`]: query,
     [`${formId}:schlagwortOptionen`]: '1',
-    [`${formId}:btnSuche`]: 'Suchen',
+    [`${formId}:ergebnisseProSeite_input`]: '25',
+    [`${formId}:btnSuche`]: `${formId}:btnSuche`,
     'javax.faces.ViewState': sViewState,
-    suchTyp: 'e',
+    suchTyp: 'n',
   })
 
   const res = await fetchHR(HR_SEARCH_URL, {
@@ -447,18 +454,35 @@ function findDocLinkId($, rowIndex, docType, formId) {
   return found
 }
 
-async function clickJSFLink(linkId, formId, viewState, cookies, resultsUrl = '', ajaxRender = '') {
+async function clickJSFLink(linkId, formId, viewState, cookies, resultsUrl = '') {
+  // Download buttons are standard PrimeFaces form POSTs — NOT AJAX.
+  // Pattern verified live: PrimeFaces.addSubmitParam(formId, {linkId: linkId}).submit(formId)
+  // No javax.faces.ajax, no Faces-Request header.
   const postUrl = resultsUrl || HR_RESULTS_URL
+
   const formData = new URLSearchParams({
     [formId]: formId,
     [linkId]: linkId,
     'javax.faces.ViewState': viewState,
-    'javax.faces.source': linkId,
-    'javax.faces.partial.event': 'click',
-    'javax.faces.partial.execute': linkId,
-    'javax.faces.ajax': 'true',
   })
-  if (ajaxRender) formData.set('javax.faces.partial.render', ajaxRender)
+
+  // DK/UT/VÖ buttons (fade1_ suffix) also need property params.
+  // Detect by suffix and inject accordingly.
+  const docTypeMap = {
+    'Global.Dokumentart.DK': 'DK',
+    'Global.Dokumentart.UT': 'UT',
+    'Global.Dokumentart.VÖ': 'VÖ',
+  }
+  if (linkId.includes('fade1_')) {
+    // Extract doc type from the link index position
+    const idxMatch = linkId.match(/:j_idt\d+:(\d+):fade1_/)
+    const idx = idxMatch ? parseInt(idxMatch[1]) : -1
+    const propByIdx = { 3: 'Global.Dokumentart.DK', 4: 'Global.Dokumentart.UT', 5: 'Global.Dokumentart.VÖ' }
+    if (propByIdx[idx]) {
+      formData.set('property', propByIdx[idx])
+      formData.set('property2', '')
+    }
+  }
 
   return fetchHR(postUrl, {
     method: 'POST',
@@ -467,8 +491,6 @@ async function clickJSFLink(linkId, formId, viewState, cookies, resultsUrl = '',
       'Content-Type': 'application/x-www-form-urlencoded',
       Referer: postUrl,
       Cookie: cookies,
-      'Faces-Request': 'partial/ajax',
-      'X-Requested-With': 'XMLHttpRequest',
     },
     body: formData.toString(),
     redirect: 'follow',
