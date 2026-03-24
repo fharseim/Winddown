@@ -748,29 +748,48 @@ async function listDKDocuments(registerArt, registerNummer, registerGericht) {
  * @param {string} registerArt
  * @param {string} registerNummer
  * @param {string} registerGericht
- * @param {string|null} leafKey  — rowKey from the DK tree (e.g. "0_0_1_0").
- *   If null/empty, automatically selects the highest-scoring document.
+ * @param {string|null} docId
+ *   Three modes:
+ *   - Exact tree key (e.g. "0_0_1_0")  → downloads that specific leaf
+ *   - Keyword (e.g. "gesellschafterliste", "satzung") → picks the highest-scoring
+ *     leaf whose label contains the keyword
+ *   - null / empty → auto-selects the highest-scoring leaf overall
  */
-async function downloadDK(registerArt, registerNummer, registerGericht, leafKey = null) {
+async function downloadDK(registerArt, registerNummer, registerGericht, docId = null) {
   const { leafMap, currentViewState, currentCookies, dkPageUrl, treeHtml } =
     await _expandDKTree(registerArt, registerNummer, registerGericht)
 
-  // Resolve which leaf to download
-  let chosenKey = leafKey && leafKey.trim() ? leafKey.trim() : null
+  let chosenKey = null
   let chosenLabel = ''
+  const id = docId && docId.trim() ? docId.trim() : null
 
-  if (chosenKey) {
-    // Validate the requested key exists in the tree
-    if (!leafMap.has(chosenKey)) {
-      console.warn(`[hr-client] DK: requested leafKey "${chosenKey}" not found in tree, falling back to best leaf`)
-      chosenKey = null
+  if (id && /^\d+_\d+_\d+_\d+$/.test(id)) {
+    // Exact tree key
+    if (leafMap.has(id)) {
+      chosenKey = id
+      chosenLabel = leafMap.get(id).label
     } else {
-      chosenLabel = leafMap.get(chosenKey).label
+      console.warn(`[hr-client] DK: exact key "${id}" not in tree, falling back to keyword/best`)
+    }
+  }
+
+  if (!chosenKey && id) {
+    // Keyword filter — find highest-scoring leaf whose label contains the keyword
+    const kw = id.toLowerCase()
+    let bestScore = -1
+    for (const [key, { score, label }] of leafMap) {
+      const combined = (label + ' ' + key).toLowerCase()
+      if (combined.includes(kw) && score > bestScore) {
+        bestScore = score; chosenKey = key; chosenLabel = label
+      }
+    }
+    if (!chosenKey) {
+      console.warn(`[hr-client] DK: no leaf matching keyword "${id}", falling back to best overall`)
     }
   }
 
   if (!chosenKey) {
-    // Auto-select highest-scoring leaf
+    // Auto-select highest-scoring leaf overall
     let bestScore = 0
     for (const [key, { score, label }] of leafMap) {
       if (score > bestScore) { bestScore = score; chosenKey = key; chosenLabel = label }

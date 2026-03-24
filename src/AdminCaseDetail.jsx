@@ -638,10 +638,6 @@ export default function AdminCaseDetail() {
   const [hrDocsError, setHrDocsError] = useState(null)
   const [hrDownloading, setHrDownloading] = useState(null) // key of currently downloading doc
 
-  // DK tree state (list of all available DK document leaves)
-  const [dkTree, setDkTree] = useState(null)       // null = not fetched
-  const [dkTreeLoading, setDkTreeLoading] = useState(false)
-  const [dkTreeError, setDkTreeError] = useState(null)
 
   function showToast(msg, variant = 'success') {
     setToast({ msg, variant })
@@ -674,30 +670,6 @@ export default function AdminCaseDetail() {
       .finally(() => setHrDocsLoading(false))
   }, [tab, hrDocs, hrDocsLoading, registerArt, registerNummer, registerGericht])
 
-  // Fetch DK tree (all available DK documents) once we know DK is available
-  useEffect(() => {
-    if (tab !== 'dokumente') return
-    if (!hrDocs) return
-    const hasDK = hrDocs.some(d => d.type === 'DK')
-    if (!hasDK) return
-    if (dkTree !== null || dkTreeLoading) return
-    if (!registerArt || !registerNummer || !registerGericht) return
-
-    setDkTreeLoading(true)
-    setDkTreeError(null)
-
-    const params = new URLSearchParams({ registerArt, registerNummer, registerGericht })
-    fetch(`/api/dk-list?${params}`)
-      .then(r => r.json())
-      .then(data => {
-        setDkTree(data.documents ?? [])
-      })
-      .catch(err => {
-        setDkTreeError('DK-Dokumentenliste konnte nicht geladen werden.')
-        console.error('[AdminCaseDetail] dk-list:', err)
-      })
-      .finally(() => setDkTreeLoading(false))
-  }, [tab, hrDocs, dkTree, dkTreeLoading, registerArt, registerNummer, registerGericht])
 
   const TABS = [
     { key: 'uebersicht',     label: 'Übersicht' },
@@ -912,7 +884,7 @@ export default function AdminCaseDetail() {
                       </p>
                       {hrDocs !== null && !hrDocsLoading && (
                         <button
-                          onClick={() => { setHrDocs(null); setHrDocsError(null); setDkTree(null); setDkTreeError(null) }}
+                          onClick={() => { setHrDocs(null); setHrDocsError(null) }}
                           className="text-xs text-blue-500 hover:text-blue-700 transition-colors"
                         >
                           Aktualisieren
@@ -941,118 +913,124 @@ export default function AdminCaseDetail() {
                       </div>
                     )}
 
-                    {/* Document buttons */}
+                    {/* Document list — flat, like handelsregister.ai */}
                     {!hrDocsLoading && !hrDocsError && hrDocs !== null && (
-                      <div className="px-6 py-5 space-y-4">
-                        {/* All non-DK documents from the register (SI, AD, CD, ...) */}
-                        <div className="flex flex-wrap gap-3">
-                          {hrDocs.filter(d => d.type !== 'DK').map(doc => {
-                            const key = `${doc.type}:`
-                            const loading = hrDownloading === key
-                            return (
-                              <button
-                                key={doc.type}
-                                disabled={hrDownloading !== null}
-                                onClick={() => downloadHRDocument(registerArt, registerNummer, registerGericht, doc.type, '', setHrDownloading, showToast)}
-                                className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border font-sans text-sm font-medium transition-colors ${
-                                  loading
-                                    ? 'bg-blue-50 border-blue-200 text-blue-400 cursor-not-allowed'
-                                    : hrDownloading
-                                      ? 'bg-rise-bg border-rise-border text-rise-muted-light cursor-not-allowed'
-                                      : 'bg-white border-blue-200 text-blue-700 hover:bg-blue-50'
-                                }`}
-                              >
-                                {loading ? (
-                                  <>
-                                    <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                                    </svg>
-                                    Lade…
-                                  </>
-                                ) : (
-                                  <>
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                                    </svg>
-                                    {doc.label} herunterladen
-                                  </>
-                                )}
-                              </button>
-                            )
-                          })}
-                        </div>
-
-                        {/* DK documents from tree */}
-                        {hrDocs.some(d => d.type === 'DK') && (
-                          <div className="border-t border-rise-border pt-4">
-                            <p className="text-xs font-medium text-rise-muted uppercase tracking-widest mb-3">Dokumente aus dem Strukturbaum</p>
-
-                            {/* Loading DK tree */}
-                            {dkTreeLoading && (
-                              <div className="flex items-center gap-2 text-sm text-rise-muted py-1">
-                                <svg className="w-3.5 h-3.5 animate-spin text-blue-400 flex-shrink-0" viewBox="0 0 24 24" fill="none">
-                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                                </svg>
-                                Lade verfügbare Dokumente…
-                              </div>
-                            )}
-
-                            {/* DK tree error */}
-                            {dkTreeError && !dkTreeLoading && (
-                              <p className="text-sm text-red-500 py-1">{dkTreeError}</p>
-                            )}
-
-                            {/* DK tree document list */}
-                            {dkTree && !dkTreeLoading && (
-                              <div className="space-y-2">
-                                {dkTree.length === 0 && (
-                                  <p className="text-sm text-rise-muted">Keine Dokumente verfügbar.</p>
-                                )}
-                                {dkTree.map(doc => {
-                                  const key = `DK:${doc.key}`
-                                  const loading = hrDownloading === key
-                                  return (
-                                    <div key={doc.key} className="flex items-center justify-between gap-4 py-2">
-                                      <span className="text-sm text-rise-dark">{doc.label}</span>
-                                      <button
-                                        disabled={hrDownloading !== null}
-                                        onClick={() => downloadHRDocument(registerArt, registerNummer, registerGericht, 'DK', doc.key, setHrDownloading, showToast)}
-                                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium font-sans rounded-lg border transition-colors flex-shrink-0 ${
-                                          loading
-                                            ? 'bg-blue-50 border-blue-200 text-blue-400 cursor-not-allowed'
-                                            : hrDownloading
-                                              ? 'bg-rise-bg border-rise-border text-rise-muted-light cursor-not-allowed'
-                                              : 'bg-white border-rise-border text-rise-muted hover:bg-rise-bg hover:text-rise-dark'
-                                        }`}
-                                      >
-                                        {loading ? (
-                                          <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                                          </svg>
-                                        ) : (
-                                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                                          </svg>
-                                        )}
-                                        {loading ? 'Lade…' : 'Herunterladen'}
-                                      </button>
-                                    </div>
-                                  )
-                                })}
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {/* No HR docs found */}
-                        {hrDocs.length === 0 && (
-                          <p className="text-sm text-rise-muted">
+                      <div>
+                        {hrDocs.length === 0 ? (
+                          <p className="px-6 py-8 text-sm text-rise-muted text-center">
                             Keine Dokumente im Handelsregister gefunden.
                           </p>
-                        )}
+                        ) : (() => {
+                          const hasDK = hrDocs.some(d => d.type === 'DK')
+
+                          // Fixed document definitions — same order as handelsregister.ai
+                          const docRows = [
+                            hasDK && {
+                              id: 'DK:gesellschafterliste',
+                              label: 'Gesellschafterliste',
+                              sublabel: 'Aktuellste verfügbare Version',
+                              docType: 'DK',
+                              docId: 'gesellschafterliste',
+                              icon: (
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+                                </svg>
+                              ),
+                            },
+                            hasDK && {
+                              id: 'DK:satzung',
+                              label: 'Gesellschaftervertrag / Satzung / Statut',
+                              sublabel: 'Aktuellste verfügbare Version',
+                              docType: 'DK',
+                              docId: 'satzung',
+                              icon: (
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                                </svg>
+                              ),
+                            },
+                            hrDocs.find(d => d.type === 'CD') && {
+                              id: 'CD:',
+                              label: 'Chronologischer Handelsregisterabdruck',
+                              sublabel: 'CD — vollständige Historie',
+                              docType: 'CD',
+                              docId: '',
+                              icon: (
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
+                                </svg>
+                              ),
+                            },
+                            hrDocs.find(d => d.type === 'AD') && {
+                              id: 'AD:',
+                              label: 'Aktueller Handelsregisterabdruck',
+                              sublabel: 'AD — aktueller Stand',
+                              docType: 'AD',
+                              docId: '',
+                              icon: (
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                </svg>
+                              ),
+                            },
+                            hrDocs.find(d => d.type === 'SI') && {
+                              id: 'SI:',
+                              label: 'Strukturiertes Inhaltsdokument',
+                              sublabel: 'SI — maschinenlesbares XML',
+                              docType: 'SI',
+                              docId: '',
+                              icon: (
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
+                                </svg>
+                              ),
+                            },
+                          ].filter(Boolean)
+
+                          return (
+                            <div className="divide-y divide-rise-border">
+                              {docRows.map(row => {
+                                const loading = hrDownloading === row.id
+                                return (
+                                  <div key={row.id} className="flex items-center justify-between gap-4 px-6 py-4 hover:bg-rise-bg transition-colors">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                      <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0 text-blue-500">
+                                        {row.icon}
+                                      </div>
+                                      <div className="min-w-0">
+                                        <p className="text-sm font-medium text-rise-dark truncate">{row.label}</p>
+                                        <p className="text-xs text-rise-muted mt-0.5">{row.sublabel}</p>
+                                      </div>
+                                    </div>
+                                    <button
+                                      disabled={hrDownloading !== null}
+                                      onClick={() => downloadHRDocument(registerArt, registerNummer, registerGericht, row.docType, row.docId, setHrDownloading, showToast)}
+                                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium font-sans rounded-lg border transition-colors flex-shrink-0 ${
+                                        loading
+                                          ? 'bg-blue-50 border-blue-200 text-blue-400 cursor-not-allowed'
+                                          : hrDownloading
+                                            ? 'bg-rise-bg border-rise-border text-rise-muted-light cursor-not-allowed'
+                                            : 'bg-white border-rise-border text-rise-muted hover:bg-rise-bg hover:text-rise-dark'
+                                      }`}
+                                    >
+                                      {loading ? (
+                                        <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                                        </svg>
+                                      ) : (
+                                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                        </svg>
+                                      )}
+                                      {loading ? 'Lade…' : 'Herunterladen'}
+                                    </button>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          )
+                        })()}
                       </div>
                     )}
                   </div>
