@@ -638,6 +638,11 @@ export default function AdminCaseDetail() {
   const [hrDocsError, setHrDocsError] = useState(null)
   const [hrDownloading, setHrDownloading] = useState(null) // key of currently downloading doc
 
+  // DK tree state (list of all available DK document leaves)
+  const [dkTree, setDkTree] = useState(null)       // null = not fetched
+  const [dkTreeLoading, setDkTreeLoading] = useState(false)
+  const [dkTreeError, setDkTreeError] = useState(null)
+
   function showToast(msg, variant = 'success') {
     setToast({ msg, variant })
     setTimeout(() => setToast(null), 5000)
@@ -668,6 +673,31 @@ export default function AdminCaseDetail() {
       })
       .finally(() => setHrDocsLoading(false))
   }, [tab, hrDocs, hrDocsLoading, registerArt, registerNummer, registerGericht])
+
+  // Fetch DK tree (all available DK documents) once we know DK is available
+  useEffect(() => {
+    if (tab !== 'dokumente') return
+    if (!hrDocs) return
+    const hasDK = hrDocs.some(d => d.type === 'DK')
+    if (!hasDK) return
+    if (dkTree !== null || dkTreeLoading) return
+    if (!registerArt || !registerNummer || !registerGericht) return
+
+    setDkTreeLoading(true)
+    setDkTreeError(null)
+
+    const params = new URLSearchParams({ registerArt, registerNummer, registerGericht })
+    fetch(`/api/dk-list?${params}`)
+      .then(r => r.json())
+      .then(data => {
+        setDkTree(data.documents ?? [])
+      })
+      .catch(err => {
+        setDkTreeError('DK-Dokumentenliste konnte nicht geladen werden.')
+        console.error('[AdminCaseDetail] dk-list:', err)
+      })
+      .finally(() => setDkTreeLoading(false))
+  }, [tab, hrDocs, dkTree, dkTreeLoading, registerArt, registerNummer, registerGericht])
 
   const TABS = [
     { key: 'uebersicht',     label: 'Übersicht' },
@@ -882,7 +912,7 @@ export default function AdminCaseDetail() {
                       </p>
                       {hrDocs !== null && !hrDocsLoading && (
                         <button
-                          onClick={() => { setHrDocs(null); setHrDocsError(null) }}
+                          onClick={() => { setHrDocs(null); setHrDocsError(null); setDkTree(null); setDkTreeError(null) }}
                           className="text-xs text-blue-500 hover:text-blue-700 transition-colors"
                         >
                           Aktualisieren
@@ -957,43 +987,66 @@ export default function AdminCaseDetail() {
                         </div>
 
                         {/* DK documents from tree */}
-                        {hrDocs.filter(d => d.type === 'DK').length > 0 && (
+                        {hrDocs.some(d => d.type === 'DK') && (
                           <div className="border-t border-rise-border pt-4">
                             <p className="text-xs font-medium text-rise-muted uppercase tracking-widest mb-3">Dokumente aus dem Strukturbaum</p>
-                            <div className="space-y-2">
-                              {hrDocs.filter(d => d.type === 'DK').map(doc => {
-                                const key = `DK:${doc.linkId}`
-                                const loading = hrDownloading === key
-                                return (
-                                  <div key={doc.linkId} className="flex items-center justify-between gap-4 py-2">
-                                    <span className="text-sm text-rise-dark">{doc.label}</span>
-                                    <button
-                                      disabled={hrDownloading !== null}
-                                      onClick={() => downloadHRDocument(registerArt, registerNummer, registerGericht, 'DK', doc.linkId, setHrDownloading, showToast)}
-                                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium font-sans rounded-lg border transition-colors flex-shrink-0 ${
-                                        loading
-                                          ? 'bg-blue-50 border-blue-200 text-blue-400 cursor-not-allowed'
-                                          : hrDownloading
-                                            ? 'bg-rise-bg border-rise-border text-rise-muted-light cursor-not-allowed'
-                                            : 'bg-white border-rise-border text-rise-muted hover:bg-rise-bg hover:text-rise-dark'
-                                      }`}
-                                    >
-                                      {loading ? (
-                                        <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
-                                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                                        </svg>
-                                      ) : (
-                                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                                        </svg>
-                                      )}
-                                      {loading ? 'Lade…' : 'Herunterladen'}
-                                    </button>
-                                  </div>
-                                )
-                              })}
-                            </div>
+
+                            {/* Loading DK tree */}
+                            {dkTreeLoading && (
+                              <div className="flex items-center gap-2 text-sm text-rise-muted py-1">
+                                <svg className="w-3.5 h-3.5 animate-spin text-blue-400 flex-shrink-0" viewBox="0 0 24 24" fill="none">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                                </svg>
+                                Lade verfügbare Dokumente…
+                              </div>
+                            )}
+
+                            {/* DK tree error */}
+                            {dkTreeError && !dkTreeLoading && (
+                              <p className="text-sm text-red-500 py-1">{dkTreeError}</p>
+                            )}
+
+                            {/* DK tree document list */}
+                            {dkTree && !dkTreeLoading && (
+                              <div className="space-y-2">
+                                {dkTree.length === 0 && (
+                                  <p className="text-sm text-rise-muted">Keine Dokumente verfügbar.</p>
+                                )}
+                                {dkTree.map(doc => {
+                                  const key = `DK:${doc.key}`
+                                  const loading = hrDownloading === key
+                                  return (
+                                    <div key={doc.key} className="flex items-center justify-between gap-4 py-2">
+                                      <span className="text-sm text-rise-dark">{doc.label}</span>
+                                      <button
+                                        disabled={hrDownloading !== null}
+                                        onClick={() => downloadHRDocument(registerArt, registerNummer, registerGericht, 'DK', doc.key, setHrDownloading, showToast)}
+                                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium font-sans rounded-lg border transition-colors flex-shrink-0 ${
+                                          loading
+                                            ? 'bg-blue-50 border-blue-200 text-blue-400 cursor-not-allowed'
+                                            : hrDownloading
+                                              ? 'bg-rise-bg border-rise-border text-rise-muted-light cursor-not-allowed'
+                                              : 'bg-white border-rise-border text-rise-muted hover:bg-rise-bg hover:text-rise-dark'
+                                        }`}
+                                      >
+                                        {loading ? (
+                                          <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                                          </svg>
+                                        ) : (
+                                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                          </svg>
+                                        )}
+                                        {loading ? 'Lade…' : 'Herunterladen'}
+                                      </button>
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            )}
                           </div>
                         )}
 

@@ -3,7 +3,7 @@ require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const rateLimit = require('express-rate-limit')
-const { searchByName, fetchDocumentList, downloadSI, downloadAD, downloadDK } = require('./lib/hr-client')
+const { searchByName, fetchDocumentList, downloadSI, downloadAD, downloadDK, listDKDocuments } = require('./lib/hr-client')
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -155,10 +155,44 @@ app.get('/api/documents', requireSecret, async (req, res) => {
   }
 })
 
+// ─── GET /api/dk-list?registerArt=HRB&registerNummer=...&registerGericht=... ───
+
+app.get('/api/dk-list', requireSecret, async (req, res) => {
+  const { registerArt, registerNummer, registerGericht } = req.query
+
+  if (!registerArt || !registerNummer || !registerGericht) {
+    return res.status(400).json({ error: 'registerArt, registerNummer, registerGericht are required' })
+  }
+
+  const cacheKey = `dk-list:${registerArt}:${registerNummer}:${registerGericht}`
+  const cached = getCached(docListCache, cacheKey, DOC_LIST_TTL)
+  if (cached) {
+    console.log(`[dk-list] cache hit for ${cacheKey}`)
+    return res.json({ ...cached.data, cached: true })
+  }
+
+  try {
+    const docs = await listDKDocuments(registerArt, registerNummer, registerGericht)
+    const payload = { registerArt, registerNummer, registerGericht, documents: docs }
+    docListCache.set(cacheKey, { ts: Date.now(), data: payload })
+    res.setHeader('Cache-Control', 'private, max-age=21600')
+    return res.json(payload)
+  } catch (err) {
+    console.error(`[dk-list] error for ${registerArt} ${registerNummer}:`, err.message)
+    const isTimeout = err.name === 'AbortError' || err.message.includes('abort')
+    return res.status(isTimeout ? 504 : 502).json({
+      error: isTimeout
+        ? 'Handelsregister nicht erreichbar — bitte später erneut versuchen.'
+        : 'Fehler beim Abruf der DK-Dokumentenliste.',
+      detail: err.message,
+    })
+  }
+})
+
 // ─── GET /api/download?registerArt=HRB&registerNummer=...&docType=SI ──────────
 
 app.get('/api/download', requireSecret, async (req, res) => {
-  const { registerArt, registerNummer, registerGericht, docType } = req.query
+  const { registerArt, registerNummer, registerGericht, docType, docId = '' } = req.query
 
   if (!registerArt || !registerNummer || !registerGericht) {
     return res.status(400).json({ error: 'registerArt, registerNummer, registerGericht are required' })
@@ -167,7 +201,8 @@ app.get('/api/download', requireSecret, async (req, res) => {
     return res.status(400).json({ error: 'docType must be SI, AD, or DK' })
   }
 
-  const cacheKey = `${registerArt}:${registerNummer}:${registerGericht}:${docType}`
+  // For DK, cache key includes docId (leafKey) so each document is cached separately
+  const cacheKey = `${registerArt}:${registerNummer}:${registerGericht}:${docType}:${docId}`
   const cached = getCached(docBinaryCache, cacheKey, DOC_BINARY_TTL)
   if (cached) {
     console.log(`[download] cache hit for ${cacheKey}`)
@@ -181,7 +216,7 @@ app.get('/api/download', requireSecret, async (req, res) => {
     let result
     if (docType === 'SI') result = await downloadSI(registerArt, registerNummer, registerGericht)
     else if (docType === 'AD') result = await downloadAD(registerArt, registerNummer, registerGericht)
-    else result = await downloadDK(registerArt, registerNummer, registerGericht)
+    else result = await downloadDK(registerArt, registerNummer, registerGericht, docId || null)
 
     const filename = buildFilename(registerArt, registerNummer, registerGericht, docType, result.contentType)
     docBinaryCache.set(cacheKey, { ts: Date.now(), buffer: result.buffer, contentType: result.contentType, filename })

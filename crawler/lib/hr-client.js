@@ -563,7 +563,31 @@ async function downloadAD(registerArt, registerNummer, registerGericht) {
   return { buffer: Buffer.from(text, 'utf-8'), contentType: ct || 'application/pdf' }
 }
 
-async function downloadDK(registerArt, registerNummer, registerGericht) {
+// ─── DK shared helpers ────────────────────────────────────────────────────────
+
+// Scores a DK leaf node by its label and parent category label.
+// Higher score = more important document type.
+function _dkLeafScore($t, el) {
+  const label = ($t(el).find('.ui-treenode-label').first().text() || '').toLowerCase()
+  const catLabel = ($t(el).closest('li.ui-treenode-parent').find('> .ui-treenode-content .ui-treenode-label, > div .ui-treenode-label').first().text() || '').toLowerCase()
+  const combined = label + ' ' + catLabel
+  if (combined.includes('gesellschafterliste')) return 4
+  if (combined.includes('satzung') || combined.includes('gesellschaftsvertrag')) return 3
+  if (combined.includes('musterprotokoll')) return 2
+  return 1
+}
+
+/**
+ * Shared helper: search for the company, navigate to the DK tree page,
+ * expand all category nodes, and return the full leaf map.
+ *
+ * Returns:
+ *   { leafMap, currentViewState, currentCookies, dkPageUrl, treeHtml }
+ *
+ * leafMap is a Map<rowKey, { score, label }> containing ALL document leaves
+ * found after expanding every category in the PrimeFaces dynamic tree.
+ */
+async function _expandDKTree(registerArt, registerNummer, registerGericht) {
   // ── Step 1: search → results page ────────────────────────────────────────────
   const session = await getSession()
   const { cookies, viewState, formId, resultsHtml, resultsUrl, rowIndex } =
@@ -586,38 +610,18 @@ async function downloadDK(registerArt, registerNummer, registerGericht) {
   const $tree = load(treeHtml)
   const treeViewState = $tree('input[name="javax.faces.ViewState"]').val() || viewState
 
-  // ── Step 3: expand ALL categories, then pick the best document leaf ────────────
+  // ── Step 3: expand ALL categories, accumulate leaves ─────────────────────────
   // The PrimeFaces tree is dynamic (lazy-loaded): category nodes are rendered in
   // the initial HTML, but their children are only loaded via AJAX expand requests.
-  // We expand every category so we can choose the most relevant document type.
-  //
-  // Priority (descending):
-  //   1. Gesellschafterliste
-  //   2. Satzung / Gesellschaftsvertrag
-  //   3. Musterprotokoll
-  //   4. Any other document (first leaf)
+  // PrimeFaces may return delta-only updates — we accumulate across all responses.
 
-  // Scores a leaf by its own label + its parent category label
-  function leafScore($t, el) {
-    const label = ($t(el).find('.ui-treenode-label').first().text() || '').toLowerCase()
-    const catLabel = ($t(el).closest('li.ui-treenode-parent').find('> .ui-treenode-content .ui-treenode-label, > div .ui-treenode-label').first().text() || '').toLowerCase()
-    const combined = label + ' ' + catLabel
-    if (combined.includes('gesellschafterliste')) return 4
-    if (combined.includes('satzung') || combined.includes('gesellschaftsvertrag')) return 3
-    if (combined.includes('musterprotokoll')) return 2
-    return 1
-  }
-
-  // Accumulate ALL leaves found across expansion responses (Map: rowKey -> score)
-  // PrimeFaces may return delta-only updates, so we cannot rely on the last
-  // response containing ALL previously expanded nodes — we must collect as we go.
   const leafMap = new Map() // rowKey -> { score, label }
 
   function collectLeaves($t) {
     $t('li.ui-treenode-leaf').each((_, el) => {
       const key = $t(el).attr('data-rowkey') || null
       if (!key || leafMap.has(key)) return
-      const score = leafScore($t, el)
+      const score = _dkLeafScore($t, el)
       const label = $t(el).find('.ui-treenode-label').first().text() || key
       leafMap.set(key, { score, label })
     })
@@ -629,7 +633,7 @@ async function downloadDK(registerArt, registerNummer, registerGericht) {
   let currentViewState = treeViewState
   let currentCookies = treeCookies
 
-  // Collect category node keys (pattern: 0_0_N) — always expand all of them
+  // Collect category node keys (pattern: N_N_N) — always expand all of them
   const categoryKeys = []
   $tree('li.ui-treenode-parent').each((_, el) => {
     const key = $tree(el).attr('data-rowkey') || ''
@@ -687,26 +691,72 @@ async function downloadDK(registerArt, registerNummer, registerGericht) {
     }
   }
 
-  // Log all found leaves for debugging
+  // Log all found leaves
   console.log(`[hr-client] DK: all leaves found (${leafMap.size}):`)
   for (const [key, { score, label }] of leafMap) {
     console.log(`[hr-client]   ${key} score=${score} "${label}"`)
   }
 
-  // Pick the highest-scoring leaf (accumulated across all expansions)
-  let firstLeafKey = null
-  let bestScore = 0
-  let chosenLabel = ''
+  return { leafMap, currentViewState, currentCookies, dkPageUrl, treeHtml }
+}
+
+/**
+ * Returns all available DK document leaves as an array:
+ * [{ key, label, score }, ...]  — sorted by score descending, then label.
+ */
+async function listDKDocuments(registerArt, registerNummer, registerGericht) {
+  const { leafMap } = await _expandDKTree(registerArt, registerNummer, registerGericht)
+
+  const docs = []
   for (const [key, { score, label }] of leafMap) {
-    if (score > bestScore) { bestScore = score; firstLeafKey = key; chosenLabel = label }
+    docs.push({ key, label, score })
+  }
+  // Sort: highest score first, then alphabetically by label
+  docs.sort((a, b) => b.score - a.score || a.label.localeCompare(b.label, 'de'))
+  return docs
+}
+
+/**
+ * Downloads a specific DK document.
+ *
+ * @param {string} registerArt
+ * @param {string} registerNummer
+ * @param {string} registerGericht
+ * @param {string|null} leafKey  — rowKey from the DK tree (e.g. "0_0_1_0").
+ *   If null/empty, automatically selects the highest-scoring document.
+ */
+async function downloadDK(registerArt, registerNummer, registerGericht, leafKey = null) {
+  const { leafMap, currentViewState, currentCookies, dkPageUrl, treeHtml } =
+    await _expandDKTree(registerArt, registerNummer, registerGericht)
+
+  // Resolve which leaf to download
+  let chosenKey = leafKey && leafKey.trim() ? leafKey.trim() : null
+  let chosenLabel = ''
+
+  if (chosenKey) {
+    // Validate the requested key exists in the tree
+    if (!leafMap.has(chosenKey)) {
+      console.warn(`[hr-client] DK: requested leafKey "${chosenKey}" not found in tree, falling back to best leaf`)
+      chosenKey = null
+    } else {
+      chosenLabel = leafMap.get(chosenKey).label
+    }
   }
 
-  if (!firstLeafKey) throw new Error('No downloadable document found in DK tree after expanding categories')
-  console.log(`[hr-client] DK leaf node key: ${firstLeafKey} ("${chosenLabel}", score ${bestScore})`)
+  if (!chosenKey) {
+    // Auto-select highest-scoring leaf
+    let bestScore = 0
+    for (const [key, { score, label }] of leafMap) {
+      if (score > bestScore) { bestScore = score; chosenKey = key; chosenLabel = label }
+    }
+  }
+
+  if (!chosenKey) throw new Error('No downloadable document found in DK tree after expanding categories')
+  console.log(`[hr-client] DK leaf node key: ${chosenKey} ("${chosenLabel}")`)
+
+  const $tree = load(treeHtml)
 
   // ── Step 4: PrimeFaces AJAX POST — select the leaf node ──────────────────────
-  // This replicates the browser's XHR when the user clicks a tree leaf.
-  // Use currentViewState/currentCookies which reflect any expand calls above.
   const ajaxBody = new URLSearchParams({
     'javax.faces.partial.ajax': 'true',
     'javax.faces.source': 'dk_form:dktree',
@@ -714,10 +764,10 @@ async function downloadDK(registerArt, registerNummer, registerGericht) {
     'javax.faces.partial.render': 'dk_form:detailsNodePanelGrid dk_form:dktree dk_formInfobox',
     'javax.faces.behavior.event': 'select',
     'javax.faces.partial.event': 'select',
-    'dk_form:dktree_instantSelection': firstLeafKey,
+    'dk_form:dktree_instantSelection': chosenKey,
     'dk_form': 'dk_form',
     'javax.faces.ViewState': currentViewState,
-    'dk_form:dktree_selection': firstLeafKey,
+    'dk_form:dktree_selection': chosenKey,
     'dk_form:dktree_scrollState': '0,0',
     'dk_form:radio_dkbuttons': 'true',
   })
@@ -740,7 +790,6 @@ async function downloadDK(registerArt, registerNummer, registerGericht) {
   const ajaxCookies = mergeCookies(ajaxRes, currentCookies)
 
   // ── Step 5: extract updated ViewState from PrimeFaces AJAX XML response ───────
-  // Format: <update id="javax.faces.ViewState"><![CDATA[...]]></update>
   let updatedViewState = currentViewState
   const vsMatch =
     ajaxText.match(/<update[^>]+id="javax\.faces\.ViewState"[^>]*><!\[CDATA\[([\s\S]*?)\]\]><\/update>/) ||
@@ -751,15 +800,12 @@ async function downloadDK(registerArt, registerNummer, registerGericht) {
   }
 
   // ── Step 6: find the Download submit button ID ────────────────────────────────
-  // The button id (e.g. dk_form:j_idt205) is generated by JSF and may vary.
-  // Parse it from the initial tree HTML; fall back to the AJAX response HTML.
   let downloadBtnId = null
   const btnPattern = /id="(dk_form:j_idt\d+)"[^>]*type="submit"/
   const btnMatchHtml = treeHtml.match(btnPattern) || ajaxText.match(btnPattern)
   if (btnMatchHtml) downloadBtnId = btnMatchHtml[1]
 
   if (!downloadBtnId) {
-    // Last-resort: look for any submit button inside dk_form in the tree HTML
     $tree('form#dk_form button[type="submit"]').each((_, el) => {
       if (!downloadBtnId) downloadBtnId = $tree(el).attr('id') || null
     })
@@ -772,7 +818,7 @@ async function downloadDK(registerArt, registerNummer, registerGericht) {
   const dlBody = new URLSearchParams({
     'dk_form': 'dk_form',
     'javax.faces.ViewState': updatedViewState,
-    'dk_form:dktree_selection': firstLeafKey,
+    'dk_form:dktree_selection': chosenKey,
     'dk_form:dktree_scrollState': '0,0',
     'dk_form:radio_dkbuttons': 'true',
     [downloadBtnId]: '',
@@ -816,11 +862,9 @@ async function downloadDK(registerArt, registerNummer, registerGericht) {
     }
 
     // Fallback: scan raw buffer for PDF magic bytes (%PDF-)
-    // The ZIP uses data descriptors so adm-zip may not parse sizes correctly.
     const pdfMagic = Buffer.from('%PDF-')
     const pdfOffset = rawBuffer.indexOf(pdfMagic)
     if (pdfOffset !== -1) {
-      // Find the end-of-PDF marker %%EOF
       const eofMarker = Buffer.from('%%EOF')
       let eofOffset = rawBuffer.lastIndexOf(eofMarker)
       if (eofOffset === -1) eofOffset = rawBuffer.length
@@ -830,12 +874,10 @@ async function downloadDK(registerArt, registerNummer, registerGericht) {
       return { buffer: pdfBuffer, contentType: 'application/pdf' }
     }
 
-    // Nothing worked — return raw ZIP so caller can decide
     console.warn('[hr-client] DK: could not extract PDF from ZIP, returning raw buffer')
     return { buffer: rawBuffer, contentType: 'application/zip' }
   }
 
-  // Unexpected response — log and throw with context
   const snippet = rawBuffer.toString('utf-8').substring(0, 300)
   throw new Error(`DK download returned unexpected content-type "${ct}". Body: ${snippet}`)
 }
@@ -881,6 +923,7 @@ module.exports = {
   downloadSI,
   downloadAD,
   downloadDK,
+  listDKDocuments,
   HR_BASE,
   HR_SEARCH_URL,
 }
