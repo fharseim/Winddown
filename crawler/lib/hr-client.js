@@ -761,6 +761,12 @@ async function _expandDKTree(registerArt, registerNummer, registerGericht) {
   const $tree = load(treeHtml)
   const treeViewState = $tree('input[name="javax.faces.ViewState"]').val() || viewState
 
+  // DEBUG
+  if (process.env.DK_DEBUG) {
+    console.log(`[hr-client] DK page: url=${dkPageUrl} treeHtmlLen=${treeHtml.length} vsLen=${treeViewState?.length} hasDkForm=${treeHtml.includes('dk_form')} hasDkTree=${treeHtml.includes('dktree')}`)
+    console.log(`[hr-client] DK page first 300: ${treeHtml.slice(0, 300).replace(/\n/g, ' ')}`)
+  }
+
   // ── Step 3: expand ALL categories, accumulate leaves ─────────────────────────
   // The PrimeFaces tree is dynamic (lazy-loaded): category nodes are rendered in
   // the initial HTML, but their children are only loaded via AJAX expand requests.
@@ -826,6 +832,11 @@ async function _expandDKTree(registerArt, registerNummer, registerGericht) {
 
     const expandXml = await expandRes.text()
     currentCookies = mergeCookies(expandRes, currentCookies)
+
+    // DEBUG: log response shape for diagnosis
+    if (process.env.DK_DEBUG) {
+      console.log(`[hr-client] DK expand ${catKey}: status=${expandRes.status} len=${expandXml.length} first200="${expandXml.slice(0, 200).replace(/\n/g, ' ')}"`)
+    }
 
     const vsExpand =
       expandXml.match(/<update[^>]+id="javax\.faces\.ViewState"[^>]*><!\[CDATA\[([\s\S]*?)\]\]><\/update>/) ||
