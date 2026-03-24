@@ -108,37 +108,10 @@ async function prefetchDocuments(registerArt, registerNummer, registerGericht, d
     }
   }
 
-  // Pre-fetch DK documents if available — use the same keyword docIds the frontend sends
-  if (available.has('DK')) {
-    // Pre-warm DK list cache
-    try {
-      const dkDocs = await listDKDocuments(registerArt, registerNummer, registerGericht)
-      const dkListKey = `dk-list:${registerArt}:${registerNummer}:${registerGericht}`
-      if (!getCached(docListCache, dkListKey, DOC_LIST_TTL)) {
-        docListCache.set(dkListKey, { ts: Date.now(), data: { registerArt, registerNummer, registerGericht, documents: dkDocs } })
-        console.log(`[prefetch] DK list cached (${dkDocs.length} docs)`)
-      }
-    } catch (err) {
-      console.warn(`[prefetch] DK list failed: ${err.message}`)
-    }
-
-    // Pre-fetch using the same keyword docIds the frontend passes (gesellschafterliste, satzung)
-    for (const docId of ['gesellschafterliste', 'satzung']) {
-      const cacheKey = `${registerArt}:${registerNummer}:${registerGericht}:DK:${docId}`
-      if (getCached(docBinaryCache, cacheKey, DOC_BINARY_TTL)) {
-        console.log(`[prefetch] DK[${docId}] already cached`)
-        continue
-      }
-      try {
-        const result = await downloadDK(registerArt, registerNummer, registerGericht, docId)
-        const filename = result.filename || buildFilename(registerArt, registerNummer, registerGericht, 'DK', result.contentType)
-        docBinaryCache.set(cacheKey, { ts: Date.now(), buffer: result.buffer, contentType: result.contentType, filename })
-        console.log(`[prefetch] DK[${docId}] cached (${result.buffer.length} bytes)`)
-      } catch (err) {
-        console.warn(`[prefetch] DK[${docId}] failed: ${err.message}`)
-      }
-    }
-  }
+  // DK documents are NOT pre-fetched here: navigating the DK tree (expand AJAX)
+  // immediately after other HR requests causes the portal to return empty AJAX
+  // responses for the tree expansion, yielding 0 leaves and a failed download.
+  // DK downloads work correctly when requested on-demand.
 
   console.log(`[prefetch] done for ${tag}`)
 }
