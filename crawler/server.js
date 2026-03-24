@@ -317,8 +317,16 @@ app.use((err, req, res, _next) => {
 
 // ─── Start ────────────────────────────────────────────────────────────────────
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`[hr-crawler] listening on port ${PORT}`)
   console.log(`[hr-crawler] allowed origins: ${ALLOWED_ORIGINS.join(', ')}`)
   console.log(`[hr-crawler] auth: ${API_SECRET ? 'enabled' : 'disabled (no API_SECRET set)'}`)
+})
+
+server.on('error', err => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`[hr-crawler] port ${PORT} already in use — exiting cleanly so PM2 can recover`)
+    process.exit(1)
+  }
+  throw err
 })
