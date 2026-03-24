@@ -944,19 +944,16 @@ export default function AdminCaseDetail() {
                     {/* Document buttons */}
                     {!hrDocsLoading && !hrDocsError && hrDocs !== null && (
                       <div className="px-6 py-5 space-y-4">
-                        {/* SI + AD — always available if HR data exists */}
+                        {/* All non-DK documents from the register (SI, AD, CD, ...) */}
                         <div className="flex flex-wrap gap-3">
-                          {[
-                            { docType: 'SI', label: 'Strukturierte Inhalte (XML)', icon: 'M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m.75 12l3 3m0 0l3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z' },
-                            { docType: 'AD', label: 'Aktueller Abdruck (PDF)', icon: 'M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z' },
-                          ].map(({ docType, label, icon }) => {
-                            const key = `${docType}:`
+                          {hrDocs.filter(d => d.type !== 'DK').map(doc => {
+                            const key = `${doc.type}:`
                             const loading = hrDownloading === key
                             return (
                               <button
-                                key={docType}
+                                key={doc.type}
                                 disabled={hrDownloading !== null}
-                                onClick={() => downloadHRDocument(registerArt, registerNummer, registerGericht, docType, '', setHrDownloading, showToast)}
+                                onClick={() => downloadHRDocument(registerArt, registerNummer, registerGericht, doc.type, '', setHrDownloading, showToast)}
                                 className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border font-sans text-sm font-medium transition-colors ${
                                   loading
                                     ? 'bg-blue-50 border-blue-200 text-blue-400 cursor-not-allowed'
@@ -976,9 +973,9 @@ export default function AdminCaseDetail() {
                                 ) : (
                                   <>
                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                      <path strokeLinecap="round" strokeLinejoin="round" d={icon} />
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                                     </svg>
-                                    {label} herunterladen
+                                    {doc.label} herunterladen
                                   </>
                                 )}
                               </button>

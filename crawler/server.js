@@ -3,7 +3,7 @@ require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const rateLimit = require('express-rate-limit')
-const { searchByName, fetchDocumentList, downloadSI, downloadAD, downloadDK, listDKDocuments } = require('./lib/hr-client')
+const { searchByName, fetchDocumentList, downloadSI, downloadAD, downloadCD, downloadDK, listDKDocuments } = require('./lib/hr-client')
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -197,8 +197,8 @@ app.get('/api/download', requireSecret, async (req, res) => {
   if (!registerArt || !registerNummer || !registerGericht) {
     return res.status(400).json({ error: 'registerArt, registerNummer, registerGericht are required' })
   }
-  if (!docType || !['SI', 'AD', 'DK'].includes(docType)) {
-    return res.status(400).json({ error: 'docType must be SI, AD, or DK' })
+  if (!docType || !['SI', 'AD', 'CD', 'DK'].includes(docType)) {
+    return res.status(400).json({ error: 'docType must be SI, AD, CD, or DK' })
   }
 
   // For DK, cache key includes docId (leafKey) so each document is cached separately
@@ -216,6 +216,7 @@ app.get('/api/download', requireSecret, async (req, res) => {
     let result
     if (docType === 'SI') result = await downloadSI(registerArt, registerNummer, registerGericht)
     else if (docType === 'AD') result = await downloadAD(registerArt, registerNummer, registerGericht)
+    else if (docType === 'CD') result = await downloadCD(registerArt, registerNummer, registerGericht)
     else result = await downloadDK(registerArt, registerNummer, registerGericht, docId || null)
 
     const filename = buildFilename(registerArt, registerNummer, registerGericht, docType, result.contentType)

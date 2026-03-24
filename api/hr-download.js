@@ -539,8 +539,8 @@ export default async function handler(req, res) {
   if (!registerArt || !registerNummer || !registerGericht) {
     return res.status(400).json({ error: 'registerArt, registerNummer, registerGericht are required' })
   }
-  if (!docType || !['SI', 'AD', 'DK'].includes(docType)) {
-    return res.status(400).json({ error: 'docType must be SI, AD, or DK' })
+  if (!docType || !['SI', 'AD', 'CD', 'DK'].includes(docType)) {
+    return res.status(400).json({ error: 'docType must be SI, AD, CD, or DK' })
   }
   // ── Proxy to Railway crawler if configured ──
   if (process.env.CRAWLER_URL) {

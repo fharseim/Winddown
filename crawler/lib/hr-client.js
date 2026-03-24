@@ -531,7 +531,7 @@ async function downloadSI(registerArt, registerNummer, registerGericht) {
   return { buffer: Buffer.from(body), contentType: 'application/xml' }
 }
 
-async function downloadAD(registerArt, registerNummer, registerGericht) {
+async function _downloadAbdruck(registerArt, registerNummer, registerGericht, abdruckType) {
   const session = await getSession()
   const { cookies, viewState, formId, resultsHtml, resultsUrl, rowIndex } =
     await searchByRegister(registerArt, registerNummer, registerGericht, session)
@@ -539,8 +539,8 @@ async function downloadAD(registerArt, registerNummer, registerGericht) {
   if (rowIndex === -1) throw new Error(`Company not found: ${registerArt} ${registerNummer}`)
 
   const $ = load(resultsHtml)
-  const linkId = findDocLinkId($, rowIndex, 'AD', formId)
-  if (!linkId) throw new Error('No AD link found')
+  const linkId = findDocLinkId($, rowIndex, abdruckType, formId)
+  if (!linkId) throw new Error(`No ${abdruckType} link found`)
 
   const res = await clickJSFLink(linkId, formId, viewState, cookies, resultsUrl)
   const ct = (res.headers.get('content-type') || '').toLowerCase()
@@ -548,7 +548,7 @@ async function downloadAD(registerArt, registerNummer, registerGericht) {
 
   // PDF: explicit content-type or magic bytes (%PDF-)
   if (ct.includes('pdf') || rawBuffer.slice(0, 5).toString('ascii') === '%PDF-') {
-    console.log(`[hr-client] AD: got PDF (ct="${ct}", size=${rawBuffer.length})`)
+    console.log(`[hr-client] ${abdruckType}: got PDF (ct="${ct}", size=${rawBuffer.length})`)
     return { buffer: rawBuffer, contentType: 'application/pdf' }
   }
 
@@ -561,7 +561,7 @@ async function downloadAD(registerArt, registerNummer, registerGericht) {
       let eofOffset = rawBuffer.lastIndexOf(eofMarker)
       if (eofOffset === -1) eofOffset = rawBuffer.length
       else eofOffset += eofMarker.length
-      console.log(`[hr-client] AD: extracted PDF from ZIP via raw scan`)
+      console.log(`[hr-client] ${abdruckType}: extracted PDF from ZIP via raw scan`)
       return { buffer: rawBuffer.slice(pdfOffset, eofOffset), contentType: 'application/pdf' }
     }
   }
@@ -579,6 +579,14 @@ async function downloadAD(registerArt, registerNummer, registerGericht) {
   }
 
   return { buffer: rawBuffer, contentType: ct || 'application/pdf' }
+}
+
+async function downloadAD(registerArt, registerNummer, registerGericht) {
+  return _downloadAbdruck(registerArt, registerNummer, registerGericht, 'AD')
+}
+
+async function downloadCD(registerArt, registerNummer, registerGericht) {
+  return _downloadAbdruck(registerArt, registerNummer, registerGericht, 'CD')
 }
 
 // ─── DK shared helpers ────────────────────────────────────────────────────────
@@ -940,6 +948,7 @@ module.exports = {
   fetchDocumentList,
   downloadSI,
   downloadAD,
+  downloadCD,
   downloadDK,
   listDKDocuments,
   HR_BASE,
