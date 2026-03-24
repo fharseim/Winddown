@@ -43,10 +43,10 @@ function browserHeaders() {
   }
 }
 
-// ─── Token-bucket rate limiter (60 req/hour to handelsregister.de) ─────────────
+// ─── Token-bucket rate limiter (200 req/hour to handelsregister.de) ────────────
 
-const BUCKET_CAPACITY = 60
-const BUCKET_REFILL_PER_MS = BUCKET_CAPACITY / (60 * 60 * 1000) // 1 per minute
+const BUCKET_CAPACITY = 200
+const BUCKET_REFILL_PER_MS = BUCKET_CAPACITY / (60 * 60 * 1000) // ~3 per minute
 
 let bucketTokens = BUCKET_CAPACITY
 let bucketLastRefill = Date.now()
