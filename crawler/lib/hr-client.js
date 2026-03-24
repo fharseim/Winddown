@@ -810,12 +810,15 @@ async function downloadDK(registerArt, registerNummer, registerGericht, docId = 
       }
     }
     if (!chosenKey) {
-      console.warn(`[hr-client] DK: no leaf matching keyword "${id}" (aliases: ${candidates.join(', ')}), falling back to best overall`)
+      // A specific docId was requested but no matching leaf found — throw rather than
+      // silently downloading the wrong document (e.g. Satzung when Gesellschafterliste
+      // was requested but does not exist in this company's DK tree).
+      throw new Error(`Dokument "${id}" nicht im Dokumentenbaum gefunden (nicht verfügbar für dieses Unternehmen)`)
     }
   }
 
   if (!chosenKey) {
-    // Auto-select highest-scoring leaf overall
+    // No docId given — auto-select highest-scoring leaf overall
     let bestScore = 0
     for (const [key, { score, label }] of leafMap) {
       if (score > bestScore) { bestScore = score; chosenKey = key; chosenLabel = label }
