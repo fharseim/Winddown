@@ -219,7 +219,8 @@ app.get('/api/download', requireSecret, async (req, res) => {
     else if (docType === 'CD') result = await downloadCD(registerArt, registerNummer, registerGericht)
     else result = await downloadDK(registerArt, registerNummer, registerGericht, docId || null)
 
-    const filename = buildFilename(registerArt, registerNummer, registerGericht, docType, result.contentType)
+    // Use filename from ZIP entry if available (e.g. for TIFF/DK documents), else build one
+    const filename = result.filename || buildFilename(registerArt, registerNummer, registerGericht, docType, result.contentType)
     docBinaryCache.set(cacheKey, { ts: Date.now(), buffer: result.buffer, contentType: result.contentType, filename })
 
     res.setHeader('Content-Type', result.contentType)
@@ -240,7 +241,10 @@ app.get('/api/download', requireSecret, async (req, res) => {
 
 function buildFilename(registerArt, registerNummer, registerGericht, docType, contentType) {
   const courtSlug = registerGericht.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '')
-  const ext = contentType.includes('pdf') ? 'pdf' : contentType.includes('zip') ? 'zip' : 'xml'
+  const ext = contentType.includes('pdf') ? 'pdf'
+    : contentType.includes('tiff') || contentType.includes('tif') ? 'tif'
+    : contentType.includes('zip') ? 'zip'
+    : 'xml'
   return `HR_${registerArt}_${registerNummer}_${courtSlug}_${docType}.${ext}`
 }
 

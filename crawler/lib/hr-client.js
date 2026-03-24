@@ -932,14 +932,12 @@ async function downloadDK(registerArt, registerNummer, registerGericht, docId = 
       if (chosen) {
         const data = chosen.getData()
         if (data && data.length > 0) {
-          // Verify it's actually a PDF
-          if (data.slice(0, 5).toString('ascii') === '%PDF-') {
-            console.log(`[hr-client] DK: extracted PDF from ZIP: ${chosen.entryName} (${data.length} bytes)`)
-            return { buffer: data, contentType: 'application/pdf' }
-          }
-          // If not a PDF, still return it — maybe it's a valid document in another format
-          console.log(`[hr-client] DK: extracted entry from ZIP (not PDF): ${chosen.entryName} (${data.length} bytes)`)
-          return { buffer: data, contentType: 'application/octet-stream' }
+          // Determine content-type from entry name extension
+          const ext = chosen.entryName.split('.').pop().toLowerCase()
+          const MIME = { pdf: 'application/pdf', tif: 'image/tiff', tiff: 'image/tiff', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png' }
+          const entryContentType = MIME[ext] || 'application/octet-stream'
+          console.log(`[hr-client] DK: extracted ${ext.toUpperCase()} from ZIP: ${chosen.entryName} (${data.length} bytes)`)
+          return { buffer: data, contentType: entryContentType, filename: chosen.entryName }
         }
       }
     } catch (zipErr) {
