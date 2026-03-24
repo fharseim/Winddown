@@ -158,7 +158,7 @@ app.get('/api/documents', requireSecret, async (req, res) => {
 // ─── GET /api/download?registerArt=HRB&registerNummer=...&docType=SI ──────────
 
 app.get('/api/download', requireSecret, async (req, res) => {
-  const { registerArt, registerNummer, registerGericht, docType, docId = '' } = req.query
+  const { registerArt, registerNummer, registerGericht, docType } = req.query
 
   if (!registerArt || !registerNummer || !registerGericht) {
     return res.status(400).json({ error: 'registerArt, registerNummer, registerGericht are required' })
@@ -166,11 +166,8 @@ app.get('/api/download', requireSecret, async (req, res) => {
   if (!docType || !['SI', 'AD', 'DK'].includes(docType)) {
     return res.status(400).json({ error: 'docType must be SI, AD, or DK' })
   }
-  if (docType === 'DK' && !docId) {
-    return res.status(400).json({ error: 'docId is required for docType=DK' })
-  }
 
-  const cacheKey = `${registerArt}:${registerNummer}:${registerGericht}:${docType}:${docId}`
+  const cacheKey = `${registerArt}:${registerNummer}:${registerGericht}:${docType}`
   const cached = getCached(docBinaryCache, cacheKey, DOC_BINARY_TTL)
   if (cached) {
     console.log(`[download] cache hit for ${cacheKey}`)
@@ -184,9 +181,9 @@ app.get('/api/download', requireSecret, async (req, res) => {
     let result
     if (docType === 'SI') result = await downloadSI(registerArt, registerNummer, registerGericht)
     else if (docType === 'AD') result = await downloadAD(registerArt, registerNummer, registerGericht)
-    else result = await downloadDK(registerArt, registerNummer, registerGericht, docId)
+    else result = await downloadDK(registerArt, registerNummer, registerGericht)
 
-    const filename = buildFilename(registerArt, registerNummer, registerGericht, docType, docId, result.contentType)
+    const filename = buildFilename(registerArt, registerNummer, registerGericht, docType, result.contentType)
     docBinaryCache.set(cacheKey, { ts: Date.now(), buffer: result.buffer, contentType: result.contentType, filename })
 
     res.setHeader('Content-Type', result.contentType)
@@ -205,12 +202,9 @@ app.get('/api/download', requireSecret, async (req, res) => {
   }
 })
 
-function buildFilename(registerArt, registerNummer, registerGericht, docType, docId, contentType) {
+function buildFilename(registerArt, registerNummer, registerGericht, docType, contentType) {
   const courtSlug = registerGericht.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '')
-  const ext = contentType.includes('pdf') ? 'pdf' : 'xml'
-  if (docType === 'DK' && docId) {
-    return `HR_${registerArt}_${registerNummer}_${courtSlug}_${docId.replace(/[^a-zA-Z0-9_-]/g, '_')}.${ext}`
-  }
+  const ext = contentType.includes('pdf') ? 'pdf' : contentType.includes('zip') ? 'zip' : 'xml'
   return `HR_${registerArt}_${registerNummer}_${courtSlug}_${docType}.${ext}`
 }
 

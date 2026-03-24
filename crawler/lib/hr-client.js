@@ -562,7 +562,8 @@ async function downloadAD(registerArt, registerNummer, registerGericht) {
   return { buffer: Buffer.from(text, 'utf-8'), contentType: ct || 'application/pdf' }
 }
 
-async function downloadDK(registerArt, registerNummer, registerGericht, docId) {
+async function downloadDK(registerArt, registerNummer, registerGericht) {
+  // ── Step 1: search → results page ────────────────────────────────────────────
   const session = await getSession()
   const { cookies, viewState, formId, resultsHtml, resultsUrl, rowIndex } =
     await searchByRegister(registerArt, registerNummer, registerGericht, session)
@@ -573,49 +574,134 @@ async function downloadDK(registerArt, registerNummer, registerGericht, docId) {
   const dkLinkId = findDocLinkId($, rowIndex, 'DK', formId)
   if (!dkLinkId) throw new Error('No DK link found')
 
+  // ── Step 2: click DK link → navigate to DK tree page ─────────────────────────
   const treeRes = await clickJSFLink(dkLinkId, formId, viewState, cookies, resultsUrl)
   const treeHtml = await treeRes.text()
   const treeCookies = mergeCookies(treeRes, cookies)
+
+  // Capture the final URL after redirect (e.g. /rp_web/documents/welcome.xhtml?cid=N)
+  const dkPageUrl = treeRes.url || `${HR_BASE}/rp_web/documents/welcome.xhtml`
+
   const $tree = load(treeHtml)
   const treeViewState = $tree('input[name="javax.faces.ViewState"]').val() || viewState
 
-  let docLinkId = null
-  $tree('*').each((_, el) => {
-    const text = $tree(el).text()
-    if (text.toLowerCase().includes(docId.toLowerCase())) {
-      const nearby = $tree(el).closest('tr, li').find('a[id], button[id]').filter((__, btn) => {
-        const t = $tree(btn).text().trim().toLowerCase()
-        return t.includes('download') || t.includes('herunterlad') || t.includes('laden')
-      })
-      if (nearby.length) {
-        docLinkId = nearby.first().attr('id')
-        return false
-      }
+  // ── Step 3: find the first actual document leaf node in the PrimeFaces tree ───
+  // Leaf nodes: <li class="ui-treenode-leaf" data-rowkey="0_0_1_0" data-nodetype="doc">
+  // Strategy: prefer data-nodetype="doc", fall back to any leaf.
+  let firstLeafKey = null
+
+  $tree('li.ui-treenode-leaf').each((_, el) => {
+    if ($tree(el).attr('data-nodetype') === 'doc' && !firstLeafKey) {
+      firstLeafKey = $tree(el).attr('data-rowkey') || null
+      return false
     }
   })
+  if (!firstLeafKey) {
+    $tree('li.ui-treenode-leaf').each((_, el) => {
+      if (!firstLeafKey) {
+        firstLeafKey = $tree(el).attr('data-rowkey') || null
+        return false
+      }
+    })
+  }
 
-  if (!docLinkId) throw new Error(`Document "${docId}" not found in DK tree`)
+  if (!firstLeafKey) throw new Error('No downloadable document found in DK tree')
+  console.log(`[hr-client] DK leaf node key: ${firstLeafKey}`)
 
-  const dlFormData = new URLSearchParams({
-    [formId]: formId,
-    [docLinkId]: docLinkId,
+  // ── Step 4: PrimeFaces AJAX POST — select the leaf node ──────────────────────
+  // This replicates the browser's XHR when the user clicks a tree leaf.
+  const ajaxBody = new URLSearchParams({
+    'javax.faces.partial.ajax': 'true',
+    'javax.faces.source': 'dk_form:dktree',
+    'javax.faces.partial.execute': 'dk_form:dktree',
+    'javax.faces.partial.render': 'dk_form:detailsNodePanelGrid dk_form:dktree dk_formInfobox',
+    'javax.faces.behavior.event': 'select',
+    'javax.faces.partial.event': 'select',
+    'dk_form:dktree_instantSelection': firstLeafKey,
+    'dk_form': 'dk_form',
     'javax.faces.ViewState': treeViewState,
+    'dk_form:dktree_selection': firstLeafKey,
+    'dk_form:dktree_scrollState': '0,0',
+    'dk_form:radio_dkbuttons': 'true',
   })
 
-  const dlRes = await fetchHR(resultsUrl || HR_RESULTS_URL, {
+  const ajaxRes = await fetchHR(dkPageUrl, {
     method: 'POST',
     headers: {
       ...browserHeaders(),
       'Content-Type': 'application/x-www-form-urlencoded',
-      Referer: resultsUrl || HR_RESULTS_URL,
+      'Faces-Request': 'partial/ajax',
+      'X-Requested-With': 'XMLHttpRequest',
+      Referer: dkPageUrl,
       Cookie: treeCookies,
     },
-    body: dlFormData.toString(),
+    body: ajaxBody.toString(),
+    redirect: 'follow',
+  })
+
+  const ajaxText = await ajaxRes.text()
+  const ajaxCookies = mergeCookies(ajaxRes, treeCookies)
+
+  // ── Step 5: extract updated ViewState from PrimeFaces AJAX XML response ───────
+  // Format: <update id="javax.faces.ViewState"><![CDATA[...]]></update>
+  let updatedViewState = treeViewState
+  const vsMatch =
+    ajaxText.match(/<update[^>]+id="javax\.faces\.ViewState"[^>]*><!\[CDATA\[([\s\S]*?)\]\]><\/update>/) ||
+    ajaxText.match(/<update[^>]+id="javax\.faces\.ViewState"[^>]*>([\s\S]*?)<\/update>/)
+  if (vsMatch) {
+    updatedViewState = vsMatch[1].trim()
+    console.log('[hr-client] updated ViewState from AJAX response')
+  }
+
+  // ── Step 6: find the Download submit button ID ────────────────────────────────
+  // The button id (e.g. dk_form:j_idt205) is generated by JSF and may vary.
+  // Parse it from the initial tree HTML; fall back to the AJAX response HTML.
+  let downloadBtnId = null
+  const btnPattern = /id="(dk_form:j_idt\d+)"[^>]*type="submit"/
+  const btnMatchHtml = treeHtml.match(btnPattern) || ajaxText.match(btnPattern)
+  if (btnMatchHtml) downloadBtnId = btnMatchHtml[1]
+
+  if (!downloadBtnId) {
+    // Last-resort: look for any submit button inside dk_form in the tree HTML
+    $tree('form#dk_form button[type="submit"]').each((_, el) => {
+      if (!downloadBtnId) downloadBtnId = $tree(el).attr('id') || null
+    })
+  }
+
+  if (!downloadBtnId) throw new Error('Could not locate DK Download button in page HTML')
+  console.log(`[hr-client] DK download button: ${downloadBtnId}`)
+
+  // ── Step 7: submit the download form (regular form POST, not AJAX) ────────────
+  const dlBody = new URLSearchParams({
+    'dk_form': 'dk_form',
+    'javax.faces.ViewState': updatedViewState,
+    'dk_form:dktree_selection': firstLeafKey,
+    'dk_form:dktree_scrollState': '0,0',
+    'dk_form:radio_dkbuttons': 'true',
+    [downloadBtnId]: '',
+  })
+
+  const dlRes = await fetchHR(dkPageUrl, {
+    method: 'POST',
+    headers: {
+      ...browserHeaders(),
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Referer: dkPageUrl,
+      Cookie: ajaxCookies,
+    },
+    body: dlBody.toString(),
     redirect: 'follow',
   })
 
   const ct = dlRes.headers.get('content-type') || 'application/pdf'
-  return { buffer: Buffer.from(await dlRes.arrayBuffer()), contentType: ct }
+
+  if (ct.includes('pdf') || ct.includes('zip') || ct.includes('octet-stream')) {
+    return { buffer: Buffer.from(await dlRes.arrayBuffer()), contentType: ct }
+  }
+
+  // Unexpected response — log and throw with context
+  const snippet = Buffer.from(await dlRes.arrayBuffer()).toString('utf-8').substring(0, 300)
+  throw new Error(`DK download returned unexpected content-type "${ct}". Body: ${snippet}`)
 }
 
 // ─── Scope / rechtsform helpers ────────────────────────────────────────────────
