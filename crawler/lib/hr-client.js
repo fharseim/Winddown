@@ -585,28 +585,97 @@ async function downloadDK(registerArt, registerNummer, registerGericht) {
   const $tree = load(treeHtml)
   const treeViewState = $tree('input[name="javax.faces.ViewState"]').val() || viewState
 
-  // ── Step 3: find the first actual document leaf node in the PrimeFaces tree ───
-  // Leaf nodes: <li class="ui-treenode-leaf" data-rowkey="0_0_1_0" data-nodetype="doc">
-  // Strategy: prefer data-nodetype="doc", fall back to any leaf.
-  let firstLeafKey = null
+  // ── Step 3: find the first document leaf node — expand categories if needed ───
+  // The PrimeFaces tree is dynamic (lazy-loaded): category nodes are rendered in
+  // the initial HTML, but their children are only loaded via AJAX expand requests.
+  // Leaf nodes look like: <li class="ui-treenode-leaf" data-rowkey="0_0_1_0" data-nodetype="doc">
 
-  $tree('li.ui-treenode-leaf').each((_, el) => {
-    if ($tree(el).attr('data-nodetype') === 'doc' && !firstLeafKey) {
-      firstLeafKey = $tree(el).attr('data-rowkey') || null
-      return false
-    }
-  })
-  if (!firstLeafKey) {
-    $tree('li.ui-treenode-leaf').each((_, el) => {
-      if (!firstLeafKey) {
-        firstLeafKey = $tree(el).attr('data-rowkey') || null
+  function findLeafKey($t) {
+    let key = null
+    $t('li.ui-treenode-leaf').each((_, el) => {
+      if ($t(el).attr('data-nodetype') === 'doc' && !key) {
+        key = $t(el).attr('data-rowkey') || null
         return false
       }
     })
+    return key
   }
 
-  if (!firstLeafKey) throw new Error('No downloadable document found in DK tree')
+  let firstLeafKey = findLeafKey($tree)
+  let currentViewState = treeViewState
+  let currentCookies = treeCookies
+
+  if (!firstLeafKey) {
+    // Tree is dynamic — collect category node keys (pattern: 0_0_N) and expand each
+    const categoryKeys = []
+    $tree('li.ui-treenode-parent').each((_, el) => {
+      const key = $tree(el).attr('data-rowkey') || ''
+      if (/^\d+_\d+_\d+$/.test(key)) categoryKeys.push(key)
+    })
+    // Also try common keys in case initial HTML has no parent nodes rendered
+    if (categoryKeys.length === 0) {
+      categoryKeys.push('0_0_0', '0_0_1', '0_0_2', '0_0_3', '0_0_4')
+    }
+    console.log(`[hr-client] DK: expanding ${categoryKeys.length} category nodes`)
+
+    for (const catKey of categoryKeys) {
+      if (firstLeafKey) break
+
+      const expandBody = new URLSearchParams({
+        'javax.faces.partial.ajax': 'true',
+        'javax.faces.source': 'dk_form:dktree',
+        'javax.faces.partial.execute': 'dk_form:dktree',
+        'javax.faces.partial.render': 'dk_form:dktree',
+        'javax.faces.behavior.event': 'expand',
+        'javax.faces.partial.event': 'expand',
+        'dk_form:dktree_expandNode': catKey,
+        'dk_form': 'dk_form',
+        'javax.faces.ViewState': currentViewState,
+        'dk_form:dktree_selection': '',
+        'dk_form:dktree_scrollState': '0,0',
+      })
+
+      const expandRes = await fetchHR(dkPageUrl, {
+        method: 'POST',
+        headers: {
+          ...browserHeaders(),
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Faces-Request': 'partial/ajax',
+          'X-Requested-With': 'XMLHttpRequest',
+          Referer: dkPageUrl,
+          Cookie: currentCookies,
+        },
+        body: expandBody.toString(),
+        redirect: 'follow',
+      })
+
+      const expandXml = await expandRes.text()
+      currentCookies = mergeCookies(expandRes, currentCookies)
+
+      // Update ViewState from expand response
+      const vsExpand =
+        expandXml.match(/<update[^>]+id="javax\.faces\.ViewState"[^>]*><!\[CDATA\[([\s\S]*?)\]\]><\/update>/) ||
+        expandXml.match(/<update[^>]+id="javax\.faces\.ViewState"[^>]*>([\s\S]*?)<\/update>/)
+      if (vsExpand) currentViewState = vsExpand[1].trim()
+
+      // Extract updated tree HTML from partial response CDATA
+      const treeUpdateMatch =
+        expandXml.match(/<update[^>]+id="dk_form:dktree"[^>]*><!\[CDATA\[([\s\S]*?)\]\]><\/update>/) ||
+        expandXml.match(/<update[^>]+id="dk_form:dktree"[^>]*>([\s\S]*?)<\/update>/)
+      if (treeUpdateMatch) {
+        const $expanded = load(treeUpdateMatch[1])
+        firstLeafKey = findLeafKey($expanded)
+        if (firstLeafKey) console.log(`[hr-client] DK: found leaf after expanding ${catKey}: ${firstLeafKey}`)
+      }
+    }
+  }
+
+  if (!firstLeafKey) throw new Error('No downloadable document found in DK tree after expanding categories')
   console.log(`[hr-client] DK leaf node key: ${firstLeafKey}`)
+
+  // Use the latest ViewState and cookies from expand calls
+  treeViewState = currentViewState
+  treeCookies = currentCookies
 
   // ── Step 4: PrimeFaces AJAX POST — select the leaf node ──────────────────────
   // This replicates the browser's XHR when the user clicks a tree leaf.
