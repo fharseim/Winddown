@@ -597,7 +597,7 @@ async function downloadDK(registerArt, registerNummer, registerGericht) {
   //   3. Musterprotokoll
   //   4. Any other document (first leaf)
 
-  // Scores a leaf node by the labels of itself + its parent category
+  // Scores a leaf by its own label + its parent category label
   function leafScore($t, el) {
     const label = ($t(el).find('.ui-treenode-label').first().text() || '').toLowerCase()
     const catLabel = ($t(el).closest('li.ui-treenode-parent').find('> .ui-treenode-content .ui-treenode-label, > div .ui-treenode-label').first().text() || '').toLowerCase()
@@ -608,22 +608,26 @@ async function downloadDK(registerArt, registerNummer, registerGericht) {
     return 1
   }
 
-  function findBestLeafKey($t) {
-    let bestKey = null
-    let bestScore = 0
+  // Accumulate ALL leaves found across expansion responses (Map: rowKey -> score)
+  // PrimeFaces may return delta-only updates, so we cannot rely on the last
+  // response containing ALL previously expanded nodes — we must collect as we go.
+  const leafMap = new Map() // rowKey -> { score, label }
+
+  function collectLeaves($t) {
     $t('li.ui-treenode-leaf').each((_, el) => {
-      if ($t(el).attr('data-nodetype') !== 'doc') return
       const key = $t(el).attr('data-rowkey') || null
-      if (!key) return
+      if (!key || leafMap.has(key)) return
       const score = leafScore($t, el)
-      if (score > bestScore) { bestScore = score; bestKey = key }
+      const label = $t(el).find('.ui-treenode-label').first().text() || key
+      leafMap.set(key, { score, label })
     })
-    return bestKey
   }
+
+  // Seed with whatever is already in the initial tree HTML
+  collectLeaves($tree)
 
   let currentViewState = treeViewState
   let currentCookies = treeCookies
-  let $lastTree = $tree
 
   // Collect category node keys (pattern: 0_0_N) — always expand all of them
   const categoryKeys = []
@@ -677,16 +681,22 @@ async function downloadDK(registerArt, registerNummer, registerGericht) {
       expandXml.match(/<update[^>]+id="dk_form:dktree"[^>]*><!\[CDATA\[([\s\S]*?)\]\]><\/update>/) ||
       expandXml.match(/<update[^>]+id="dk_form:dktree"[^>]*>([\s\S]*?)<\/update>/)
     if (treeUpdateMatch) {
-      $lastTree = load(treeUpdateMatch[1])
-      console.log(`[hr-client] DK: expanded category ${catKey}`)
+      const $expanded = load(treeUpdateMatch[1])
+      collectLeaves($expanded)
+      console.log(`[hr-client] DK: expanded ${catKey}, total leaves so far: ${leafMap.size}`)
     }
   }
 
-  // Now pick the best leaf across all expanded categories
-  const firstLeafKey = findBestLeafKey($lastTree)
+  // Pick the highest-scoring leaf (accumulated across all expansions)
+  let firstLeafKey = null
+  let bestScore = 0
+  let chosenLabel = ''
+  for (const [key, { score, label }] of leafMap) {
+    if (score > bestScore) { bestScore = score; firstLeafKey = key; chosenLabel = label }
+  }
+
   if (!firstLeafKey) throw new Error('No downloadable document found in DK tree after expanding categories')
-  const chosenLabel = $lastTree(`li.ui-treenode-leaf[data-rowkey="${firstLeafKey}"]`).find('.ui-treenode-label').first().text() || firstLeafKey
-  console.log(`[hr-client] DK leaf node key: ${firstLeafKey} ("${chosenLabel}")`)
+  console.log(`[hr-client] DK leaf node key: ${firstLeafKey} ("${chosenLabel}", score ${bestScore})`)
 
   // ── Step 4: PrimeFaces AJAX POST — select the leaf node ──────────────────────
   // This replicates the browser's XHR when the user clicks a tree leaf.
@@ -783,21 +793,40 @@ async function downloadDK(registerArt, registerNummer, registerGericht) {
 
   // Handelsregister returns a ZIP containing the PDF — extract it
   if (ct.includes('zip') || ct.includes('octet-stream') || rawBuffer.slice(0, 2).toString() === 'PK') {
+    // Try adm-zip first (reads central directory)
     try {
       const zip = new AdmZip(rawBuffer)
       const entries = zip.getEntries()
       const pdfEntry = entries.find(e => e.entryName.toLowerCase().endsWith('.pdf'))
       if (pdfEntry) {
-        console.log(`[hr-client] DK: extracted PDF from ZIP: ${pdfEntry.entryName}`)
-        return { buffer: pdfEntry.getData(), contentType: 'application/pdf' }
+        const data = pdfEntry.getData()
+        if (data && data.length > 0) {
+          console.log(`[hr-client] DK: extracted PDF from ZIP: ${pdfEntry.entryName}`)
+          return { buffer: data, contentType: 'application/pdf' }
+        }
       }
-      // No PDF found — return the raw ZIP
-      console.warn('[hr-client] DK: ZIP contained no .pdf entry, returning raw ZIP')
-      return { buffer: rawBuffer, contentType: 'application/zip' }
     } catch (zipErr) {
-      console.warn(`[hr-client] DK: ZIP extraction failed (${zipErr.message}), returning raw buffer`)
-      return { buffer: rawBuffer, contentType: ct }
+      console.warn(`[hr-client] DK: adm-zip failed (${zipErr.message}), trying raw scan`)
     }
+
+    // Fallback: scan raw buffer for PDF magic bytes (%PDF-)
+    // The ZIP uses data descriptors so adm-zip may not parse sizes correctly.
+    const pdfMagic = Buffer.from('%PDF-')
+    const pdfOffset = rawBuffer.indexOf(pdfMagic)
+    if (pdfOffset !== -1) {
+      // Find the end-of-PDF marker %%EOF
+      const eofMarker = Buffer.from('%%EOF')
+      let eofOffset = rawBuffer.lastIndexOf(eofMarker)
+      if (eofOffset === -1) eofOffset = rawBuffer.length
+      else eofOffset += eofMarker.length
+      const pdfBuffer = rawBuffer.slice(pdfOffset, eofOffset)
+      console.log(`[hr-client] DK: extracted PDF via raw scan (offset ${pdfOffset}, size ${pdfBuffer.length})`)
+      return { buffer: pdfBuffer, contentType: 'application/pdf' }
+    }
+
+    // Nothing worked — return raw ZIP so caller can decide
+    console.warn('[hr-client] DK: could not extract PDF from ZIP, returning raw buffer')
+    return { buffer: rawBuffer, contentType: 'application/zip' }
   }
 
   // Unexpected response — log and throw with context
