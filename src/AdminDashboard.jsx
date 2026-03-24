@@ -83,6 +83,16 @@ const MOCK_CASES = [
     rolle: 'Gründer',
     status: 'intake',
   },
+  {
+    id: 'mock-008',
+    created_at: '2026-03-24T09:00:00Z',
+    firma_name: 'KP Management UG (haftungsbeschränkt)',
+    firma_rechtsform: 'UG',
+    contact_name: 'Kai Petersen',
+    contact_email: 'k.petersen@kp-management.de',
+    rolle: 'Gründer',
+    status: 'intake',
+  },
 ]
 
 function relativeTime(iso) {
