@@ -85,6 +85,16 @@ async function prefetchDocuments(registerArt, registerNummer, registerGericht, d
   const tag = `${registerArt} ${registerNummer} @ ${registerGericht}`
   console.log(`[prefetch] starting background pre-fetch for ${tag}`)
 
+  // Prime hr-client's searchResultCache so all download functions use the
+  // verified rowIndex (critical when the same HRB number exists at multiple
+  // courts, e.g. HRB 25133 at both AG Augsburg and AG Kiel).
+  try {
+    await fetchDocumentList(registerArt, registerNummer, registerGericht)
+    console.log(`[prefetch] searchResultCache primed for ${tag}`)
+  } catch (err) {
+    console.warn(`[prefetch] searchResultCache prime failed: ${err.message}`)
+  }
+
   const available = new Set((docList || []).map(d => d.type))
 
   // Pre-fetch simple doc types
@@ -291,6 +301,12 @@ app.get('/api/download', requireSecret, async (req, res) => {
   }
 
   try {
+    // Prime searchResultCache before downloading so _applyCachedRowIndex can
+    // correct any ambiguous rowIndex (e.g. same HRB at multiple courts).
+    try {
+      await fetchDocumentList(registerArt, registerNummer, registerGericht)
+    } catch (_) { /* non-fatal — download will proceed with best-effort row */ }
+
     let result
     if (docType === 'SI') result = await downloadSI(registerArt, registerNummer, registerGericht)
     else if (docType === 'AD') result = await downloadAD(registerArt, registerNummer, registerGericht)
