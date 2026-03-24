@@ -384,6 +384,55 @@ async function downloadAD(registerArt, registerNummer, registerGericht) {
 }
 
 /**
+ * Downloads CD (Chronologischer Abdruck) — returns PDF buffer.
+ */
+async function downloadCD(registerArt, registerNummer, registerGericht) {
+  console.log(`[hr-download] CD: ${registerArt} ${registerNummer} @ ${registerGericht}`)
+
+  const session = await createSession()
+  const { cookies, viewState, formId, resultsHtml, rowIndex } =
+    await searchAndFindCompany(registerArt, registerNummer, registerGericht, session)
+
+  if (rowIndex === -1) {
+    throw new Error(`Company not found: ${registerArt} ${registerNummer} at ${registerGericht}`)
+  }
+
+  const $ = load(resultsHtml)
+  const linkId = findDocLinkId($, rowIndex, 'CD', formId)
+  if (!linkId) {
+    throw new Error(`No CD document link found for row ${rowIndex}`)
+  }
+
+  const res = await clickJSFLink(linkId, formId, viewState, cookies)
+  const contentType = res.headers.get('content-type') || ''
+
+  if (contentType.includes('pdf')) {
+    const buffer = Buffer.from(await res.arrayBuffer())
+    return { buffer, contentType: 'application/pdf' }
+  }
+
+  const text = await res.text()
+  const pdfUrlMatch = text.match(/["']([^"']*\.pdf[^"']*)["']/) ||
+    text.match(/window\.location\s*=\s*["']([^"']+)["']/) ||
+    text.match(/redirect\s+url="([^"]+\.pdf[^"]*)"/)
+
+  if (pdfUrlMatch) {
+    const pdfUrl = pdfUrlMatch[1].startsWith('http')
+      ? pdfUrlMatch[1]
+      : `${HR_BASE}${pdfUrlMatch[1]}`
+    const pdfRes = await fetchWithTimeout(pdfUrl, {
+      headers: { ...BROWSER_HEADERS, Cookie: cookies },
+    })
+    if (!pdfRes.ok) throw new Error(`PDF download failed: HTTP ${pdfRes.status}`)
+    const buffer = Buffer.from(await pdfRes.arrayBuffer())
+    return { buffer, contentType: 'application/pdf' }
+  }
+
+  const buffer = Buffer.from(text, 'utf-8')
+  return { buffer, contentType: contentType || 'application/pdf' }
+}
+
+/**
  * Downloads a DK document from the document tree.
  * docId identifies the specific document (e.g. "Gesellschafterliste", "Satzung",
  * or an opaque ID from the DK tree).
@@ -539,8 +588,8 @@ export default async function handler(req, res) {
   if (!registerArt || !registerNummer || !registerGericht) {
     return res.status(400).json({ error: 'registerArt, registerNummer, registerGericht are required' })
   }
-  if (!docType || !['SI', 'AD', 'DK'].includes(docType)) {
-    return res.status(400).json({ error: 'docType must be SI, AD, or DK' })
+  if (!docType || !['SI', 'AD', 'CD', 'DK'].includes(docType)) {
+    return res.status(400).json({ error: 'docType must be SI, AD, CD, or DK' })
   }
   if (docType === 'DK' && !docId) {
     return res.status(400).json({ error: 'docId is required for docType=DK' })
@@ -574,6 +623,8 @@ export default async function handler(req, res) {
       result = await downloadSI(registerArt, registerNummer, registerGericht)
     } else if (docType === 'AD') {
       result = await downloadAD(registerArt, registerNummer, registerGericht)
+    } else if (docType === 'CD') {
+      result = await downloadCD(registerArt, registerNummer, registerGericht)
     } else {
       result = await downloadDK(registerArt, registerNummer, registerGericht, docId)
     }

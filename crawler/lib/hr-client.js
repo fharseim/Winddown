@@ -551,6 +551,38 @@ async function downloadAD(registerArt, registerNummer, registerGericht) {
   return { buffer: Buffer.from(text, 'utf-8'), contentType: ct || 'application/pdf' }
 }
 
+async function downloadCD(registerArt, registerNummer, registerGericht) {
+  const session = await getSession()
+  const { cookies, viewState, formId, resultsHtml, rowIndex } =
+    await searchByRegister(registerArt, registerNummer, registerGericht, session)
+
+  if (rowIndex === -1) throw new Error(`Company not found: ${registerArt} ${registerNummer}`)
+
+  const $ = load(resultsHtml)
+  const linkId = findDocLinkId($, rowIndex, 'CD', formId)
+  if (!linkId) throw new Error('No CD link found')
+
+  const res = await clickJSFLink(linkId, formId, viewState, cookies)
+  const ct = res.headers.get('content-type') || ''
+
+  if (ct.includes('pdf')) {
+    return { buffer: Buffer.from(await res.arrayBuffer()), contentType: 'application/pdf' }
+  }
+
+  const text = await res.text()
+  const pdfMatch = text.match(/["']([^"']*\.pdf[^"']*)["']/) ||
+    text.match(/window\.location\s*=\s*["']([^"']+)["']/) ||
+    text.match(/redirect\s+url="([^"]+)"/)
+  if (pdfMatch) {
+    const url = pdfMatch[1].startsWith('http') ? pdfMatch[1] : `${HR_BASE}${pdfMatch[1]}`
+    const pdfRes = await fetchHR(url, { headers: { ...browserHeaders(), Cookie: cookies } })
+    if (!pdfRes.ok) throw new Error(`PDF fetch failed: ${pdfRes.status}`)
+    return { buffer: Buffer.from(await pdfRes.arrayBuffer()), contentType: 'application/pdf' }
+  }
+
+  return { buffer: Buffer.from(text, 'utf-8'), contentType: ct || 'application/pdf' }
+}
+
 async function downloadDK(registerArt, registerNummer, registerGericht, docId) {
   const session = await getSession()
   const { cookies, viewState, formId, resultsHtml, rowIndex } =
@@ -647,6 +679,7 @@ module.exports = {
   fetchDocumentList,
   downloadSI,
   downloadAD,
+  downloadCD,
   downloadDK,
   HR_BASE,
   HR_SEARCH_URL,
