@@ -10,6 +10,7 @@
  */
 
 const { load } = require('cheerio')
+const AdmZip = require('adm-zip')
 
 const HR_BASE = 'https://www.handelsregister.de'
 const HR_WELCOME_URL = `${HR_BASE}/rp_web/welcome.xhtml`
@@ -759,14 +760,34 @@ async function downloadDK(registerArt, registerNummer, registerGericht) {
     redirect: 'follow',
   })
 
-  const ct = dlRes.headers.get('content-type') || 'application/pdf'
+  const ct = (dlRes.headers.get('content-type') || 'application/pdf').toLowerCase()
+  const rawBuffer = Buffer.from(await dlRes.arrayBuffer())
 
-  if (ct.includes('pdf') || ct.includes('zip') || ct.includes('octet-stream')) {
-    return { buffer: Buffer.from(await dlRes.arrayBuffer()), contentType: ct }
+  if (ct.includes('pdf')) {
+    return { buffer: rawBuffer, contentType: 'application/pdf' }
+  }
+
+  // Handelsregister returns a ZIP containing the PDF — extract it
+  if (ct.includes('zip') || ct.includes('octet-stream') || rawBuffer.slice(0, 2).toString() === 'PK') {
+    try {
+      const zip = new AdmZip(rawBuffer)
+      const entries = zip.getEntries()
+      const pdfEntry = entries.find(e => e.entryName.toLowerCase().endsWith('.pdf'))
+      if (pdfEntry) {
+        console.log(`[hr-client] DK: extracted PDF from ZIP: ${pdfEntry.entryName}`)
+        return { buffer: pdfEntry.getData(), contentType: 'application/pdf' }
+      }
+      // No PDF found — return the raw ZIP
+      console.warn('[hr-client] DK: ZIP contained no .pdf entry, returning raw ZIP')
+      return { buffer: rawBuffer, contentType: 'application/zip' }
+    } catch (zipErr) {
+      console.warn(`[hr-client] DK: ZIP extraction failed (${zipErr.message}), returning raw buffer`)
+      return { buffer: rawBuffer, contentType: ct }
+    }
   }
 
   // Unexpected response — log and throw with context
-  const snippet = Buffer.from(await dlRes.arrayBuffer()).toString('utf-8').substring(0, 300)
+  const snippet = rawBuffer.toString('utf-8').substring(0, 300)
   throw new Error(`DK download returned unexpected content-type "${ct}". Body: ${snippet}`)
 }
 
