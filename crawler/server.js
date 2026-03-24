@@ -42,7 +42,7 @@ app.use('/api/', limiter)
 
 // ─── Auth middleware ───────────────────────────────────────────────────────────
 
-const API_SECRET = process.env.API_SECRET
+const API_SECRET = (process.env.API_SECRET || '').trim()
 
 function requireSecret(req, res, next) {
   if (!API_SECRET) {
@@ -50,7 +50,7 @@ function requireSecret(req, res, next) {
     console.warn('[auth] API_SECRET not set — running without auth (dev mode)')
     return next()
   }
-  const provided = req.headers['x-api-secret'] || ''
+  const provided = (req.headers['x-api-secret'] || '').trim()
   if (provided !== API_SECRET) {
     return res.status(403).json({ error: 'Forbidden: invalid x-api-secret' })
   }
