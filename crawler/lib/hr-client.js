@@ -284,18 +284,28 @@ async function searchByRegister(registerArt, registerNummer, registerGericht, se
     registerGericht.replace(/^Amtsgericht\s+/i, '').toLowerCase().replace(/\s+/g, ' ').trim(),
   ])]
 
+  // Collect all rows that match register number + art
+  const matchingRows = []
   $('tr[data-ri]').each((_, row) => {
     const ri = parseInt($(row).attr('data-ri') || '-1', 10)
     const text = $(row).text().toLowerCase().replace(/\s+/g, ' ')
     if (
       text.includes(registerNummer.toLowerCase()) &&
-      text.includes(registerArt.toLowerCase()) &&
-      gerichtVariants.some(g => text.includes(g))
+      text.includes(registerArt.toLowerCase())
     ) {
-      rowIndex = ri
-      return false
+      matchingRows.push({ ri, text })
     }
   })
+
+  if (matchingRows.length === 1) {
+    // Only one candidate — take it regardless of Gericht (portal already filtered)
+    rowIndex = matchingRows[0].ri
+  } else if (matchingRows.length > 1) {
+    // Multiple candidates — require Gericht match to pick the right one
+    const gerichtMatch = matchingRows.find(r => gerichtVariants.some(g => r.text.includes(g)))
+    if (gerichtMatch) rowIndex = gerichtMatch.ri
+    // If no Gericht match found among multiple rows → rowIndex stays -1 (not found)
+  }
 
   return {
     cookies,
