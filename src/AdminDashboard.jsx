@@ -73,6 +73,16 @@ const MOCK_CASES = [
     rolle: 'Gründer',
     status: 'abgeschlossen',
   },
+  {
+    id: 'mock-007',
+    created_at: '2026-03-24T08:00:00Z',
+    firma_name: 'amplius Cleantech UG (haftungsbeschränkt)',
+    firma_rechtsform: 'UG',
+    contact_name: 'Justus Schmidt',
+    contact_email: 'j.schmidt@amplius-cleantech.de',
+    rolle: 'Gründer',
+    status: 'intake',
+  },
 ]
 
 function relativeTime(iso) {
