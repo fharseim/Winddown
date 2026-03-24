@@ -144,25 +144,6 @@ function mergeCookies(res, existing = '') {
 const searchResultCache = new Map()
 const SEARCH_RESULT_TTL = 8 * 60 * 1000 // 8 minutes
 
-// ─── DK tree session cache ────────────────────────────────────────────────────
-// The HR portal blocks a second DK tree navigation for the same company within
-// a short timeframe (returns empty AJAX responses → 0 leaves). Cache the full
-// _expandDKTree result — leafMap, session cookies, viewState, dkPageUrl — so
-// that downloadDK can reuse the existing session instead of re-navigating.
-
-const dkTreeCache = new Map()
-const DK_TREE_TTL = 8 * 60 * 1000 // 8 minutes (matches portal session lifetime)
-
-function _setCachedDKTree(key, data) {
-  dkTreeCache.set(key, { ts: Date.now(), data })
-}
-
-function _getCachedDKTree(key) {
-  const entry = dkTreeCache.get(key)
-  if (!entry) return null
-  if (Date.now() - entry.ts > DK_TREE_TTL) { dkTreeCache.delete(key); return null }
-  return entry.data
-}
 
 function _setCachedRowIndex(key, rowIndex) {
   searchResultCache.set(key, { rowIndex, ts: Date.now() })
@@ -729,15 +710,6 @@ function _dkLeafScore($t, el) {
  * found after expanding every category in the PrimeFaces dynamic tree.
  */
 async function _expandDKTree(registerArt, registerNummer, registerGericht) {
-  // Return cached tree session if available — avoids a second portal navigation
-  // which causes the portal to return empty AJAX responses (0 leaves).
-  const cacheKey = `${registerArt}:${registerNummer}:${registerGericht}`
-  const cached = _getCachedDKTree(cacheKey)
-  if (cached) {
-    console.log(`[hr-client] DK: using cached tree session for ${cacheKey} (${cached.leafMap.size} leaves)`)
-    return cached
-  }
-
   // ── Step 1: search → results page ────────────────────────────────────────────
   const session = await getSession()
   const { cookies, viewState, formId, resultsHtml, resultsUrl, rowIndex } =
@@ -758,14 +730,15 @@ async function _expandDKTree(registerArt, registerNummer, registerGericht) {
   // Capture the final URL after redirect (e.g. /rp_web/documents/welcome.xhtml?cid=N)
   const dkPageUrl = treeRes.url || `${HR_BASE}/rp_web/documents/welcome.xhtml`
 
+  // Detect portal error page (rate-limiting or session rejection)
+  if (dkPageUrl.includes('/error.xhtml') || !treeHtml.includes('dk_form')) {
+    console.warn(`[hr-client] DK: portal returned error page (${dkPageUrl}) — rate limited or session rejected`)
+    throw new Error('Handelsregister DK: Zugriff vorübergehend gesperrt — bitte in einigen Minuten erneut versuchen.')
+  }
+
   const $tree = load(treeHtml)
   const treeViewState = $tree('input[name="javax.faces.ViewState"]').val() || viewState
-
-  // DEBUG
-  if (process.env.DK_DEBUG) {
-    console.log(`[hr-client] DK page: url=${dkPageUrl} treeHtmlLen=${treeHtml.length} vsLen=${treeViewState?.length} hasDkForm=${treeHtml.includes('dk_form')} hasDkTree=${treeHtml.includes('dktree')}`)
-    console.log(`[hr-client] DK page first 300: ${treeHtml.slice(0, 300).replace(/\n/g, ' ')}`)
-  }
+  console.log(`[hr-client] DK page: ${dkPageUrl} (dk_form found, vsLen=${treeViewState?.length})`)
 
   // ── Step 3: expand ALL categories, accumulate leaves ─────────────────────────
   // The PrimeFaces tree is dynamic (lazy-loaded): category nodes are rendered in
@@ -833,11 +806,6 @@ async function _expandDKTree(registerArt, registerNummer, registerGericht) {
     const expandXml = await expandRes.text()
     currentCookies = mergeCookies(expandRes, currentCookies)
 
-    // DEBUG: log response shape for diagnosis
-    if (process.env.DK_DEBUG) {
-      console.log(`[hr-client] DK expand ${catKey}: status=${expandRes.status} len=${expandXml.length} first200="${expandXml.slice(0, 200).replace(/\n/g, ' ')}"`)
-    }
-
     const vsExpand =
       expandXml.match(/<update[^>]+id="javax\.faces\.ViewState"[^>]*><!\[CDATA\[([\s\S]*?)\]\]><\/update>/) ||
       expandXml.match(/<update[^>]+id="javax\.faces\.ViewState"[^>]*>([\s\S]*?)<\/update>/)
@@ -859,18 +827,7 @@ async function _expandDKTree(registerArt, registerNummer, registerGericht) {
     console.log(`[hr-client]   ${key} score=${score} "${label}"`)
   }
 
-  const result = { leafMap, currentViewState, currentCookies, dkPageUrl, treeHtml }
-
-  // Cache the full tree result (including session) so downloadDK can reuse it
-  // without re-navigating — the portal blocks a second DK navigation for the
-  // same company in quick succession (returns empty AJAX → 0 leaves).
-  if (leafMap.size > 0) {
-    const cacheKey = `${registerArt}:${registerNummer}:${registerGericht}`
-    _setCachedDKTree(cacheKey, result)
-    console.log(`[hr-client] DK: tree session cached for ${cacheKey}`)
-  }
-
-  return result
+  return { leafMap, currentViewState, currentCookies, dkPageUrl, treeHtml }
 }
 
 /**
@@ -997,10 +954,6 @@ async function downloadDK(registerArt, registerNummer, registerGericht, docId = 
   const ajaxText = await ajaxRes.text()
   const ajaxCookies = mergeCookies(ajaxRes, currentCookies)
 
-  if (process.env.DK_DEBUG) {
-    console.log(`[hr-client] DK select AJAX: status=${ajaxRes.status} len=${ajaxText.length} first300="${ajaxText.slice(0, 300).replace(/\n/g, ' ')}"`)
-  }
-
   // ── Step 5: extract updated ViewState from PrimeFaces AJAX XML response ───────
   let updatedViewState = currentViewState
   const vsMatch =
@@ -1025,9 +978,6 @@ async function downloadDK(registerArt, registerNummer, registerGericht, docId = 
 
   if (!downloadBtnId) throw new Error('Could not locate DK Download button in page HTML')
   console.log(`[hr-client] DK download button: ${downloadBtnId}`)
-  if (process.env.DK_DEBUG) {
-    console.log(`[hr-client] DK download: chosenKey=${chosenKey} vsLen=${updatedViewState?.length} dlUrl=${dkPageUrl}`)
-  }
 
   // ── Step 7: submit the download form (regular form POST, not AJAX) ────────────
   const dlBody = new URLSearchParams({
@@ -1053,9 +1003,6 @@ async function downloadDK(registerArt, registerNummer, registerGericht, docId = 
 
   const ct = (dlRes.headers.get('content-type') || 'application/pdf').toLowerCase()
   const rawBuffer = Buffer.from(await dlRes.arrayBuffer())
-  if (process.env.DK_DEBUG) {
-    console.log(`[hr-client] DK dl response: status=${dlRes.status} ct="${ct}" size=${rawBuffer.length} url=${dlRes.url}`)
-  }
 
   if (ct.includes('pdf')) {
     return { buffer: rawBuffer, contentType: 'application/pdf' }
