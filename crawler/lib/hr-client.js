@@ -12,7 +12,8 @@
 const { load } = require('cheerio')
 
 const HR_BASE = 'https://www.handelsregister.de'
-const HR_SEARCH_URL = `${HR_BASE}/rp_web/erweitertesuche.xhtml`
+const HR_WELCOME_URL = `${HR_BASE}/rp_web/welcome.xhtml`
+const HR_SEARCH_URL = `${HR_BASE}/rp_web/erweitertesuche/welcome.xhtml`
 
 // ─── User-Agent rotation ──────────────────────────────────────────────────────
 
@@ -158,43 +159,67 @@ function returnSession(session) {
 }
 
 async function createSession() {
-  const res = await fetchHR(HR_SEARCH_URL, {
-    headers: browserHeaders(),
-    redirect: 'follow',
+  // Step 1: Welcome page — establishes a valid JSESSIONID
+  const res1 = await fetchHR(HR_WELCOME_URL, { headers: browserHeaders() })
+  if (!res1.ok) throw new Error(`HR welcome init failed: HTTP ${res1.status}`)
+  const html1 = await res1.text()
+  let cookies = mergeCookies(res1)
+  const $1 = load(html1)
+  const naviViewState = $1('form#naviForm input[name="javax.faces.ViewState"]').val() || ''
+
+  // Step 2: Navigate to extended search via naviForm POST (returns a redirect)
+  const navBody = new URLSearchParams({
+    naviForm: 'naviForm',
+    'naviForm:erweiterteSucheLink': 'naviForm:erweiterteSucheLink',
+    'javax.faces.ViewState': naviViewState,
   })
-  if (!res.ok) throw new Error(`HR session init failed: HTTP ${res.status}`)
+  const res2 = await fetchHR(HR_WELCOME_URL, {
+    method: 'POST',
+    headers: {
+      ...browserHeaders(),
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Cookie: cookies,
+    },
+    body: navBody.toString(),
+    redirect: 'manual',
+  })
+  cookies = mergeCookies(res2, cookies)
+  const loc = res2.headers.get('location') || '/rp_web/erweitertesuche/welcome.xhtml'
+  const searchUrl = loc.startsWith('http') ? loc : `${HR_BASE}${loc}`
 
-  const html = await res.text()
-  const cookies = mergeCookies(res)
-  const $ = load(html)
+  // Step 3: Load the actual extended search page
+  const res3 = await fetchHR(searchUrl, { headers: { ...browserHeaders(), Cookie: cookies } })
+  cookies = mergeCookies(res3, cookies)
+  const html3 = await res3.text()
+  const $3 = load(html3)
+  const viewState = $3('form[id="form"] input[name="javax.faces.ViewState"]').val() || ''
+  const formId = 'form'
 
-  const viewState = $('input[name="javax.faces.ViewState"]').val() || ''
-  const formId = $('form').first().attr('id') || 'form1'
-
-  console.log('[hr-client] created new session, viewState length:', viewState.length)
-  return { cookies, viewState, formId, html, createdAt: Date.now() }
+  console.log('[hr-client] created new session, viewState length:', viewState.length, 'formId:', formId)
+  return { cookies, viewState, formId, html: html3, searchUrl, createdAt: Date.now() }
 }
 
 // ─── Search ───────────────────────────────────────────────────────────────────
 
 async function searchByRegister(registerArt, registerNummer, registerGericht, session) {
-  const { cookies: sCookies, viewState: sViewState, formId } = session
-  const searchTerm = `${registerArt} ${registerNummer}`
+  const { cookies: sCookies, viewState: sViewState, formId, searchUrl = HR_SEARCH_URL } = session
 
   const formData = new URLSearchParams({
     [formId]: formId,
-    [`${formId}:schlagwoerter`]: searchTerm,
-    [`${formId}:schlagwortOptionen`]: '2',
+    suchTyp: 'e',
+    [`${formId}:schlagwortOptionen`]: '1',
+    [`${formId}:registerArt_input`]: registerArt,
+    [`${formId}:registerNummer`]: registerNummer,
     [`${formId}:btnSuche`]: 'Suche',
     'javax.faces.ViewState': sViewState,
   })
 
-  const res = await fetchHR(HR_SEARCH_URL, {
+  const res = await fetchHR(searchUrl, {
     method: 'POST',
     headers: {
       ...browserHeaders(),
       'Content-Type': 'application/x-www-form-urlencoded',
-      Referer: HR_SEARCH_URL,
+      Referer: searchUrl,
       Cookie: sCookies,
     },
     body: formData.toString(),
@@ -206,6 +231,8 @@ async function searchByRegister(registerArt, registerNummer, registerGericht, se
   const cookies = mergeCookies(res, sCookies)
   const $ = load(html)
   const viewState = $('input[name="javax.faces.ViewState"]').val() || sViewState
+
+  console.log(`[hr-client] searchByRegister ${registerArt} ${registerNummer}: title="${$('title').text().trim()}"`)
 
   let rowIndex = -1
   $('table tr').each((i, row) => {
@@ -227,24 +254,25 @@ async function searchByRegister(registerArt, registerNummer, registerGericht, se
 
 // ─── Company name search (for /api/search) ────────────────────────────────────
 
-async function searchByName(query, schlagwortOptionen = '2') {
+async function searchByName(query, schlagwortOptionen = '1') {
   const session = await getSession()
-  const { cookies: sCookies, viewState: sViewState, formId } = session
+  const { cookies: sCookies, viewState: sViewState, formId, searchUrl = HR_SEARCH_URL } = session
 
   const formData = new URLSearchParams({
     [formId]: formId,
+    suchTyp: 'e',
     [`${formId}:schlagwoerter`]: query,
     [`${formId}:schlagwortOptionen`]: schlagwortOptionen,
     [`${formId}:btnSuche`]: 'Suche',
     'javax.faces.ViewState': sViewState,
   })
 
-  const res = await fetchHR(HR_SEARCH_URL, {
+  const res = await fetchHR(searchUrl, {
     method: 'POST',
     headers: {
       ...browserHeaders(),
       'Content-Type': 'application/x-www-form-urlencoded',
-      Referer: HR_SEARCH_URL,
+      Referer: searchUrl,
       Cookie: sCookies,
     },
     body: formData.toString(),
