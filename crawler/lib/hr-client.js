@@ -774,17 +774,25 @@ async function downloadDK(registerArt, registerNummer, registerGericht, docId = 
   }
 
   if (!chosenKey && id) {
-    // Keyword filter — find highest-scoring leaf whose label contains the keyword
+    // Keyword filter — find highest-scoring leaf whose label contains the keyword.
+    // Expand aliases so e.g. "satzung" also matches "gesellschaftsvertrag" / "statut",
+    // and "gesellschafterliste" also matches "gesellschaftsliste".
+    const KEYWORD_ALIASES = {
+      'satzung':             ['satzung', 'gesellschaftsvertrag', 'gesellschaftsvertag', 'statut'],
+      'gesellschafterliste': ['gesellschafterliste', 'gesellschaftsliste', 'gesellschafterlist'],
+    }
     const kw = id.toLowerCase()
+    const candidates = KEYWORD_ALIASES[kw] ?? [kw]
+
     let bestScore = -1
     for (const [key, { score, label }] of leafMap) {
       const combined = (label + ' ' + key).toLowerCase()
-      if (combined.includes(kw) && score > bestScore) {
+      if (candidates.some(c => combined.includes(c)) && score > bestScore) {
         bestScore = score; chosenKey = key; chosenLabel = label
       }
     }
     if (!chosenKey) {
-      console.warn(`[hr-client] DK: no leaf matching keyword "${id}", falling back to best overall`)
+      console.warn(`[hr-client] DK: no leaf matching keyword "${id}" (aliases: ${candidates.join(', ')}), falling back to best overall`)
     }
   }
 
