@@ -199,20 +199,31 @@ async function searchAndFindCompany(registerArt, registerNummer, registerGericht
   const $ = load(html)
   const viewState = $('input[name="javax.faces.ViewState"]').val() || sessionViewState
 
-  // Find which row matches our company
-  let rowIndex = -1
-  $('table tr').each((i, row) => {
-    if (i === 0) return // skip header
-    const text = $(row).text()
-    const normGericht = registerGericht.toLowerCase().replace(/\s+/g, ' ').trim()
-    const hasNummer = text.includes(registerNummer)
-    const hasArt = text.toUpperCase().includes(registerArt)
-    const hasGericht = text.toLowerCase().replace(/\s+/g, ' ').includes(normGericht)
-    if (hasNummer && hasArt && (hasGericht || rowIndex === -1)) {
-      rowIndex = i - 1 // 0-based excluding header
-      return false // break
+  // Find which row matches our company — require Gericht match when multiple
+  // rows share the same HRB number (e.g. HRB 25133 at AG Augsburg AND AG Kiel).
+  const gerichtNorm = registerGericht.toLowerCase().replace(/^amtsgericht\s+/i, '').replace(/^ag\s+/i, '').replace(/\s+/g, ' ').trim()
+  const gerichtVariants = [...new Set([
+    registerGericht.toLowerCase().replace(/\s+/g, ' ').trim(),
+    registerGericht.toLowerCase().replace(/^amtsgericht\s+/i, '').replace(/\s+/g, ' ').trim(),
+    registerGericht.toLowerCase().replace(/^ag\s+/i, '').replace(/\s+/g, ' ').trim(),
+  ])]
+
+  const matchingRows = []
+  $('tr[data-ri]').each((_, row) => {
+    const ri = parseInt($(row).attr('data-ri') || '-1', 10)
+    const text = $(row).text().toLowerCase().replace(/\s+/g, ' ')
+    if (text.includes(registerNummer.toLowerCase()) && text.includes(registerArt.toLowerCase())) {
+      matchingRows.push({ ri, text })
     }
   })
+
+  let rowIndex = -1
+  if (matchingRows.length === 1) {
+    rowIndex = matchingRows[0].ri
+  } else if (matchingRows.length > 1) {
+    const match = matchingRows.find(r => gerichtVariants.some(g => r.text.includes(g)))
+    if (match) rowIndex = match.ri
+  }
 
   return { cookies, viewState, formId, resultsHtml: html, rowIndex }
 }
@@ -518,7 +529,7 @@ async function proxyToCrawler(req, res) {
   const contentDisposition = upstream.headers.get('content-disposition') || ''
   res.setHeader('Content-Type', contentType)
   if (contentDisposition) res.setHeader('Content-Disposition', contentDisposition)
-  res.setHeader('Cache-Control', 'private, max-age=21600')
+  res.setHeader('Cache-Control', 'no-store')
 
   const buffer = Buffer.from(await upstream.arrayBuffer())
   return res.status(200).send(buffer)
@@ -562,7 +573,7 @@ export default async function handler(req, res) {
     res.setHeader('Content-Type', cached.contentType)
     res.setHeader('Content-Disposition', `attachment; filename="${cached.filename}"`)
     res.setHeader('ETag', etag)
-    res.setHeader('Cache-Control', 'private, max-age=21600') // 6 hours
+    res.setHeader('Cache-Control', 'no-store') // 6 hours
     return res.status(200).send(cached.buffer)
   }
 
@@ -582,7 +593,7 @@ export default async function handler(req, res) {
     res.setHeader('Content-Type', result.contentType)
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
     res.setHeader('Content-Length', result.buffer.length)
-    res.setHeader('Cache-Control', 'private, max-age=21600')
+    res.setHeader('Cache-Control', 'no-store')
     return res.status(200).send(result.buffer)
   } catch (err) {
     console.error(`[hr-download] Error downloading ${docType} for ${registerArt} ${registerNummer}:`, err.message)

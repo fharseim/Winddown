@@ -296,7 +296,7 @@ app.get('/api/download', requireSecret, async (req, res) => {
     console.log(`[download] cache hit for ${cacheKey}`)
     res.setHeader('Content-Type', cached.contentType)
     res.setHeader('Content-Disposition', `attachment; filename="${cached.filename}"`)
-    res.setHeader('Cache-Control', 'private, max-age=21600')
+    res.setHeader('Cache-Control', 'no-store')
     return res.status(200).send(cached.buffer)
   }
 
@@ -320,7 +320,7 @@ app.get('/api/download', requireSecret, async (req, res) => {
     res.setHeader('Content-Type', result.contentType)
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
     res.setHeader('Content-Length', result.buffer.length)
-    res.setHeader('Cache-Control', 'private, max-age=21600')
+    res.setHeader('Cache-Control', 'no-store')
     return res.status(200).send(result.buffer)
   } catch (err) {
     console.error(`[download] error for ${docType} ${registerArt} ${registerNummer}:`, err.message)
