@@ -554,6 +554,24 @@ async function _downloadAbdruck(registerArt, registerNummer, registerGericht, ab
 
   // ZIP containing PDF (handelsregister sometimes wraps it)
   if (ct.includes('zip') || ct.includes('octet-stream') || rawBuffer.slice(0, 2).toString('ascii') === 'PK') {
+    // Try adm-zip to get decompressed entry
+    try {
+      const zip = new AdmZip(rawBuffer)
+      const entries = zip.getEntries().filter(e => !e.isDirectory)
+      let chosen = entries.find(e => e.entryName.toLowerCase().endsWith('.pdf'))
+      if (!chosen && entries.length > 0) {
+        chosen = entries.reduce((a, b) => (a.header.size > b.header.size ? a : b))
+      }
+      if (chosen) {
+        const data = chosen.getData()
+        if (data && data.slice(0, 5).toString('ascii') === '%PDF-') {
+          console.log(`[hr-client] ${abdruckType}: extracted PDF from ZIP via adm-zip: ${chosen.entryName}`)
+          return { buffer: data, contentType: 'application/pdf' }
+        }
+      }
+    } catch (_) { /* fall through to raw scan */ }
+
+    // Raw scan fallback
     const pdfMagic = Buffer.from('%PDF-')
     const pdfOffset = rawBuffer.indexOf(pdfMagic)
     if (pdfOffset !== -1) {
@@ -897,17 +915,31 @@ async function downloadDK(registerArt, registerNummer, registerGericht, docId = 
   }
 
   // Handelsregister returns a ZIP containing the PDF — extract it
-  if (ct.includes('zip') || ct.includes('octet-stream') || rawBuffer.slice(0, 2).toString() === 'PK') {
-    // Try adm-zip first (reads central directory)
+  if (ct.includes('zip') || ct.includes('octet-stream') || rawBuffer.slice(0, 2).toString('ascii') === 'PK') {
+    // Try adm-zip: first look for .pdf entry, then fall back to largest entry
     try {
       const zip = new AdmZip(rawBuffer)
-      const entries = zip.getEntries()
-      const pdfEntry = entries.find(e => e.entryName.toLowerCase().endsWith('.pdf'))
-      if (pdfEntry) {
-        const data = pdfEntry.getData()
+      const entries = zip.getEntries().filter(e => !e.isDirectory)
+      console.log(`[hr-client] DK: ZIP has ${entries.length} entries: ${entries.map(e => e.entryName).join(', ')}`)
+
+      // Prefer an entry whose name ends in .pdf (case-insensitive)
+      let chosen = entries.find(e => e.entryName.toLowerCase().endsWith('.pdf'))
+      // Fallback: largest entry (the PDF regardless of name/extension)
+      if (!chosen && entries.length > 0) {
+        chosen = entries.reduce((a, b) => (a.header.size > b.header.size ? a : b))
+        console.log(`[hr-client] DK: no .pdf entry, using largest: ${chosen.entryName}`)
+      }
+      if (chosen) {
+        const data = chosen.getData()
         if (data && data.length > 0) {
-          console.log(`[hr-client] DK: extracted PDF from ZIP: ${pdfEntry.entryName}`)
-          return { buffer: data, contentType: 'application/pdf' }
+          // Verify it's actually a PDF
+          if (data.slice(0, 5).toString('ascii') === '%PDF-') {
+            console.log(`[hr-client] DK: extracted PDF from ZIP: ${chosen.entryName} (${data.length} bytes)`)
+            return { buffer: data, contentType: 'application/pdf' }
+          }
+          // If not a PDF, still return it — maybe it's a valid document in another format
+          console.log(`[hr-client] DK: extracted entry from ZIP (not PDF): ${chosen.entryName} (${data.length} bytes)`)
+          return { buffer: data, contentType: 'application/octet-stream' }
         }
       }
     } catch (zipErr) {
