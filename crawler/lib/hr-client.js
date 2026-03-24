@@ -687,6 +687,12 @@ async function downloadDK(registerArt, registerNummer, registerGericht) {
     }
   }
 
+  // Log all found leaves for debugging
+  console.log(`[hr-client] DK: all leaves found (${leafMap.size}):`)
+  for (const [key, { score, label }] of leafMap) {
+    console.log(`[hr-client]   ${key} score=${score} "${label}"`)
+  }
+
   // Pick the highest-scoring leaf (accumulated across all expansions)
   let firstLeafKey = null
   let bestScore = 0
