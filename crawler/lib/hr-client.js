@@ -543,13 +543,31 @@ async function downloadAD(registerArt, registerNummer, registerGericht) {
   if (!linkId) throw new Error('No AD link found')
 
   const res = await clickJSFLink(linkId, formId, viewState, cookies, resultsUrl)
-  const ct = res.headers.get('content-type') || ''
+  const ct = (res.headers.get('content-type') || '').toLowerCase()
+  const rawBuffer = Buffer.from(await res.arrayBuffer())
 
-  if (ct.includes('pdf')) {
-    return { buffer: Buffer.from(await res.arrayBuffer()), contentType: 'application/pdf' }
+  // PDF: explicit content-type or magic bytes (%PDF-)
+  if (ct.includes('pdf') || rawBuffer.slice(0, 5).toString('ascii') === '%PDF-') {
+    console.log(`[hr-client] AD: got PDF (ct="${ct}", size=${rawBuffer.length})`)
+    return { buffer: rawBuffer, contentType: 'application/pdf' }
   }
 
-  const text = await res.text()
+  // ZIP containing PDF (handelsregister sometimes wraps it)
+  if (ct.includes('zip') || ct.includes('octet-stream') || rawBuffer.slice(0, 2).toString('ascii') === 'PK') {
+    const pdfMagic = Buffer.from('%PDF-')
+    const pdfOffset = rawBuffer.indexOf(pdfMagic)
+    if (pdfOffset !== -1) {
+      const eofMarker = Buffer.from('%%EOF')
+      let eofOffset = rawBuffer.lastIndexOf(eofMarker)
+      if (eofOffset === -1) eofOffset = rawBuffer.length
+      else eofOffset += eofMarker.length
+      console.log(`[hr-client] AD: extracted PDF from ZIP via raw scan`)
+      return { buffer: rawBuffer.slice(pdfOffset, eofOffset), contentType: 'application/pdf' }
+    }
+  }
+
+  // HTML response — check for redirect URL to a PDF
+  const text = rawBuffer.toString('utf-8')
   const pdfMatch = text.match(/["']([^"']*\.pdf[^"']*)["']/) ||
     text.match(/window\.location\s*=\s*["']([^"']+)["']/) ||
     text.match(/redirect\s+url="([^"]+)"/)
@@ -560,7 +578,7 @@ async function downloadAD(registerArt, registerNummer, registerGericht) {
     return { buffer: Buffer.from(await pdfRes.arrayBuffer()), contentType: 'application/pdf' }
   }
 
-  return { buffer: Buffer.from(text, 'utf-8'), contentType: ct || 'application/pdf' }
+  return { buffer: rawBuffer, contentType: ct || 'application/pdf' }
 }
 
 // ─── DK shared helpers ────────────────────────────────────────────────────────
