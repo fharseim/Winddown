@@ -997,6 +997,10 @@ async function downloadDK(registerArt, registerNummer, registerGericht, docId = 
   const ajaxText = await ajaxRes.text()
   const ajaxCookies = mergeCookies(ajaxRes, currentCookies)
 
+  if (process.env.DK_DEBUG) {
+    console.log(`[hr-client] DK select AJAX: status=${ajaxRes.status} len=${ajaxText.length} first300="${ajaxText.slice(0, 300).replace(/\n/g, ' ')}"`)
+  }
+
   // ── Step 5: extract updated ViewState from PrimeFaces AJAX XML response ───────
   let updatedViewState = currentViewState
   const vsMatch =
@@ -1021,6 +1025,9 @@ async function downloadDK(registerArt, registerNummer, registerGericht, docId = 
 
   if (!downloadBtnId) throw new Error('Could not locate DK Download button in page HTML')
   console.log(`[hr-client] DK download button: ${downloadBtnId}`)
+  if (process.env.DK_DEBUG) {
+    console.log(`[hr-client] DK download: chosenKey=${chosenKey} vsLen=${updatedViewState?.length} dlUrl=${dkPageUrl}`)
+  }
 
   // ── Step 7: submit the download form (regular form POST, not AJAX) ────────────
   const dlBody = new URLSearchParams({
@@ -1046,6 +1053,9 @@ async function downloadDK(registerArt, registerNummer, registerGericht, docId = 
 
   const ct = (dlRes.headers.get('content-type') || 'application/pdf').toLowerCase()
   const rawBuffer = Buffer.from(await dlRes.arrayBuffer())
+  if (process.env.DK_DEBUG) {
+    console.log(`[hr-client] DK dl response: status=${dlRes.status} ct="${ct}" size=${rawBuffer.length} url=${dlRes.url}`)
+  }
 
   if (ct.includes('pdf')) {
     return { buffer: rawBuffer, contentType: 'application/pdf' }
