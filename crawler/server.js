@@ -74,6 +74,74 @@ function getCached(map, key, ttl) {
   return e
 }
 
+// ─── Background pre-fetch ─────────────────────────────────────────────────────
+
+/**
+ * Called after /api/documents responds. Downloads all available document types
+ * into docBinaryCache so subsequent /api/download calls return instantly.
+ */
+async function prefetchDocuments(registerArt, registerNummer, registerGericht, docList) {
+  const tag = `${registerArt} ${registerNummer} @ ${registerGericht}`
+  console.log(`[prefetch] starting background pre-fetch for ${tag}`)
+
+  const available = new Set((docList || []).map(d => d.type))
+
+  // Pre-fetch simple doc types
+  for (const docType of ['SI', 'AD', 'CD']) {
+    if (!available.has(docType)) continue
+    const cacheKey = `${registerArt}:${registerNummer}:${registerGericht}:${docType}:`
+    if (getCached(docBinaryCache, cacheKey, DOC_BINARY_TTL)) {
+      console.log(`[prefetch] ${docType} already cached`)
+      continue
+    }
+    try {
+      let result
+      if (docType === 'SI') result = await downloadSI(registerArt, registerNummer, registerGericht)
+      else if (docType === 'AD') result = await downloadAD(registerArt, registerNummer, registerGericht)
+      else result = await downloadCD(registerArt, registerNummer, registerGericht)
+      const filename = result.filename || buildFilename(registerArt, registerNummer, registerGericht, docType, result.contentType)
+      docBinaryCache.set(cacheKey, { ts: Date.now(), buffer: result.buffer, contentType: result.contentType, filename })
+      console.log(`[prefetch] ${docType} cached (${result.buffer.length} bytes)`)
+    } catch (err) {
+      console.warn(`[prefetch] ${docType} failed: ${err.message}`)
+    }
+  }
+
+  // Pre-fetch DK documents if available — use the same keyword docIds the frontend sends
+  if (available.has('DK')) {
+    // Pre-warm DK list cache
+    try {
+      const dkDocs = await listDKDocuments(registerArt, registerNummer, registerGericht)
+      const dkListKey = `dk-list:${registerArt}:${registerNummer}:${registerGericht}`
+      if (!getCached(docListCache, dkListKey, DOC_LIST_TTL)) {
+        docListCache.set(dkListKey, { ts: Date.now(), data: { registerArt, registerNummer, registerGericht, documents: dkDocs } })
+        console.log(`[prefetch] DK list cached (${dkDocs.length} docs)`)
+      }
+    } catch (err) {
+      console.warn(`[prefetch] DK list failed: ${err.message}`)
+    }
+
+    // Pre-fetch using the same keyword docIds the frontend passes (gesellschafterliste, satzung)
+    for (const docId of ['gesellschafterliste', 'satzung']) {
+      const cacheKey = `${registerArt}:${registerNummer}:${registerGericht}:DK:${docId}`
+      if (getCached(docBinaryCache, cacheKey, DOC_BINARY_TTL)) {
+        console.log(`[prefetch] DK[${docId}] already cached`)
+        continue
+      }
+      try {
+        const result = await downloadDK(registerArt, registerNummer, registerGericht, docId)
+        const filename = result.filename || buildFilename(registerArt, registerNummer, registerGericht, 'DK', result.contentType)
+        docBinaryCache.set(cacheKey, { ts: Date.now(), buffer: result.buffer, contentType: result.contentType, filename })
+        console.log(`[prefetch] DK[${docId}] cached (${result.buffer.length} bytes)`)
+      } catch (err) {
+        console.warn(`[prefetch] DK[${docId}] failed: ${err.message}`)
+      }
+    }
+  }
+
+  console.log(`[prefetch] done for ${tag}`)
+}
+
 // ─── Health check ─────────────────────────────────────────────────────────────
 
 app.get('/health', (req, res) => {
@@ -132,6 +200,11 @@ app.get('/api/documents', requireSecret, async (req, res) => {
   const cached = getCached(docListCache, cacheKey, DOC_LIST_TTL)
   if (cached) {
     console.log(`[documents] cache hit for ${cacheKey}`)
+    // Still trigger pre-fetch if binary docs aren't in cache (e.g. after restart)
+    const adCacheKey = `${registerArt}:${registerNummer}:${registerGericht}:AD:`
+    if (!getCached(docBinaryCache, adCacheKey, DOC_BINARY_TTL)) {
+      setImmediate(() => prefetchDocuments(registerArt, registerNummer, registerGericht, cached.data.documents))
+    }
     return res.json({ ...cached.data, cached: true })
   }
 
@@ -139,7 +212,11 @@ app.get('/api/documents', requireSecret, async (req, res) => {
     const result = await fetchDocumentList(registerArt, registerNummer, registerGericht)
     const payload = { found: result.found, registerArt, registerNummer, registerGericht, documents: result.documents }
 
-    if (result.found) docListCache.set(cacheKey, { ts: Date.now(), data: payload })
+    if (result.found) {
+      docListCache.set(cacheKey, { ts: Date.now(), data: payload })
+      // Background pre-fetch all available documents into cache so user downloads are instant
+      setImmediate(() => prefetchDocuments(registerArt, registerNummer, registerGericht, result.documents))
+    }
 
     res.setHeader('Cache-Control', 'private, max-age=21600')
     return res.json(payload)
