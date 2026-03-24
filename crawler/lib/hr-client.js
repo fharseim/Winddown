@@ -797,16 +797,21 @@ async function downloadDK(registerArt, registerNummer, registerGericht, docId = 
     // and "gesellschafterliste" also matches "gesellschaftsliste".
     const KEYWORD_ALIASES = {
       'satzung':             ['satzung', 'gesellschaftsvertrag', 'gesellschaftsvertag', 'statut'],
-      'gesellschafterliste': ['gesellschafterliste', 'gesellschaftsliste', 'gesellschafterlist'],
+      'gesellschafterliste': ['gesellschafterliste', 'gesellschaftsliste', 'gesellschafterlist', 'liste der gesellschafter'],
     }
     const kw = id.toLowerCase()
     const candidates = KEYWORD_ALIASES[kw] ?? [kw]
 
     let bestScore = -1
+    let bestDate = ''
     for (const [key, { score, label }] of leafMap) {
       const combined = (label + ' ' + key).toLowerCase()
-      if (candidates.some(c => combined.includes(c)) && score > bestScore) {
-        bestScore = score; chosenKey = key; chosenLabel = label
+      if (!candidates.some(c => combined.includes(c))) continue
+      // Extract date from label (e.g. "… am 13.08.2015" → "2015-08-13" for ISO comparison)
+      const dateMatch = label.match(/(\d{2})\.(\d{2})\.(\d{4})/)
+      const isoDate = dateMatch ? `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}` : ''
+      if (score > bestScore || (score === bestScore && isoDate > bestDate)) {
+        bestScore = score; bestDate = isoDate; chosenKey = key; chosenLabel = label
       }
     }
     if (!chosenKey) {
