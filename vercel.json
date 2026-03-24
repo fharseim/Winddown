@@ -2,5 +2,10 @@
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
-  ]
+  ],
+  "functions": {
+    "api/hr-download.js": { "maxDuration": 60 },
+    "api/hr-documents.js": { "maxDuration": 60 },
+    "api/dk-list.js": { "maxDuration": 60 }
+  }
 }

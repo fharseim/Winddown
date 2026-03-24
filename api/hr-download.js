@@ -24,6 +24,8 @@ function isAllowedOrigin(origin) {
   if (ALLOWED_ORIGINS.includes(origin)) return true
   if (/^https?:\/\/localhost(:\d+)?$/.test(origin)) return true
   if (/^https?:\/\/127\.0\.0\.1(:\d+)?$/.test(origin)) return true
+  // Allow all Vercel preview deployments for this project
+  if (/^https:\/\/winddown-[^.]+\.vercel\.app$/.test(origin)) return true
   return false
 }
 
