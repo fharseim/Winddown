@@ -277,14 +277,20 @@ async function searchByRegister(registerArt, registerNummer, registerGericht, se
 
   // Find the matching row by data-ri index
   let rowIndex = -1
+  // Build multiple gericht name variants to handle "AG Kiel", "Amtsgericht Kiel", "Kiel" etc.
+  const gerichtVariants = [...new Set([
+    registerGericht.toLowerCase().replace(/\s+/g, ' ').trim(),
+    registerGericht.replace(/^AG\s+/i, '').toLowerCase().replace(/\s+/g, ' ').trim(),
+    registerGericht.replace(/^Amtsgericht\s+/i, '').toLowerCase().replace(/\s+/g, ' ').trim(),
+  ])]
+
   $('tr[data-ri]').each((_, row) => {
     const ri = parseInt($(row).attr('data-ri') || '-1', 10)
-    const text = $(row).text()
-    const normGericht = registerGericht.toLowerCase().replace(/\s+/g, ' ').trim()
+    const text = $(row).text().toLowerCase().replace(/\s+/g, ' ')
     if (
-      text.includes(registerNummer) &&
-      text.toUpperCase().includes(registerArt) &&
-      (text.toLowerCase().replace(/\s+/g, ' ').includes(normGericht) || rowIndex === -1)
+      text.includes(registerNummer.toLowerCase()) &&
+      text.includes(registerArt.toLowerCase()) &&
+      gerichtVariants.some(g => text.includes(g))
     ) {
       rowIndex = ri
       return false
