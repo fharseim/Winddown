@@ -673,12 +673,9 @@ async function downloadDK(registerArt, registerNummer, registerGericht) {
   if (!firstLeafKey) throw new Error('No downloadable document found in DK tree after expanding categories')
   console.log(`[hr-client] DK leaf node key: ${firstLeafKey}`)
 
-  // Use the latest ViewState and cookies from expand calls
-  treeViewState = currentViewState
-  treeCookies = currentCookies
-
   // ── Step 4: PrimeFaces AJAX POST — select the leaf node ──────────────────────
   // This replicates the browser's XHR when the user clicks a tree leaf.
+  // Use currentViewState/currentCookies which reflect any expand calls above.
   const ajaxBody = new URLSearchParams({
     'javax.faces.partial.ajax': 'true',
     'javax.faces.source': 'dk_form:dktree',
@@ -688,7 +685,7 @@ async function downloadDK(registerArt, registerNummer, registerGericht) {
     'javax.faces.partial.event': 'select',
     'dk_form:dktree_instantSelection': firstLeafKey,
     'dk_form': 'dk_form',
-    'javax.faces.ViewState': treeViewState,
+    'javax.faces.ViewState': currentViewState,
     'dk_form:dktree_selection': firstLeafKey,
     'dk_form:dktree_scrollState': '0,0',
     'dk_form:radio_dkbuttons': 'true',
@@ -702,18 +699,18 @@ async function downloadDK(registerArt, registerNummer, registerGericht) {
       'Faces-Request': 'partial/ajax',
       'X-Requested-With': 'XMLHttpRequest',
       Referer: dkPageUrl,
-      Cookie: treeCookies,
+      Cookie: currentCookies,
     },
     body: ajaxBody.toString(),
     redirect: 'follow',
   })
 
   const ajaxText = await ajaxRes.text()
-  const ajaxCookies = mergeCookies(ajaxRes, treeCookies)
+  const ajaxCookies = mergeCookies(ajaxRes, currentCookies)
 
   // ── Step 5: extract updated ViewState from PrimeFaces AJAX XML response ───────
   // Format: <update id="javax.faces.ViewState"><![CDATA[...]]></update>
-  let updatedViewState = treeViewState
+  let updatedViewState = currentViewState
   const vsMatch =
     ajaxText.match(/<update[^>]+id="javax\.faces\.ViewState"[^>]*><!\[CDATA\[([\s\S]*?)\]\]><\/update>/) ||
     ajaxText.match(/<update[^>]+id="javax\.faces\.ViewState"[^>]*>([\s\S]*?)<\/update>/)
