@@ -542,10 +542,6 @@ export default async function handler(req, res) {
   if (!docType || !['SI', 'AD', 'DK'].includes(docType)) {
     return res.status(400).json({ error: 'docType must be SI, AD, or DK' })
   }
-  if (docType === 'DK' && !docId) {
-    return res.status(400).json({ error: 'docId is required for docType=DK' })
-  }
-
   // ── Proxy to Railway crawler if configured ──
   if (process.env.CRAWLER_URL) {
     try {
