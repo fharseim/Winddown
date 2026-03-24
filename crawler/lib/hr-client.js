@@ -309,12 +309,17 @@ async function searchByRegister(registerArt, registerNummer, registerGericht, se
   const matchingRows = []
   $('tr[data-ri]').each((_, row) => {
     const ri = parseInt($(row).attr('data-ri') || '-1', 10)
-    const text = $(row).text().toLowerCase().replace(/\s+/g, ' ')
+    const fullText = $(row).text().toLowerCase().replace(/\s+/g, ' ')
+    // Extract only the court name from the bold header span (first nested row of the result)
+    // This prevents false Gericht matches against company names or cities that share a name
+    // with the Amtsgericht (e.g. a company "KP Management UG" with Sitz in Kiel matching "kiel"
+    // when searching for "AG Kiel" but the row is actually registered at a different court)
+    const headerText = $(row).find('span.fontWeightBold').first().text().toLowerCase().replace(/\s+/g, ' ')
     if (
-      text.includes(registerNummer.toLowerCase()) &&
-      text.includes(registerArt.toLowerCase())
+      fullText.includes(registerNummer.toLowerCase()) &&
+      fullText.includes(registerArt.toLowerCase())
     ) {
-      matchingRows.push({ ri, text })
+      matchingRows.push({ ri, fullText, headerText })
     }
   })
 
@@ -322,8 +327,10 @@ async function searchByRegister(registerArt, registerNummer, registerGericht, se
     // Only one candidate — take it regardless of Gericht (portal already filtered)
     rowIndex = matchingRows[0].ri
   } else if (matchingRows.length > 1) {
-    // Multiple candidates — require Gericht match to pick the right one
-    const gerichtMatch = matchingRows.find(r => gerichtVariants.some(g => r.text.includes(g)))
+    // Multiple candidates — require Gericht match to pick the right one.
+    // Match ONLY against the court header text (span.fontWeightBold), not the full row text,
+    // to avoid false positives where the Gericht name appears in the company name or Sitz.
+    const gerichtMatch = matchingRows.find(r => gerichtVariants.some(g => r.headerText.includes(g)))
     if (gerichtMatch) rowIndex = gerichtMatch.ri
     // If no Gericht match found among multiple rows → rowIndex stays -1 (not found)
   }

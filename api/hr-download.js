@@ -211,9 +211,12 @@ async function searchAndFindCompany(registerArt, registerNummer, registerGericht
   const matchingRows = []
   $('tr[data-ri]').each((_, row) => {
     const ri = parseInt($(row).attr('data-ri') || '-1', 10)
-    const text = $(row).text().toLowerCase().replace(/\s+/g, ' ')
-    if (text.includes(registerNummer.toLowerCase()) && text.includes(registerArt.toLowerCase())) {
-      matchingRows.push({ ri, text })
+    const fullText = $(row).text().toLowerCase().replace(/\s+/g, ' ')
+    // Extract only the court name from the bold header span to avoid false Gericht matches
+    // against company names or cities that share a name with the Amtsgericht
+    const headerText = $(row).find('span.fontWeightBold').first().text().toLowerCase().replace(/\s+/g, ' ')
+    if (fullText.includes(registerNummer.toLowerCase()) && fullText.includes(registerArt.toLowerCase())) {
+      matchingRows.push({ ri, fullText, headerText })
     }
   })
 
@@ -221,7 +224,7 @@ async function searchAndFindCompany(registerArt, registerNummer, registerGericht
   if (matchingRows.length === 1) {
     rowIndex = matchingRows[0].ri
   } else if (matchingRows.length > 1) {
-    const match = matchingRows.find(r => gerichtVariants.some(g => r.text.includes(g)))
+    const match = matchingRows.find(r => gerichtVariants.some(g => r.headerText.includes(g)))
     if (match) rowIndex = match.ri
   }
 
