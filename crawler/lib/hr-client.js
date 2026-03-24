@@ -144,6 +144,26 @@ function mergeCookies(res, existing = '') {
 const searchResultCache = new Map()
 const SEARCH_RESULT_TTL = 8 * 60 * 1000 // 8 minutes
 
+// ─── DK tree session cache ────────────────────────────────────────────────────
+// The HR portal blocks a second DK tree navigation for the same company within
+// a short timeframe (returns empty AJAX responses → 0 leaves). Cache the full
+// _expandDKTree result — leafMap, session cookies, viewState, dkPageUrl — so
+// that downloadDK can reuse the existing session instead of re-navigating.
+
+const dkTreeCache = new Map()
+const DK_TREE_TTL = 8 * 60 * 1000 // 8 minutes (matches portal session lifetime)
+
+function _setCachedDKTree(key, data) {
+  dkTreeCache.set(key, { ts: Date.now(), data })
+}
+
+function _getCachedDKTree(key) {
+  const entry = dkTreeCache.get(key)
+  if (!entry) return null
+  if (Date.now() - entry.ts > DK_TREE_TTL) { dkTreeCache.delete(key); return null }
+  return entry.data
+}
+
 function _setCachedRowIndex(key, rowIndex) {
   searchResultCache.set(key, { rowIndex, ts: Date.now() })
 }
@@ -709,6 +729,15 @@ function _dkLeafScore($t, el) {
  * found after expanding every category in the PrimeFaces dynamic tree.
  */
 async function _expandDKTree(registerArt, registerNummer, registerGericht) {
+  // Return cached tree session if available — avoids a second portal navigation
+  // which causes the portal to return empty AJAX responses (0 leaves).
+  const cacheKey = `${registerArt}:${registerNummer}:${registerGericht}`
+  const cached = _getCachedDKTree(cacheKey)
+  if (cached) {
+    console.log(`[hr-client] DK: using cached tree session for ${cacheKey} (${cached.leafMap.size} leaves)`)
+    return cached
+  }
+
   // ── Step 1: search → results page ────────────────────────────────────────────
   const session = await getSession()
   const { cookies, viewState, formId, resultsHtml, resultsUrl, rowIndex } =
@@ -819,7 +848,18 @@ async function _expandDKTree(registerArt, registerNummer, registerGericht) {
     console.log(`[hr-client]   ${key} score=${score} "${label}"`)
   }
 
-  return { leafMap, currentViewState, currentCookies, dkPageUrl, treeHtml }
+  const result = { leafMap, currentViewState, currentCookies, dkPageUrl, treeHtml }
+
+  // Cache the full tree result (including session) so downloadDK can reuse it
+  // without re-navigating — the portal blocks a second DK navigation for the
+  // same company in quick succession (returns empty AJAX → 0 leaves).
+  if (leafMap.size > 0) {
+    const cacheKey = `${registerArt}:${registerNummer}:${registerGericht}`
+    _setCachedDKTree(cacheKey, result)
+    console.log(`[hr-client] DK: tree session cached for ${cacheKey}`)
+  }
+
+  return result
 }
 
 /**
