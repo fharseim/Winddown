@@ -53,7 +53,7 @@ async function downloadHRDocument(registerArt, registerNummer, registerGericht, 
   try {
     const params = new URLSearchParams({ registerArt, registerNummer, registerGericht, docType })
     if (docId) params.set('docId', docId)
-    const res = await fetch(`/api/hr-download?${params}`)
+    const res = await fetch(`/api/hr-download?${params}`, { cache: 'no-store' })
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: 'Unbekannter Fehler' }))
       showToast(`Fehler: ${err.error || res.statusText}`, 'error')

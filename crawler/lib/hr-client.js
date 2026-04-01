@@ -123,10 +123,10 @@ function resolveCourtCode(gerichtInput) {
   return ''
 }
 
-// ─── Token-bucket rate limiter (60 req/hour to handelsregister.de) ─────────────
+// ─── Token-bucket rate limiter (200 req/hour to handelsregister.de) ────────────
 
-const BUCKET_CAPACITY = 60
-const BUCKET_REFILL_PER_MS = BUCKET_CAPACITY / (60 * 60 * 1000) // 1 per minute
+const BUCKET_CAPACITY = 200
+const BUCKET_REFILL_PER_MS = BUCKET_CAPACITY / (60 * 60 * 1000) // ~3 per minute
 
 let bucketTokens = BUCKET_CAPACITY
 let bucketLastRefill = Date.now()
@@ -212,6 +212,27 @@ function mergeCookies(res, existing = '') {
   }
 
   return [...map.entries()].map(([k, v]) => `${k}=${v}`).join('; ')
+}
+
+// ─── Search result cache ──────────────────────────────────────────────────────
+// Keyed by "registerArt:registerNummer:registerGericht".
+// Caches the verified rowIndex so all downloads use the same result row as
+// fetchDocumentList, preventing ambiguous-court bugs (e.g. HRB 25133 exists at
+// both AG Augsburg and AG Kiel — if an independent search lands on the wrong
+// one, the cached rowIndex from the document-list call corrects it).
+
+const searchResultCache = new Map()
+const SEARCH_RESULT_TTL = 8 * 60 * 1000 // 8 minutes
+
+function _setCachedRowIndex(key, rowIndex) {
+  searchResultCache.set(key, { rowIndex, ts: Date.now() })
+}
+
+function _getCachedRowIndex(key) {
+  const entry = searchResultCache.get(key)
+  if (!entry) return null
+  if (Date.now() - entry.ts > SEARCH_RESULT_TTL) { searchResultCache.delete(key); return null }
+  return entry.rowIndex
 }
 
 // ─── Session pool ─────────────────────────────────────────────────────────────
@@ -365,18 +386,28 @@ async function searchByRegister(registerArt, registerNummer, registerGericht, se
     registerGericht.replace(/^Amtsgericht\s+/i, '').toLowerCase().replace(/\s+/g, ' ').trim(),
   ])]
 
+  // Collect all rows that match register number + art
+  const matchingRows = []
   $('tr[data-ri]').each((_, row) => {
     const ri = parseInt($(row).attr('data-ri') || '-1', 10)
     const text = $(row).text().toLowerCase().replace(/\s+/g, ' ')
     if (
       text.includes(registerNummer.toLowerCase()) &&
-      text.includes(registerArt.toLowerCase()) &&
-      gerichtVariants.some(g => text.includes(g))
+      text.includes(registerArt.toLowerCase())
     ) {
-      rowIndex = ri
-      return false
+      matchingRows.push({ ri, text })
     }
   })
+
+  if (matchingRows.length === 1) {
+    // Only one candidate — take it regardless of Gericht (portal already filtered)
+    rowIndex = matchingRows[0].ri
+  } else if (matchingRows.length > 1) {
+    // Multiple candidates — require Gericht match to pick the right one
+    const gerichtMatch = matchingRows.find(r => gerichtVariants.some(g => r.text.includes(g)))
+    if (gerichtMatch) rowIndex = gerichtMatch.ri
+    // If no Gericht match found among multiple rows → rowIndex stays -1 (not found)
+  }
 
   return {
     cookies,
@@ -513,6 +544,11 @@ async function fetchDocumentList(registerArt, registerNummer, registerGericht) {
     return { found: false, documents: [] }
   }
 
+  // Cache the verified rowIndex so download functions use the same row
+  const cacheKey = `${registerArt}:${registerNummer}:${registerGericht}`
+  _setCachedRowIndex(cacheKey, result.rowIndex)
+  console.log(`[hr-client] cached rowIndex=${result.rowIndex} for ${cacheKey}`)
+
   const $ = load(result.resultsHtml)
   const documents = parseDocumentLinks($, result.rowIndex, result.formId)
 
@@ -526,6 +562,32 @@ async function fetchDocumentList(registerArt, registerNummer, registerGericht) {
       formId: result.formId,
     },
   }
+}
+
+// ─── Apply cached rowIndex ────────────────────────────────────────────────────
+// After a fresh searchByRegister call, override rowIndex with the cached value
+// (set by fetchDocumentList) if it exists and the row is present in the HTML.
+// This ensures all downloads use the same verified row regardless of search
+// non-determinism (different sessions may return different orderings).
+
+function _applyCachedRowIndex(registerArt, registerNummer, registerGericht, searchResult) {
+  const cacheKey = `${registerArt}:${registerNummer}:${registerGericht}`
+  const cachedIdx = _getCachedRowIndex(cacheKey)
+  if (cachedIdx === null) return searchResult
+
+  const { resultsHtml, rowIndex } = searchResult
+  if (cachedIdx === rowIndex) return searchResult
+
+  // Verify the cached row actually exists in the current search HTML
+  const $check = load(resultsHtml)
+  if ($check(`tr[data-ri="${cachedIdx}"]`).length > 0) {
+    console.log(`[hr-client] overriding search rowIndex=${rowIndex} → cached ${cachedIdx} for ${cacheKey}`)
+    return { ...searchResult, rowIndex: cachedIdx }
+  }
+
+  // Cached row not in current results — trust the fresh search
+  console.warn(`[hr-client] cached rowIndex=${cachedIdx} not in results; using search rowIndex=${rowIndex} for ${cacheKey}`)
+  return searchResult
 }
 
 // ─── JSF link helpers ─────────────────────────────────────────────────────────
@@ -590,7 +652,8 @@ async function clickJSFLink(linkId, formId, viewState, cookies, resultsUrl = '')
 async function downloadSI(registerArt, registerNummer, registerGericht) {
   const session = await getSession()
   const { cookies, viewState, formId, resultsHtml, resultsUrl, rowIndex } =
-    await searchByRegister(registerArt, registerNummer, registerGericht, session)
+    _applyCachedRowIndex(registerArt, registerNummer, registerGericht,
+      await searchByRegister(registerArt, registerNummer, registerGericht, session))
 
   if (rowIndex === -1) throw new Error(`Company not found: ${registerArt} ${registerNummer}`)
 
@@ -621,7 +684,8 @@ async function downloadSI(registerArt, registerNummer, registerGericht) {
 async function _downloadAbdruck(registerArt, registerNummer, registerGericht, abdruckType) {
   const session = await getSession()
   const { cookies, viewState, formId, resultsHtml, resultsUrl, rowIndex } =
-    await searchByRegister(registerArt, registerNummer, registerGericht, session)
+    _applyCachedRowIndex(registerArt, registerNummer, registerGericht,
+      await searchByRegister(registerArt, registerNummer, registerGericht, session))
 
   if (rowIndex === -1) throw new Error(`Company not found: ${registerArt} ${registerNummer}`)
 
@@ -722,7 +786,8 @@ async function _expandDKTree(registerArt, registerNummer, registerGericht) {
   // ── Step 1: search → results page ────────────────────────────────────────────
   const session = await getSession()
   const { cookies, viewState, formId, resultsHtml, resultsUrl, rowIndex } =
-    await searchByRegister(registerArt, registerNummer, registerGericht, session)
+    _applyCachedRowIndex(registerArt, registerNummer, registerGericht,
+      await searchByRegister(registerArt, registerNummer, registerGericht, session))
 
   if (rowIndex === -1) throw new Error(`Company not found: ${registerArt} ${registerNummer}`)
 

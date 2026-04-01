@@ -22,6 +22,7 @@ app.use(cors({
     if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true)
     if (/^https?:\/\/localhost(:\d+)?$/.test(origin)) return cb(null, true)
     if (/^https?:\/\/127\.0\.0\.1(:\d+)?$/.test(origin)) return cb(null, true)
+    if (/\.vercel\.app$/.test(origin)) return cb(null, true)
     cb(new Error(`CORS: origin not allowed: ${origin}`))
   },
   methods: ['GET', 'OPTIONS'],
@@ -42,7 +43,7 @@ app.use('/api/', limiter)
 
 // ─── Auth middleware ───────────────────────────────────────────────────────────
 
-const API_SECRET = process.env.API_SECRET
+const API_SECRET = (process.env.API_SECRET || '').trim()
 
 function requireSecret(req, res, next) {
   if (!API_SECRET) {
@@ -50,7 +51,7 @@ function requireSecret(req, res, next) {
     console.warn('[auth] API_SECRET not set — running without auth (dev mode)')
     return next()
   }
-  const provided = req.headers['x-api-secret'] || ''
+  const provided = (req.headers['x-api-secret'] || '').trim()
   if (provided !== API_SECRET) {
     return res.status(403).json({ error: 'Forbidden: invalid x-api-secret' })
   }
@@ -285,7 +286,7 @@ app.get('/api/download', requireSecret, async (req, res) => {
     console.log(`[download] cache hit for ${cacheKey}`)
     res.setHeader('Content-Type', cached.contentType)
     res.setHeader('Content-Disposition', `attachment; filename="${cached.filename}"`)
-    res.setHeader('Cache-Control', 'private, max-age=21600')
+    res.setHeader('Cache-Control', 'no-store')
     return res.status(200).send(cached.buffer)
   }
 
@@ -303,7 +304,7 @@ app.get('/api/download', requireSecret, async (req, res) => {
     res.setHeader('Content-Type', result.contentType)
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
     res.setHeader('Content-Length', result.buffer.length)
-    res.setHeader('Cache-Control', 'private, max-age=21600')
+    res.setHeader('Cache-Control', 'no-store')
     return res.status(200).send(result.buffer)
   } catch (err) {
     console.error(`[download] error for ${docType} ${registerArt} ${registerNummer}:`, err.message)
