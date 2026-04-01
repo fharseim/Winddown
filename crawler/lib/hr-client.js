@@ -43,6 +43,86 @@ function browserHeaders() {
   }
 }
 
+// ─── Court code mapping ───────────────────────────────────────────────────────
+const COURT_NAME_TO_CODE = {
+  "Aachen":"R3101","Altenburg":"Y1201","Amberg":"D3101","Ansbach":"D3201",
+  "Apolda":"Y1101","Arnsberg":"R1901","Arnstadt":"Y1102",
+  "Arnstadt Zweigstelle Ilmenau":"Y1303","Aschaffenburg":"D4102",
+  "Augsburg":"D2102","Aurich":"P3101","Bad Hersfeld":"M1305",
+  "Bad Homburg v.d.H.":"M1202","Bad Kreuznach":"T2101",
+  "Bad Oeynhausen":"R2108","Bad Salzungen":"Y1301","Bamberg":"D4201",
+  "Bayreuth":"D4301","Berlin (Charlottenburg)":"F1103","Bielefeld":"R2101",
+  "Bochum":"R2201","Bonn":"R3201","Braunschweig":"P1103",
+  "Bremen":"H1101","Chemnitz":"U1206","Coburg":"D4401",
+  "Coesfeld":"R2707","Cottbus":"G1103","Darmstadt":"M1103",
+  "Deggendorf":"D2201","Dortmund":"R2402","Dresden":"U1104",
+  "Duisburg":"R1202","Düren":"R3103","Düsseldorf":"R1101",
+  "Eisenach":"Y1105","Erfurt":"Y1106","Eschwege":"M1602",
+  "Essen":"R2503","Flensburg":"X1112","Frankfurt am Main":"M1201",
+  "Frankfurt/Oder":"G1207","Freiburg":"B1204","Friedberg":"M1405",
+  "Fritzlar":"M1603","Fulda":"M1301","Fürth":"D3304",
+  "Gelsenkirchen":"R2507","Gera":"Y1203","Gießen":"M1406",
+  "Gotha":"Y1108","Göttingen":"P2204","Greiz":"Y1205",
+  "Gütersloh":"R2103","Hagen":"R2602","Hamburg":"K1101",
+  "Hamm":"R2404","Hanau":"M1502","Hannover":"P2305",
+  "Heilbad Heiligenstadt":"Y1109","Hildburghausen":"Y1302",
+  "Hildesheim":"P2408","Hof":"D4501","Homburg":"V1102",
+  "Ingolstadt":"D5701","Iserlohn":"R2604","Jena":"Y1206",
+  "Kaiserslautern":"T3201","Kassel":"M1607","Kempten (Allgäu)":"D2304",
+  "Kiel":"X1517","Kleve":"R1304","Koblenz":"T2210",
+  "Köln":"R3306","Königstein":"M1203","Korbach":"M1608",
+  "Krefeld":"R1402","Landau":"T3304","Landshut":"D2404",
+  "Langenfeld":"R1105","Lebach":"V1103","Leipzig":"U1308",
+  "Lemgo":"R2307","Limburg":"M1706","Lübeck":"X1721",
+  "Ludwigshafen a.Rhein (Ludwigshafen)":"T3104","Lüneburg":"P2507",
+  "Mainz":"T2304","Mannheim":"B1601","Marburg":"M1809",
+  "Meiningen":"Y1304","Memmingen":"D2505","Merzig":"V1104",
+  "Mönchengladbach":"R1504","Montabaur":"T2214","Mühlhausen":"Y1110",
+  "München":"D2601","Münster":"R2713","Neubrandenburg":"N1105",
+  "Neunkirchen":"V1105","Neuruppin":"G1309","Neuss":"R1102",
+  "Nordhausen":"Y1111","Nürnberg":"D3310","Offenbach am Main":"M1114",
+  "Oldenburg (Oldenburg)":"P3210","Osnabrück":"P3313",
+  "Ottweiler":"V1107","Paderborn":"R2809","Passau":"D2803",
+  "Pinneberg":"X1321","Pößneck":"Y1209",
+  "Pößneck Zweigstelle Bad Lobenstein":"Y1208","Potsdam":"G1312",
+  "Recklinghausen":"R2204","Regensburg":"D3410","Rostock":"N1206",
+  "Rudolstadt":"Y1210","Saarbrücken":"V1109","Saarlouis":"V1110",
+  "Schweinfurt":"D4608","Schwerin":"N1308","Siegburg":"R3208",
+  "Siegen":"R2909","Sömmerda":"Y1112","Sondershausen":"Y1113",
+  "Sonneberg":"Y1307","Stadthagen":"P2106","Stadtroda":"Y1214",
+  "Steinfurt":"R2706","Stendal":"W1215",
+  "St. Ingbert (St Ingbert)":"V1111","Stralsund":"N1209",
+  "Straubing":"D3413","Stuttgart":"B2609",
+  "St. Wendel (St Wendel)":"V1112","Suhl":"Y1308",
+  "Tostedt":"P2613","Traunstein":"D2910","Ulm":"B2805",
+  "Völklingen":"V1115","Walsrode":"P2716",
+  "Weiden i. d. OPf.":"D3508","Weimar":"Y1114","Wetzlar":"M1710",
+  "Wiesbaden":"M1906","Wittlich":"T2216","Wuppertal":"R1608",
+  "Würzburg":"D4714",
+}
+
+function resolveCourtCode(gerichtInput) {
+  if (!gerichtInput) return ''
+  const raw = gerichtInput.trim()
+  if (/^[A-Z]\d{4}$/.test(raw)) return raw
+  if (COURT_NAME_TO_CODE[raw]) return COURT_NAME_TO_CODE[raw]
+  const stripped = raw
+    .replace(/^Amtsgericht\s+/i, '')
+    .replace(/^AG\s+/i, '')
+    .replace(/^Registergericht\s+/i, '')
+    .trim()
+  if (COURT_NAME_TO_CODE[stripped]) return COURT_NAME_TO_CODE[stripped]
+  const lowerStripped = stripped.toLowerCase()
+  for (const [name, code] of Object.entries(COURT_NAME_TO_CODE)) {
+    if (name.toLowerCase() === lowerStripped) return code
+  }
+  for (const [name, code] of Object.entries(COURT_NAME_TO_CODE)) {
+    if (name.toLowerCase().includes(lowerStripped) || lowerStripped.includes(name.toLowerCase())) return code
+  }
+  console.warn(`[hr-client] Could not resolve court code for: ${gerichtInput}, sending empty`)
+  return ''
+}
+
 // ─── Token-bucket rate limiter (200 req/hour to handelsregister.de) ────────────
 
 const BUCKET_CAPACITY = 200
@@ -252,8 +332,9 @@ async function createSession() {
 async function searchByRegister(registerArt, registerNummer, registerGericht, session) {
   const { cookies: sCookies, viewState: sViewState, formId } = session
 
-  // Strip "Amtsgericht " prefix for the court search field
-  const gerichtShort = registerGericht.replace(/^Amtsgericht\s*/i, '').trim()
+  const courtCode = resolveCourtCode(registerGericht)
+  console.log(`[hr-client] search: ${registerArt} ${registerNummer} @ ${registerGericht} → courtCode="${courtCode}"`)
+
 
   const formData = new URLSearchParams({
     [formId]: formId,
@@ -261,7 +342,7 @@ async function searchByRegister(registerArt, registerNummer, registerGericht, se
     [`${formId}:schlagwortOptionen`]: '1',
     [`${formId}:registerArt_input`]: registerArt,
     [`${formId}:registerNummer`]: registerNummer,
-    [`${formId}:registerGericht_input`]: gerichtShort,
+    [`${formId}:registergericht_input`]: courtCode,
     [`${formId}:ergebnisseProSeite_input`]: '10',
     [`${formId}:btnSuche`]: `${formId}:btnSuche`,
     'javax.faces.ViewState': sViewState,
@@ -328,6 +409,22 @@ async function searchByRegister(registerArt, registerNummer, registerGericht, se
     // If no Gericht match found among multiple rows → rowIndex stays -1 (not found)
   }
 
+  // Warn early if court could not be resolved — unfiltered results increase wrong-company risk
+  if (!courtCode) {
+    console.warn(`[hr-client] WARNING: court "${registerGericht}" not resolved to a code — results may include other courts`)
+  }
+
+  // Extract the matched company name for verification logging
+  let matchedFirmaName = null
+  if (rowIndex !== -1) {
+    const matchedRow = $(`tr[data-ri="${rowIndex}"]`)
+    const nestedRows = matchedRow.find('table').first().find('tr')
+    if (nestedRows.length >= 2) {
+      matchedFirmaName = $(nestedRows[1]).find('td').first().text().trim() || null
+    }
+    console.log(`[hr-client] matched row ${rowIndex}: firma="${matchedFirmaName}" for ${registerArt} ${registerNummer} @ ${registerGericht}`)
+  }
+
   return {
     cookies,
     viewState: resultsViewState,
@@ -335,6 +432,7 @@ async function searchByRegister(registerArt, registerNummer, registerGericht, se
     resultsUrl,
     resultsHtml: html,
     rowIndex,
+    matchedFirmaName,
   }
 }
 
@@ -500,8 +598,12 @@ function _applyCachedRowIndex(registerArt, registerNummer, registerGericht, sear
   // Verify the cached row actually exists in the current search HTML
   const $check = load(resultsHtml)
   if ($check(`tr[data-ri="${cachedIdx}"]`).length > 0) {
-    console.log(`[hr-client] overriding search rowIndex=${rowIndex} → cached ${cachedIdx} for ${cacheKey}`)
-    return { ...searchResult, rowIndex: cachedIdx }
+    const nestedRows = $check(`tr[data-ri="${cachedIdx}"]`).find('table').first().find('tr')
+    const cachedFirmaName = nestedRows.length >= 2
+      ? $check(nestedRows[1]).find('td').first().text().trim() || null
+      : null
+    console.log(`[hr-client] overriding search rowIndex=${rowIndex} → cached ${cachedIdx} for ${cacheKey} (firma="${cachedFirmaName}")`)
+    return { ...searchResult, rowIndex: cachedIdx, matchedFirmaName: cachedFirmaName }
   }
 
   // Cached row not in current results — trust the fresh search
@@ -570,11 +672,13 @@ async function clickJSFLink(linkId, formId, viewState, cookies, resultsUrl = '')
 
 async function downloadSI(registerArt, registerNummer, registerGericht) {
   const session = await getSession()
-  const { cookies, viewState, formId, resultsHtml, resultsUrl, rowIndex } =
+  const { cookies, viewState, formId, resultsHtml, resultsUrl, rowIndex, matchedFirmaName } =
     _applyCachedRowIndex(registerArt, registerNummer, registerGericht,
       await searchByRegister(registerArt, registerNummer, registerGericht, session))
 
   if (rowIndex === -1) throw new Error(`Company not found: ${registerArt} ${registerNummer}`)
+
+  console.log(`[hr-client] SI download: firma="${matchedFirmaName}" | ${registerArt} ${registerNummer} @ ${registerGericht}`)
 
   const $ = load(resultsHtml)
   const linkId = findDocLinkId($, rowIndex, 'SI', formId)
@@ -602,11 +706,13 @@ async function downloadSI(registerArt, registerNummer, registerGericht) {
 
 async function _downloadAbdruck(registerArt, registerNummer, registerGericht, abdruckType) {
   const session = await getSession()
-  const { cookies, viewState, formId, resultsHtml, resultsUrl, rowIndex } =
+  const { cookies, viewState, formId, resultsHtml, resultsUrl, rowIndex, matchedFirmaName } =
     _applyCachedRowIndex(registerArt, registerNummer, registerGericht,
       await searchByRegister(registerArt, registerNummer, registerGericht, session))
 
   if (rowIndex === -1) throw new Error(`Company not found: ${registerArt} ${registerNummer}`)
+
+  console.log(`[hr-client] ${abdruckType} download: firma="${matchedFirmaName}" | ${registerArt} ${registerNummer} @ ${registerGericht}`)
 
   const $ = load(resultsHtml)
   const linkId = findDocLinkId($, rowIndex, abdruckType, formId)
@@ -704,11 +810,13 @@ function _dkLeafScore($t, el) {
 async function _expandDKTree(registerArt, registerNummer, registerGericht) {
   // ── Step 1: search → results page ────────────────────────────────────────────
   const session = await getSession()
-  const { cookies, viewState, formId, resultsHtml, resultsUrl, rowIndex } =
+  const { cookies, viewState, formId, resultsHtml, resultsUrl, rowIndex, matchedFirmaName } =
     _applyCachedRowIndex(registerArt, registerNummer, registerGericht,
       await searchByRegister(registerArt, registerNummer, registerGericht, session))
 
   if (rowIndex === -1) throw new Error(`Company not found: ${registerArt} ${registerNummer}`)
+
+  console.log(`[hr-client] DK download: firma="${matchedFirmaName}" | ${registerArt} ${registerNummer} @ ${registerGericht}`)
 
   const $ = load(resultsHtml)
   const dkLinkId = findDocLinkId($, rowIndex, 'DK', formId)
