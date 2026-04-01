@@ -7,6 +7,7 @@ import DashboardHome from './pages/DashboardHome.jsx'
 import ApiKeysPage from './pages/ApiKeysPage.jsx'
 import BillingPage from './pages/BillingPage.jsx'
 import DocsPage from './pages/DocsPage.jsx'
+import DownloadPage from './pages/DownloadPage.jsx'
 import DashboardLayout from './components/DashboardLayout.jsx'
 
 export default function App() {
@@ -18,15 +19,16 @@ export default function App() {
     return () => subscription.unsubscribe()
   }, [])
 
-  if (session === undefined) return null // loading
+  const loading = session === undefined
 
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/docs" element={<DocsPage />} />
-      <Route path="/login" element={session ? <Navigate to="/dashboard" /> : <LoginPage />} />
-      <Route path="/dashboard" element={session ? <DashboardLayout /> : <Navigate to="/login" />}>
+      <Route path="/login" element={!loading && session ? <Navigate to="/dashboard" /> : <LoginPage />} />
+      <Route path="/dashboard" element={loading ? null : session ? <DashboardLayout /> : <Navigate to="/login" />}>
         <Route index element={<DashboardHome />} />
+        <Route path="download" element={<DownloadPage />} />
         <Route path="keys" element={<ApiKeysPage />} />
         <Route path="billing" element={<BillingPage />} />
       </Route>

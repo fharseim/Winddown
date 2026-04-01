@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { api } from '../lib/api.js'
 
 const s = {
@@ -18,15 +19,23 @@ const s = {
   dayBar:  (h) => ({ flex: 1, background: '#0f172a', borderRadius: '2px 2px 0 0', height: `${h}%`, minHeight: 2 }),
   daylabel:{ display: 'flex', gap: 4, marginTop: 4 },
   dl:      { flex: 1, fontSize: 10, color: '#94a3b8', textAlign: 'center' },
+  recentGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 },
+  recentItem: { background: '#fff', borderRadius: 8, padding: '14px 18px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid transparent' },
+  recentName: { fontSize: 14, fontWeight: 600, marginBottom: 2 },
+  recentMeta: { fontSize: 12, color: '#64748b' },
+  recentArrow:{ color: '#94a3b8', fontSize: 16 },
 }
 
 export default function DashboardHome() {
   const [me, setMe] = useState(null)
   const [usage, setUsage] = useState([])
+  const [recent, setRecent] = useState([])
+  const navigate = useNavigate()
 
   useEffect(() => {
     api.me().then(setMe).catch(console.error)
     api.usage(30).then(setUsage).catch(console.error)
+    api.recentCompanies().then(setRecent).catch(() => {})
   }, [])
 
   if (!me) return <div style={{ color: '#64748b' }}>Laden…</div>
@@ -61,6 +70,29 @@ export default function DashboardHome() {
           </div>
         </div>
       </div>
+
+      {recent.length > 0 && (
+        <div style={s.section}>
+          <div style={s.sh2}>Zuletzt abgerufen</div>
+          <div style={s.recentGrid}>
+            {recent.map((c, i) => (
+              <div
+                key={i}
+                style={s.recentItem}
+                onClick={() => navigate('/dashboard/download', { state: { preselect: c } })}
+                onMouseEnter={e => e.currentTarget.style.borderColor = '#e2e8f0'}
+                onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}
+              >
+                <div>
+                  <div style={s.recentName}>{c.register_art} {c.register_nummer}</div>
+                  <div style={s.recentMeta}>{c.register_gericht}</div>
+                </div>
+                <div style={s.recentArrow}>→</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {usage.length > 0 && (
         <div style={s.section}>

@@ -22,6 +22,7 @@ async function req(method, path, body) {
 
 export const api = {
   me:              ()           => req('GET',    '/dashboard/me'),
+  recentCompanies: ()           => req('GET',    '/dashboard/recent-companies'),
   usage:           (days = 30)  => req('GET',    `/dashboard/usage?days=${days}`),
   listKeys:        ()           => req('GET',    '/dashboard/api-keys'),
   createKey:       (label)      => req('POST',   '/dashboard/api-keys', { label }),

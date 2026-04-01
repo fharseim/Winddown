@@ -92,6 +92,87 @@ router.delete('/api-keys/:id', async (req, res) => {
   }
 })
 
+// GET /dashboard/recent-companies  — distinct companies from usage_logs
+router.get('/recent-companies', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('saas_usage_logs')
+      .select('register_art, register_nummer, register_gericht')
+      .eq('customer_id', req.customer.id)
+      .not('register_nummer', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(200)
+
+    if (error) throw error
+
+    // Deduplicate by register_art+nummer+gericht, keep order of first occurrence
+    const seen = new Set()
+    const unique = []
+    for (const row of data) {
+      const key = `${row.register_art}:${row.register_nummer}:${row.register_gericht}`
+      if (!seen.has(key)) {
+        seen.add(key)
+        unique.push(row)
+      }
+      if (unique.length >= 10) break
+    }
+
+    res.json(unique)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// GET /dashboard/search?q=
+router.get('/search', async (req, res) => {
+  try {
+    const { proxyCrawler } = await import('../services/crawlerProxy.js')
+    const upstream = await proxyCrawler('/api/search', req.query)
+    const data = await upstream.json()
+    res.status(upstream.status).json(data)
+  } catch (err) {
+    res.status(502).json({ error: err.message })
+  }
+})
+
+// GET /dashboard/documents?registerArt=&registerNummer=&registerGericht=
+router.get('/documents', async (req, res) => {
+  try {
+    const { proxyCrawler } = await import('../services/crawlerProxy.js')
+    const upstream = await proxyCrawler('/api/documents', req.query)
+    const data = await upstream.json()
+    res.status(upstream.status).json(data)
+  } catch (err) {
+    res.status(502).json({ error: err.message })
+  }
+})
+
+// GET /dashboard/download?registerArt=&registerNummer=&registerGericht=&docType=&docId=
+router.get('/download', async (req, res) => {
+  const { registerArt, registerNummer, registerGericht, docType, docId } = req.query
+  if (!registerArt || !registerNummer || !registerGericht || !docType) {
+    return res.status(400).json({ error: 'registerArt, registerNummer, registerGericht und docType sind erforderlich' })
+  }
+  if (!['AD', 'CD', 'DK'].includes(docType)) {
+    return res.status(400).json({ error: 'docType muss AD, CD oder DK sein' })
+  }
+  try {
+    const { proxyCrawler } = await import('../services/crawlerProxy.js')
+    const upstream = await proxyCrawler('/api/download', { registerArt, registerNummer, registerGericht, docType, ...(docId ? { docId } : {}) })
+    if (!upstream.ok) {
+      const text = await upstream.text()
+      return res.status(upstream.status).json({ error: text })
+    }
+    const ct = upstream.headers.get('content-type') || 'application/pdf'
+    res.setHeader('Content-Type', ct)
+    res.setHeader('Content-Disposition', `attachment; filename="${registerArt}_${registerNummer}_${docType}.pdf"`)
+    const buffer = Buffer.from(await upstream.arrayBuffer())
+    res.send(buffer)
+  } catch (err) {
+    res.status(502).json({ error: err.message })
+  }
+})
+
 // POST /dashboard/billing/checkout  { plan: 'starter'|'growth'|'scale' }
 router.post('/billing/checkout', async (req, res) => {
   try {

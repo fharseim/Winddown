@@ -125,22 +125,31 @@ function resolveCourtCode(gerichtInput) {
 
 // ─── Token-bucket rate limiter (200 req/hour to handelsregister.de) ────────────
 
-const BUCKET_CAPACITY = 200
-const BUCKET_REFILL_PER_MS = BUCKET_CAPACITY / (60 * 60 * 1000) // ~3 per minute
+const BUCKET_CAPACITY = 500
+const BUCKET_REFILL_PER_MS = BUCKET_CAPACITY / (60 * 60 * 1000) // ~8 per minute
 
 let bucketTokens = BUCKET_CAPACITY
 let bucketLastRefill = Date.now()
 
-function consumeToken() {
+async function consumeToken() {
   const now = Date.now()
   const elapsed = now - bucketLastRefill
   bucketTokens = Math.min(BUCKET_CAPACITY, bucketTokens + elapsed * BUCKET_REFILL_PER_MS)
   bucketLastRefill = now
 
   if (bucketTokens < 1) {
-    throw new Error('Rate limit: too many requests to handelsregister.de (60/hour)')
+    // Wait for one token to refill rather than immediately rejecting
+    const waitMs = Math.ceil((1 - bucketTokens) / BUCKET_REFILL_PER_MS)
+    if (waitMs > 30000) {
+      throw new Error('Rate limit: too many concurrent requests to handelsregister.de — bitte kurz warten')
+    }
+    console.warn(`[hr-client] rate limit — waiting ${waitMs}ms for token refill`)
+    await sleep(waitMs)
+    bucketTokens = 0
+    bucketLastRefill = Date.now()
+  } else {
+    bucketTokens -= 1
   }
-  bucketTokens -= 1
 }
 
 // ─── HTTP helpers ─────────────────────────────────────────────────────────────
@@ -162,7 +171,7 @@ async function fetchHR(url, opts, timeoutMs = 25000) {
   const maxAttempts = 3
   let lastErr
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    consumeToken()
+    await consumeToken()
     try {
       const res = await fetchWithTimeout(url, opts, timeoutMs)
       if (res.status === 429 || res.status === 503) {

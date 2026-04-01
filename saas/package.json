@@ -2,6 +2,7 @@
   "name": "hrauszug-saas",
   "version": "1.0.0",
   "description": "hrauszug.io — Handelsregister API SaaS layer",
+  "type": "module",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

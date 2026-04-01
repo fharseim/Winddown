@@ -28,10 +28,11 @@ export default function DashboardLayout() {
       <aside style={s.sidebar}>
         <div style={s.logo}>hrauszug.io</div>
         <nav style={s.nav}>
-          <NavLink to="/dashboard"        end style={linkStyle}>Übersicht</NavLink>
-          <NavLink to="/dashboard/keys"       style={linkStyle}>API-Keys</NavLink>
-          <NavLink to="/dashboard/billing"    style={linkStyle}>Abonnement</NavLink>
-          <NavLink to="/docs"                 style={linkStyle}>Dokumentation</NavLink>
+          <NavLink to="/dashboard"             end style={linkStyle}>Übersicht</NavLink>
+          <NavLink to="/dashboard/download"      style={linkStyle}>Dokumente</NavLink>
+          <NavLink to="/dashboard/keys"          style={linkStyle}>API-Keys</NavLink>
+          <NavLink to="/dashboard/billing"       style={linkStyle}>Abonnement</NavLink>
+          <NavLink to="/docs"                    style={linkStyle}>Dokumentation</NavLink>
         </nav>
         <div style={s.signout}>
           <button style={s.btn} onClick={signOut}>Abmelden</button>
