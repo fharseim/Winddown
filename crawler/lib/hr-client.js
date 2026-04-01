@@ -409,6 +409,22 @@ async function searchByRegister(registerArt, registerNummer, registerGericht, se
     // If no Gericht match found among multiple rows → rowIndex stays -1 (not found)
   }
 
+  // Warn early if court could not be resolved — unfiltered results increase wrong-company risk
+  if (!courtCode) {
+    console.warn(`[hr-client] WARNING: court "${registerGericht}" not resolved to a code — results may include other courts`)
+  }
+
+  // Extract the matched company name for verification logging
+  let matchedFirmaName = null
+  if (rowIndex !== -1) {
+    const matchedRow = $(`tr[data-ri="${rowIndex}"]`)
+    const nestedRows = matchedRow.find('table').first().find('tr')
+    if (nestedRows.length >= 2) {
+      matchedFirmaName = $(nestedRows[1]).find('td').first().text().trim() || null
+    }
+    console.log(`[hr-client] matched row ${rowIndex}: firma="${matchedFirmaName}" for ${registerArt} ${registerNummer} @ ${registerGericht}`)
+  }
+
   return {
     cookies,
     viewState: resultsViewState,
@@ -416,6 +432,7 @@ async function searchByRegister(registerArt, registerNummer, registerGericht, se
     resultsUrl,
     resultsHtml: html,
     rowIndex,
+    matchedFirmaName,
   }
 }
 
@@ -581,8 +598,12 @@ function _applyCachedRowIndex(registerArt, registerNummer, registerGericht, sear
   // Verify the cached row actually exists in the current search HTML
   const $check = load(resultsHtml)
   if ($check(`tr[data-ri="${cachedIdx}"]`).length > 0) {
-    console.log(`[hr-client] overriding search rowIndex=${rowIndex} → cached ${cachedIdx} for ${cacheKey}`)
-    return { ...searchResult, rowIndex: cachedIdx }
+    const nestedRows = $check(`tr[data-ri="${cachedIdx}"]`).find('table').first().find('tr')
+    const cachedFirmaName = nestedRows.length >= 2
+      ? $check(nestedRows[1]).find('td').first().text().trim() || null
+      : null
+    console.log(`[hr-client] overriding search rowIndex=${rowIndex} → cached ${cachedIdx} for ${cacheKey} (firma="${cachedFirmaName}")`)
+    return { ...searchResult, rowIndex: cachedIdx, matchedFirmaName: cachedFirmaName }
   }
 
   // Cached row not in current results — trust the fresh search
@@ -651,11 +672,13 @@ async function clickJSFLink(linkId, formId, viewState, cookies, resultsUrl = '')
 
 async function downloadSI(registerArt, registerNummer, registerGericht) {
   const session = await getSession()
-  const { cookies, viewState, formId, resultsHtml, resultsUrl, rowIndex } =
+  const { cookies, viewState, formId, resultsHtml, resultsUrl, rowIndex, matchedFirmaName } =
     _applyCachedRowIndex(registerArt, registerNummer, registerGericht,
       await searchByRegister(registerArt, registerNummer, registerGericht, session))
 
   if (rowIndex === -1) throw new Error(`Company not found: ${registerArt} ${registerNummer}`)
+
+  console.log(`[hr-client] SI download: firma="${matchedFirmaName}" | ${registerArt} ${registerNummer} @ ${registerGericht}`)
 
   const $ = load(resultsHtml)
   const linkId = findDocLinkId($, rowIndex, 'SI', formId)
@@ -683,11 +706,13 @@ async function downloadSI(registerArt, registerNummer, registerGericht) {
 
 async function _downloadAbdruck(registerArt, registerNummer, registerGericht, abdruckType) {
   const session = await getSession()
-  const { cookies, viewState, formId, resultsHtml, resultsUrl, rowIndex } =
+  const { cookies, viewState, formId, resultsHtml, resultsUrl, rowIndex, matchedFirmaName } =
     _applyCachedRowIndex(registerArt, registerNummer, registerGericht,
       await searchByRegister(registerArt, registerNummer, registerGericht, session))
 
   if (rowIndex === -1) throw new Error(`Company not found: ${registerArt} ${registerNummer}`)
+
+  console.log(`[hr-client] ${abdruckType} download: firma="${matchedFirmaName}" | ${registerArt} ${registerNummer} @ ${registerGericht}`)
 
   const $ = load(resultsHtml)
   const linkId = findDocLinkId($, rowIndex, abdruckType, formId)
@@ -785,11 +810,13 @@ function _dkLeafScore($t, el) {
 async function _expandDKTree(registerArt, registerNummer, registerGericht) {
   // ── Step 1: search → results page ────────────────────────────────────────────
   const session = await getSession()
-  const { cookies, viewState, formId, resultsHtml, resultsUrl, rowIndex } =
+  const { cookies, viewState, formId, resultsHtml, resultsUrl, rowIndex, matchedFirmaName } =
     _applyCachedRowIndex(registerArt, registerNummer, registerGericht,
       await searchByRegister(registerArt, registerNummer, registerGericht, session))
 
   if (rowIndex === -1) throw new Error(`Company not found: ${registerArt} ${registerNummer}`)
+
+  console.log(`[hr-client] DK download: firma="${matchedFirmaName}" | ${registerArt} ${registerNummer} @ ${registerGericht}`)
 
   const $ = load(resultsHtml)
   const dkLinkId = findDocLinkId($, rowIndex, 'DK', formId)
